@@ -8,6 +8,15 @@ fun BoolQuery.Builder.filterQuery(fn: Query.Builder.() -> ObjectBuilder<Query>):
     return this.filter(fn)
 }
 
-fun BoolQuery.Builder.filterQuery(vararg values: Query): BoolQuery.Builder {
-    return this.filter(values.toList())
+fun BoolQuery.Builder.filterQuery(vararg values: Query?): BoolQuery.Builder {
+    return this.filter(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
+}
+
+fun BoolQuery.Builder.filterQuery(values: List<Query?>?): BoolQuery.Builder {
+    val queries = values?.asSequence()?.mapNotNull { it }?.toList()
+    return if (queries.isNullOrEmpty()) {
+        this
+    } else {
+        this.filter(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
+    }
 }
