@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query

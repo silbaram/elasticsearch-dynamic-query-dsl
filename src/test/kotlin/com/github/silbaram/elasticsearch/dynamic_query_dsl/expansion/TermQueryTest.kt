@@ -1,7 +1,8 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.query.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.Item_level.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.mustQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
