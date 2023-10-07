@@ -1,7 +1,7 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.item_level
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.boolQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.filterQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.mustNotQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.mustQuery
