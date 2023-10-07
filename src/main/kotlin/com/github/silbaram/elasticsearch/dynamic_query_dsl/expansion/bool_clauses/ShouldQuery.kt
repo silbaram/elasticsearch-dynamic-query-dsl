@@ -9,7 +9,12 @@ fun BoolQuery.Builder.shouldQuery(fn: Query.Builder.() -> ObjectBuilder<Query>):
 }
 
 fun BoolQuery.Builder.shouldQuery(vararg values: Query?): BoolQuery.Builder {
-    return this.should(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
+    val queries = values.asSequence().mapNotNull { it }.toList()
+    return if (queries.isEmpty()) {
+        this
+    } else {
+        this.should(queries)
+    }
 }
 
 fun BoolQuery.Builder.shouldQuery(values: List<Query?>?): BoolQuery.Builder {
