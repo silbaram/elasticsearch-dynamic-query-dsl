@@ -331,4 +331,25 @@ class TermsQueryTest: FunSpec({
         boolQueryBuild.isBool shouldBe true
         shouldQuery.size shouldBe 0
     }
+
+    test("terms 쿼리에 boost 설정시 적용이 되어야함") {
+        val boolQuery = Query.Builder()
+            .boolQuery {
+                mustQuery(
+                    termsQuery(
+                        field = "a",
+                        values = listOf("1111", "2222"),
+                        boost = 2.5F
+                    )
+                )
+            }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().boost() shouldBe 2.5F
+    }
 })

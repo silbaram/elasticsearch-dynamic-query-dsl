@@ -292,7 +292,7 @@ class TermQueryTest: FunSpec({
     test("should 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustNotQuery(
+                shouldQuery(
                     termQuery(
                         field = "a",
                         value = ""
@@ -309,5 +309,25 @@ class TermQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         shouldQuery.size shouldBe 0
+    }
+
+    test("term 쿼리에 boost 설정시 적용이 되어야함") {
+        val boolQuery = Query.Builder().boolQuery {
+            mustQuery(
+                termQuery(
+                    field = "a",
+                    value = "1111",
+                    boost = 2.0F
+                )
+            )
+        }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
+        mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.boost() shouldBe 2.0F
     }
 })
