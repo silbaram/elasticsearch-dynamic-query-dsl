@@ -9,8 +9,10 @@ repositories {
     mavenCentral()
 }
 
+val elasticsearchJavaVersion: String by project
+
 dependencies {
-    implementation("co.elastic.clients:elasticsearch-java:8.9.1")
+    implementation("co.elastic.clients:elasticsearch-java:$elasticsearchJavaVersion")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
     testImplementation("io.kotest:kotest-assertions-core:5.7.1")
@@ -18,4 +20,8 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(17)
 }
