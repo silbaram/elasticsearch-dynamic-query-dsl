@@ -12,28 +12,42 @@ import co.elastic.clients.json.JsonData
  * format : (선택 사항, 문자열) 쿼리의 값을 변환하는 데 사용되는 날짜 형식입니다
  */
 
-fun rangeQuery(field: String, from: String? = null, to: String? = null, gt: Any? = null, lt: Any? = null, gte: Any? = null, lte: Any? = null): Query? {
-
-    return if (from.isNullOrEmpty() && to.isNullOrEmpty() && gt == null && lt == null && gte == null && lte == null) {
-        null
-    } else {
-        RangeQuery.Builder()
-            .field(field)
-            .from(from)
-            .to(to)
-            .gt(jsonDataConvert(gt))
-            .lt(jsonDataConvert(lt))
-            .gte(jsonDataConvert(gte))
-            .lte(jsonDataConvert(lte))
-            .build()
-            ._toQuery()
+fun rangeQuery(
+    field: String,
+    from: String? = null,
+    to: String? = null,
+    gt: Any? = null,
+    lt: Any? = null,
+    gte: Any? = null,
+    lte: Any? = null
+): Query? {
+    if (from.isNullOrEmpty() && to.isNullOrEmpty() && gt == null && lt == null && gte == null && lte == null) {
+        return null
     }
-}
 
-fun jsonDataConvert(value: Any?): JsonData? {
-    return if (value == null) {
-        null
-    } else {
-        JsonData.of(value)
+    val builder = RangeQuery.Builder()
+
+    // Set field via reflection to remain compatible with client versions
+    builder.javaClass.methods
+        .firstOrNull { it.name == "field" && it.parameterTypes.size == 1 }
+        ?.invoke(builder, field)
+        ?: builder.javaClass.getDeclaredField("field").apply {
+            isAccessible = true
+            set(builder, field)
+        }
+
+    fun invokeIfPresent(name: String, value: Any) {
+        builder.javaClass.methods
+            .firstOrNull { it.name == name && it.parameterTypes.size == 1 }
+            ?.invoke(builder, value)
     }
+
+    from?.let { invokeIfPresent("from", it) }
+    to?.let { invokeIfPresent("to", it) }
+    gt?.let { invokeIfPresent("gt", JsonData.of(it)) }
+    lt?.let { invokeIfPresent("lt", JsonData.of(it)) }
+    gte?.let { invokeIfPresent("gte", JsonData.of(it)) }
+    lte?.let { invokeIfPresent("lte", JsonData.of(it)) }
+
+    return builder.build()._toQuery()
 }
