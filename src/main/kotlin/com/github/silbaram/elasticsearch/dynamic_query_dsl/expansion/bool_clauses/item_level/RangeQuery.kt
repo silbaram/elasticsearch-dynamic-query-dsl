@@ -42,8 +42,8 @@ fun rangeQuery(
             ?.invoke(builder, value)
     }
 
-    from?.let { invokeIfPresent("from", it) }
-    to?.let { invokeIfPresent("to", it) }
+    from?.let { invokeIfPresent("from", JsonData.of(it)) }
+    to?.let { invokeIfPresent("to", JsonData.of(it)) }
     gt?.let { invokeIfPresent("gt", JsonData.of(it)) }
     lt?.let { invokeIfPresent("lt", JsonData.of(it)) }
     gte?.let { invokeIfPresent("gte", JsonData.of(it)) }
