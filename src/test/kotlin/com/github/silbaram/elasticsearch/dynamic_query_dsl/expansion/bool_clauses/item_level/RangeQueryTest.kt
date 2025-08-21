@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
 import co.elastic.clients.json.JsonData
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries.boolQuery
-import io.kotest.assertions.print.print
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -75,16 +74,16 @@ class RangeQueryTest: FunSpec ({
         mustQuery.filter { it.isRange && it.range().fieldName() == "c"}.size shouldBe 1
 
         mustQuery.filter { it.isRange && it.range().fieldName() == "a" && it.range().jsonValue("from") != null }[0]
-            .range().jsonValue("from")!!.print().value shouldBe "\"1234\""
+            .range().jsonValue("from")!!.to(String::class.java) shouldBe "1234"
         mustQuery.filter { it.isRange && it.range().fieldName() == "a" && it.range().jsonValue("to") != null }[0]
-            .range().jsonValue("to")!!.print().value shouldBe "\"5678\""
+            .range().jsonValue("to")!!.to(String::class.java) shouldBe "5678"
         mustQuery.filter { it.isRange && it.range().fieldName() == "b" }[0]
-            .range().jsonValue("gt")!!.print().value shouldBe "123"
+            .range().jsonValue("gt")!!.to(Int::class.java) shouldBe 123
         mustQuery.filter { it.isRange && it.range().fieldName() == "b" }[0]
-            .range().jsonValue("lt")!!.print().value shouldBe "567"
+            .range().jsonValue("lt")!!.to(Int::class.java) shouldBe 567
         mustQuery.filter { it.isRange && it.range().fieldName() == "c" }[0]
-            .range().jsonValue("gte")!!.print().value shouldBe "456"
+            .range().jsonValue("gte")!!.to(Int::class.java) shouldBe 456
         mustQuery.filter { it.isRange && it.range().fieldName() == "c" }[0]
-            .range().jsonValue("lte")!!.print().value shouldBe "789"
+            .range().jsonValue("lte")!!.to(Int::class.java) shouldBe 789
     }
 })
