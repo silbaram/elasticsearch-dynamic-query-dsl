@@ -21,9 +21,20 @@ private fun RangeQuery.fieldName(): String? {
 }
 
 private fun RangeQuery.jsonValue(name: String): JsonData? {
-    return this.javaClass.methods
-        .firstOrNull { it.name == name && it.parameterCount == 0 }
-        ?.invoke(this) as? JsonData
+    val method = this.javaClass.methods.firstOrNull { it.name == name && it.parameterCount == 0 }
+    val value = if (method != null) {
+        method.invoke(this)
+    } else {
+        val field = this.javaClass.declaredFields.firstOrNull { it.name == name } ?: return null
+        field.isAccessible = true
+        field.get(this)
+    }
+
+    return when (value) {
+        null -> null
+        is JsonData -> value
+        else -> JsonData.of(value)
+    }
 }
 
 class RangeQueryTest: FunSpec ({

@@ -42,7 +42,10 @@ fun rangeQuery(
 
     fun invokeIfPresent(name: String, rawValue: Any) {
         val method = builder.javaClass.methods.firstOrNull {
-            it.name == name && it.parameterCount == 1
+            it.name == name &&
+                it.parameterCount == 1 &&
+                (it.parameterTypes[0].isAssignableFrom(JsonData::class.java) ||
+                    it.parameterTypes[0].isAssignableFrom(rawValue.javaClass))
         }
 
         if (method != null) {
