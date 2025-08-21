@@ -29,7 +29,11 @@ fun rangeQuery(
 
     // Set field via reflection to remain compatible with client versions
     builder.javaClass.methods
-        .firstOrNull { it.name == "field" && it.parameterTypes.size == 1 }
+        .firstOrNull {
+            it.name == "field" &&
+                it.parameterTypes.size == 1 &&
+                it.parameterTypes[0].isAssignableFrom(String::class.java)
+        }
         ?.invoke(builder, field)
         ?: builder.javaClass.getDeclaredField("field").apply {
             isAccessible = true
@@ -37,8 +41,13 @@ fun rangeQuery(
         }
 
     fun invokeIfPresent(name: String, value: Any) {
+        val valueType = value::class.java
         builder.javaClass.methods
-            .firstOrNull { it.name == name && it.parameterTypes.size == 1 }
+            .firstOrNull {
+                it.name == name &&
+                    it.parameterTypes.size == 1 &&
+                    it.parameterTypes[0].isAssignableFrom(valueType)
+            }
             ?.invoke(builder, value)
     }
 
