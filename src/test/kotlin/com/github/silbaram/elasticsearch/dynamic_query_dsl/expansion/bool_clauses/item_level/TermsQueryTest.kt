@@ -32,8 +32,8 @@ class TermsQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         mustQuery.size shouldBe 2
-        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        mustQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("must 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
@@ -66,8 +66,8 @@ class TermsQueryTest: FunSpec({
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
-        mustQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        mustQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333")
     }
 
     test("must 쿼리에서 termsQuery가 없을때 must쿼리는 생성 안되야함") {
@@ -112,8 +112,8 @@ class TermsQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         filterQuery.size shouldBe 2
-        filterQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        filterQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
+        filterQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        filterQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("filter 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
@@ -146,8 +146,8 @@ class TermsQueryTest: FunSpec({
         filterQuery.size shouldBe 2
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
-        filterQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        filterQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333")
+        filterQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        filterQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333")
     }
 
     test("filter 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
@@ -192,8 +192,8 @@ class TermsQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         mustNotQuery.size shouldBe 2
-        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
+        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("mustNot 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
@@ -226,8 +226,8 @@ class TermsQueryTest: FunSpec({
         mustNotQuery.size shouldBe 2
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
-        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333")
+        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333")
     }
 
     test("mustNot 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
@@ -272,8 +272,8 @@ class TermsQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         shouldQuery.size shouldBe 2
-        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
+        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("should 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
@@ -306,8 +306,8 @@ class TermsQueryTest: FunSpec({
         shouldQuery.size shouldBe 2
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
-        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
-        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333")
+        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "c" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        shouldQuery.filter { it.isTerms }.find { it.terms().field() == "d" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("3333")
     }
 
     test("should 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
@@ -349,7 +349,7 @@ class TermsQueryTest: FunSpec({
 
         boolQueryBuild.isBool shouldBe true
         mustQuery.size shouldBe 1
-        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().boost() shouldBe 2.5F
     }
 })

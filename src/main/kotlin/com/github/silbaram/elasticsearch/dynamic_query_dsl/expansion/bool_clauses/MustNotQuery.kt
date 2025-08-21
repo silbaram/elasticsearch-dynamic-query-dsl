@@ -17,10 +17,10 @@ fun BoolQuery.Builder.mustNotQuery(vararg values: Query?): BoolQuery.Builder {
 }
 
 fun BoolQuery.Builder.mustNotQuery(values: List<Query?>?): BoolQuery.Builder {
-    val queries = values?.asSequence()?.mapNotNull { it }?.toList()
-    return if (queries.isNullOrEmpty()) {
+    val queries = values?.filterNotNull() ?: emptyList()
+    return if (queries.isEmpty()) {
         this
     } else {
-        this.mustNot(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
+        this.mustNot(queries)
     }
 }
