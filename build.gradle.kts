@@ -5,6 +5,10 @@ plugins {
 group = "com.github.silbaram"
 version = "1.0-SNAPSHOT"
 
+kotlin {
+    jvmToolchain(17)
+}
+
 repositories {
     mavenCentral()
 }

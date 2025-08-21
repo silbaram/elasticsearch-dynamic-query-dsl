@@ -10,18 +10,10 @@ fun BoolQuery.Builder.shouldQuery(fn: Query.Builder.() -> ObjectBuilder<Query>):
 
 fun BoolQuery.Builder.shouldQuery(vararg values: Query?): BoolQuery.Builder {
     val queries = values.asSequence().mapNotNull { it }.toList()
-    return if (queries.isEmpty()) {
-        this
-    } else {
-        this.should(queries)
-    }
+    return addClause("should", queries)
 }
 
 fun BoolQuery.Builder.shouldQuery(values: List<Query?>?): BoolQuery.Builder {
-    val queries = values?.asSequence()?.mapNotNull { it }?.toList()
-    return if (queries.isNullOrEmpty()) {
-        this
-    } else {
-        this.should(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
-    }
+    val queries = values?.filterNotNull() ?: emptyList()
+    return addClause("should", queries)
 }

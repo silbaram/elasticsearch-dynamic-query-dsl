@@ -7,20 +7,13 @@ import co.elastic.clients.util.ObjectBuilder
 fun BoolQuery.Builder.mustQuery(fn: Query.Builder.() -> ObjectBuilder<Query>): BoolQuery.Builder {
     return this.must(fn)
 }
+
 fun BoolQuery.Builder.mustQuery(vararg values: Query?): BoolQuery.Builder {
     val queries = values.asSequence().mapNotNull { it }.toList()
-    return if (queries.isEmpty()) {
-        this
-    } else {
-        this.must(queries)
-    }
+    return addClause("must", queries)
 }
 
 fun BoolQuery.Builder.mustQuery(values: List<Query?>?): BoolQuery.Builder {
-    val queries = values?.asSequence()?.mapNotNull { it }?.toList()
-    return if (queries.isNullOrEmpty()) {
-        this
-    } else {
-        this.must(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
-    }
+    val queries = values?.filterNotNull() ?: emptyList()
+    return addClause("must", queries)
 }
