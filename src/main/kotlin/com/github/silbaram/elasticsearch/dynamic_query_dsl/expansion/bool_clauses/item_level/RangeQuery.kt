@@ -40,23 +40,40 @@ fun rangeQuery(
             set(builder, field)
         }
 
-    fun invokeIfPresent(name: String, value: Any) {
-        val valueType = value::class.java
-        builder.javaClass.methods
-            .firstOrNull {
-                it.name == name &&
-                    it.parameterTypes.size == 1 &&
-                    it.parameterTypes[0].isAssignableFrom(valueType)
+    fun invokeIfPresent(name: String, rawValue: Any) {
+        val method = builder.javaClass.methods.firstOrNull {
+            it.name == name && it.parameterCount == 1
+        }
+
+        if (method != null) {
+            val paramType = method.parameterTypes[0]
+            val arg = when {
+                paramType.isAssignableFrom(JsonData::class.java) && rawValue !is JsonData -> JsonData.of(rawValue)
+                paramType.isAssignableFrom(String::class.java) && rawValue !is String -> rawValue.toString()
+                else -> rawValue
             }
-            ?.invoke(builder, value)
+
+            method.invoke(builder, arg)
+            return
+        }
+
+        builder.javaClass.declaredFields.firstOrNull { it.name == name }?.let { field ->
+            field.isAccessible = true
+            val arg = when {
+                field.type.isAssignableFrom(JsonData::class.java) && rawValue !is JsonData -> JsonData.of(rawValue)
+                field.type.isAssignableFrom(String::class.java) && rawValue !is String -> rawValue.toString()
+                else -> rawValue
+            }
+            field.set(builder, arg)
+        }
     }
 
-    from?.let { invokeIfPresent("from", JsonData.of(it)) }
-    to?.let { invokeIfPresent("to", JsonData.of(it)) }
-    gt?.let { invokeIfPresent("gt", JsonData.of(it)) }
-    lt?.let { invokeIfPresent("lt", JsonData.of(it)) }
-    gte?.let { invokeIfPresent("gte", JsonData.of(it)) }
-    lte?.let { invokeIfPresent("lte", JsonData.of(it)) }
+    from?.let { invokeIfPresent("from", it) }
+    to?.let { invokeIfPresent("to", it) }
+    gt?.let { invokeIfPresent("gt", it) }
+    lt?.let { invokeIfPresent("lt", it) }
+    gte?.let { invokeIfPresent("gte", it) }
+    lte?.let { invokeIfPresent("lte", it) }
 
     return builder.build()._toQuery()
 }
