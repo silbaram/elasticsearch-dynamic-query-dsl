@@ -7,6 +7,12 @@ fun termQuery(field: String, value: String?, boost: Float? = null): Query? {
     return if (value.isNullOrEmpty()) {
         null
     } else {
-        TermQuery.Builder().field(field).value(value).boost(boost).build()._toQuery()
+        val builder = TermQuery.Builder()
+            .field(field)
+            .value(value)
+
+        boost?.let { builder.boost(it) }
+
+        return builder.build()._toQuery()
     }
 }
