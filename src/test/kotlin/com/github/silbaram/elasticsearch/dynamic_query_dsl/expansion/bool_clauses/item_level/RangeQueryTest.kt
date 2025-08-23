@@ -12,26 +12,28 @@ class RangeQueryTest: FunSpec ({
     test("must 쿼리에서 range 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    rangeQuery(
-                        field = "a",
-                        from = "1234"
-                    ),
-                    rangeQuery(
-                        field = "a",
-                        to = "5678"
-                    ),
-                    rangeQuery(
-                        field = "b",
-                        gt = 123,
-                        lt = 567
-                    ),
-                    rangeQuery(
-                        field = "c",
-                        gte = 456,
-                        lte = 789
-                    )
-                )
+                mustQuery {
+                    queries[
+                        rangeQuery(
+                            field = "a",
+                            from = "1234"
+                        ),
+                        rangeQuery(
+                            field = "a",
+                            to = "5678"
+                        ),
+                        rangeQuery(
+                            field = "b",
+                            gt = 123,
+                            lt = 567
+                        ),
+                        rangeQuery(
+                            field = "c",
+                            gte = 456,
+                            lte = 789
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
