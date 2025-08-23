@@ -101,16 +101,18 @@ class TermsQueryTest: FunSpec({
     test("filter 쿼리에서 terms 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                filterQuery(
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = listOf("3333", "4444")
-                    )
-                )
+                filterQuery{
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = listOf("3333", "4444")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -125,24 +127,26 @@ class TermsQueryTest: FunSpec({
     test("filter 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                filterQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    ),
-                    termsQuery(
-                        field = "c",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "d",
-                        values = listOf(null, "3333")
-                    )
-                )
+                filterQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        ),
+                        termsQuery(
+                            field = "c",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "d",
+                            values = listOf(null, "3333")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -159,16 +163,18 @@ class TermsQueryTest: FunSpec({
     test("filter 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                filterQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    )
-                )
+                filterQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -181,16 +187,18 @@ class TermsQueryTest: FunSpec({
     test("mustNot 쿼리에서 terms 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustNotQuery(
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = listOf("3333", "4444")
-                    )
-                )
+                mustNotQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = listOf("3333", "4444")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -205,24 +213,26 @@ class TermsQueryTest: FunSpec({
     test("mustNot 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustNotQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    ),
-                    termsQuery(
-                        field = "c",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "d",
-                        values = listOf(null, "3333")
-                    )
-                )
+                mustNotQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        ),
+                        termsQuery(
+                            field = "c",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "d",
+                            values = listOf(null, "3333")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -239,16 +249,18 @@ class TermsQueryTest: FunSpec({
     test("mustNot 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                filterQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    )
-                )
+                filterQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -261,16 +273,18 @@ class TermsQueryTest: FunSpec({
     test("should 쿼리에서 terms 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                shouldQuery(
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = listOf("3333", "4444")
-                    )
-                )
+                shouldQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = listOf("3333", "4444")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -285,24 +299,26 @@ class TermsQueryTest: FunSpec({
     test("should 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                shouldQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    ),
-                    termsQuery(
-                        field = "c",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "d",
-                        values = listOf(null, "3333")
-                    )
-                )
+                shouldQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        ),
+                        termsQuery(
+                            field = "c",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "d",
+                            values = listOf(null, "3333")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -319,16 +335,18 @@ class TermsQueryTest: FunSpec({
     test("should 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                shouldQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    )
-                )
+                shouldQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
