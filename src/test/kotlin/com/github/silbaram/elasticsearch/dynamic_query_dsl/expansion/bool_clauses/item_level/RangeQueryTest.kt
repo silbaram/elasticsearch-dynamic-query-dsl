@@ -54,4 +54,25 @@ class RangeQueryTest: FunSpec ({
         mustQuery.filter { it.isRange && it.range().field() == "c"}[0].range().gte().print().value shouldBe "456"
         mustQuery.filter { it.isRange && it.range().field() == "c"}[0].range().lte().print().value shouldBe "789"
     }
+
+    test("must 쿼리에서 rangeQuery에 boost 설정시 적용이 되어야함") {
+        val boolQuery = Query.Builder()
+            .boolQuery {
+                mustQuery {
+                    rangeQuery(
+                        field = "d",
+                        gte = 10,
+                        lte = 20,
+                        boost = 3.0F
+                    )
+                }
+            }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isRange }.find { it.range().field() == "d" }?.range()?.boost() shouldBe 3.0F
+    }
 })

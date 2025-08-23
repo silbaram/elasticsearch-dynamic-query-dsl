@@ -1,5 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.item_level
 
+import co.elastic.clients.elasticsearch._types.query_dsl.ExistsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery
 import co.elastic.clients.json.JsonData
@@ -12,12 +13,20 @@ import co.elastic.clients.json.JsonData
  * format : (선택 사항, 문자열) 쿼리의 값을 변환하는 데 사용되는 날짜 형식입니다
  */
 
-fun rangeQuery(field: String, from: String? = null, to: String? = null, gt: Any? = null, lt: Any? = null, gte: Any? = null, lte: Any? = null): Query? {
+fun rangeQuery(
+    field: String,
+    from: String? = null,
+    to: String? = null,
+    gt: Any? = null,
+    lt: Any? = null,
+    gte: Any? = null,
+    lte: Any? = null,
+    boost: Float? = null): Query? {
 
     return if (from.isNullOrEmpty() && to.isNullOrEmpty() && gt == null && lt == null && gte == null && lte == null) {
         null
     } else {
-        RangeQuery.Builder()
+        val builder = RangeQuery.Builder()
             .field(field)
             .from(from)
             .to(to)
@@ -25,8 +34,9 @@ fun rangeQuery(field: String, from: String? = null, to: String? = null, gt: Any?
             .lt(jsonDataConvert(lt))
             .gte(jsonDataConvert(gte))
             .lte(jsonDataConvert(lte))
-            .build()
-            ._toQuery()
+        boost?.let { builder.boost(it) }
+
+        builder.build()._toQuery()
     }
 }
 

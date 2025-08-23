@@ -51,4 +51,24 @@ class ExistsQueryTest: FunSpec ({
         mustQuery.first().isTerm shouldBe true
         mustQuery.first().term().field() shouldBe "a"
     }
+
+    test("exists 쿼리에 boost 설정시 적용이 되어야함") {
+        val boolQuery = Query.Builder()
+            .boolQuery {
+                mustQuery {
+                    existsQuery(
+                        field = "a",
+                        boost = 2.0F
+                    )
+                }
+            }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.field() shouldBe "a"
+        mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.boost() shouldBe 2.0F
+    }
 })

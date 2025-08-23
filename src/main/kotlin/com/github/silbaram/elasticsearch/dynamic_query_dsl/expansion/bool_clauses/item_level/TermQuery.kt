@@ -13,6 +13,6 @@ fun termQuery(field: String, value: String?, boost: Float? = null): Query? {
 
         boost?.let { builder.boost(it) }
 
-        return builder.build()._toQuery()
+        builder.build()._toQuery()
     }
 }

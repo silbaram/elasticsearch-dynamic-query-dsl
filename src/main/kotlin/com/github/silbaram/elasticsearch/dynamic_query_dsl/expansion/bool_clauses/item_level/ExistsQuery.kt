@@ -3,10 +3,13 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_claus
 import co.elastic.clients.elasticsearch._types.query_dsl.ExistsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 
-fun existsQuery(field: String?): Query? {
+fun existsQuery(field: String?, boost: Float? = null): Query? {
     return if (field.isNullOrEmpty()) {
         null
     } else {
-        ExistsQuery.Builder().field(field).build()._toQuery()
+        val builder = ExistsQuery.Builder().field(field)
+        boost?.let { builder.boost(it) }
+
+        builder.build()._toQuery()
     }
 }
