@@ -14,16 +14,18 @@ class TermQueryTest: FunSpec({
     test("must 쿼리에서 term 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termQuery(
-                        field = "a",
-                        value = "1111"
-                    ),
-                    termQuery(
-                        field = "b",
-                        value = "2222"
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termQuery(
+                            field = "a",
+                            value = "1111"
+                        ),
+                        termQuery(
+                            field = "b",
+                            value = "2222"
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -38,20 +40,22 @@ class TermQueryTest: FunSpec({
     test("must 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termQuery(
-                        field = "a",
-                        value = null
-                    ),
-                    termQuery(
-                        field = "b",
-                        value = ""
-                    ),
-                    termQuery(
-                        field = "c",
-                        value = "3333"
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termQuery(
+                            field = "a",
+                            value = null
+                        ),
+                        termQuery(
+                            field = "b",
+                            value = ""
+                        ),
+                        termQuery(
+                            field = "c",
+                            value = "3333"
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -67,16 +71,18 @@ class TermQueryTest: FunSpec({
     test("must 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termQuery(
-                        field = "a",
-                        value = ""
-                    ),
-                    termQuery(
-                        field = "b",
-                        value = null
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termQuery(
+                            field = "a",
+                            value = ""
+                        ),
+                        termQuery(
+                            field = "b",
+                            value = null
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -313,13 +319,13 @@ class TermQueryTest: FunSpec({
 
     test("term 쿼리에 boost 설정시 적용이 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            mustQuery(
+            mustQuery {
                 termQuery(
                     field = "a",
                     value = "1111",
                     boost = 2.0F
                 )
-            )
+            }
         }
 
         val boolQueryBuild = boolQuery.build()

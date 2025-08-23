@@ -15,16 +15,18 @@ class TermsQueryTest: FunSpec({
     test("must 쿼리에서 terms 쿼리 생성이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = listOf("3333", "4444")
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = listOf("3333", "4444")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -39,24 +41,26 @@ class TermsQueryTest: FunSpec({
     test("must 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    ),
-                    termsQuery(
-                        field = "c",
-                        values = listOf("1111", "2222")
-                    ),
-                    termsQuery(
-                        field = "d",
-                        values = listOf(null, "3333")
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        ),
+                        termsQuery(
+                            field = "c",
+                            values = listOf("1111", "2222")
+                        ),
+                        termsQuery(
+                            field = "d",
+                            values = listOf(null, "3333")
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -73,16 +77,18 @@ class TermsQueryTest: FunSpec({
     test("must 쿼리에서 termsQuery가 없을때 must쿼리는 생성 안되야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
-                    termsQuery(
-                        field = "a",
-                        values = null
-                    ),
-                    termsQuery(
-                        field = "b",
-                        values = emptyList()
-                    )
-                )
+                mustQuery {
+                    queries[
+                        termsQuery(
+                            field = "a",
+                            values = null
+                        ),
+                        termsQuery(
+                            field = "b",
+                            values = emptyList()
+                        )
+                    ]
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
@@ -335,13 +341,13 @@ class TermsQueryTest: FunSpec({
     test("terms 쿼리에 boost 설정시 적용이 되어야함") {
         val boolQuery = Query.Builder()
             .boolQuery {
-                mustQuery(
+                mustQuery {
                     termsQuery(
                         field = "a",
                         values = listOf("1111", "2222"),
                         boost = 2.5F
                     )
-                )
+                }
             }
 
         val boolQueryBuild = boolQuery.build()
