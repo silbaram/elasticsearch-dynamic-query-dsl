@@ -2,25 +2,24 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_claus
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.util.ObjectBuilder
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.SubQueryBuilders
 
-fun BoolQuery.Builder.mustNotQuery(fn: Query.Builder.() -> ObjectBuilder<Query>): BoolQuery.Builder {
-    return this.mustNot(fn)
-}
-fun BoolQuery.Builder.mustNotQuery(vararg values: Query?): BoolQuery.Builder {
-    val queries = values.asSequence().mapNotNull { it }.toList()
-    return if (queries.isEmpty()) {
-        this
-    } else {
-        this.mustNot(queries)
-    }
-}
+/**
+ * 람다를 사용하여 `mustNot` 절에 쿼리를 추가하는 통합 DSL 함수입니다.
+ * 단일 쿼리 또는 `queries[...]`를 사용한 여러 쿼리를 모두 지원합니다.
+ */
+fun BoolQuery.Builder.mustNotQuery(fn: SubQueryBuilders.() -> Any?): BoolQuery.Builder {
+    val builder = SubQueryBuilders()
+    val result = builder.fn()
 
-fun BoolQuery.Builder.mustNotQuery(values: List<Query?>?): BoolQuery.Builder {
-    val queries = values?.asSequence()?.mapNotNull { it }?.toList()
-    return if (queries.isNullOrEmpty()) {
-        this
-    } else {
-        this.mustNot(values.asSequence().mapNotNull { it }.filter { it.term().value()._get() != null }.toList())
+    // 람다의 마지막 표현식이 Query 타입이면 단일 쿼리로 간주하여 추가
+    if (result is Query) {
+        builder.addQuery(result)
     }
+
+    // 빌더 내에 수집된 모든 쿼리를 mustNot 절에 추가
+    builder.forEach { query ->
+        this.mustNot(query)
+    }
+    return this
 }

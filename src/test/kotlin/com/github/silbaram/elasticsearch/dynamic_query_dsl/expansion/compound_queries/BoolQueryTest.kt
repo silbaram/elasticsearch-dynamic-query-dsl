@@ -1,7 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.filterQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.item_level.termQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.mustNotQuery
@@ -14,12 +13,12 @@ class BoolQueryTest: FunSpec({
 
     test("bool에 filter query가 추가 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            filterQuery(
+            filterQuery {
                 termQuery(
                     field = "field1",
                     value = "value1"
                 )
-            )
+            }
         }
 
         val boolQueryBuild = boolQuery.build()
@@ -52,12 +51,12 @@ class BoolQueryTest: FunSpec({
 
     test("bool에 mustNot query가 추가 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            mustNotQuery(
+            mustNotQuery {
                 termQuery(
                     field = "field1",
                     value = "value1"
                 )
-            )
+            }
         }
 
         val boolQueryBuild = boolQuery.build()
@@ -71,12 +70,12 @@ class BoolQueryTest: FunSpec({
 
     test("bool에 should query가 추가 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            shouldQuery(
+            shouldQuery {
                 termQuery(
                     field = "field1",
                     value = "value1"
                 )
-            )
+            }
         }
 
         val boolQueryBuild = boolQuery.build()
@@ -90,21 +89,30 @@ class BoolQueryTest: FunSpec({
 
     test("bool에 filter, must, mustNot, should query가 추가 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            filterQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
+            filterQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
             mustQuery {
                 termQuery(
                     field = "field1",
                     value = "value1"
                 )
             }
-            mustNotQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
-            shouldQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
+            mustNotQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
+            shouldQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
         }
 
         val boolQueryBuild = boolQuery.build()
@@ -118,21 +126,30 @@ class BoolQueryTest: FunSpec({
 
     test("bool에 minimumShouldMatch, boost가 추가 되어야함") {
         val boolQuery = Query.Builder().boolQuery {
-            filterQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
+            filterQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
             mustQuery {
                 termQuery(
                     field = "field1",
                     value = "value1"
                 )
             }
-            mustNotQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
-            shouldQuery(
-                Query.Builder().term(TermQuery.Builder().field("field1").value("value1").build()).build()
-            )
+            mustNotQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
+            shouldQuery {
+                termQuery(
+                    field = "field1",
+                    value = "value1"
+                )
+            }
             minimumShouldMatch("2")
             boost(2.0F)
         }
