@@ -8,12 +8,22 @@ class BoostingQueryDsl {
     private val negativeQueries = SubQueryBuilders()
     var negativeBoost: Double = 1.0
 
-    fun positive(fn: SubQueryBuilders.() -> Unit) {
-        positiveQueries.apply(fn)
+    fun positive(fn: SubQueryBuilders.() -> Any?) {
+        val subQuery = SubQueryBuilders()
+        val result = fn(subQuery)
+        if (result is Query) {
+            subQuery.addQuery(result)
+        }
+        positiveQueries.addAll(subQuery)
     }
 
-    fun negative(fn: SubQueryBuilders.() -> Unit) {
-        negativeQueries.apply(fn)
+    fun negative(fn: SubQueryBuilders.() -> Any?) {
+        val subQuery = SubQueryBuilders()
+        val result = fn(subQuery)
+        if (result is Query) {
+            subQuery.addQuery(result)
+        }
+        negativeQueries.addAll(subQuery)
     }
 
     internal fun buildPositiveQuery(): Query? {
