@@ -47,4 +47,8 @@ class SubQueryBuilders {
     fun size(): Int = collectedQueries.size
 
     fun forEach(action: (Query) -> Unit) = collectedQueries.forEach(action)
+
+    fun addAll(other: SubQueryBuilders) {
+        this.collectedQueries.addAll(other.collectedQueries)
+    }
 }
