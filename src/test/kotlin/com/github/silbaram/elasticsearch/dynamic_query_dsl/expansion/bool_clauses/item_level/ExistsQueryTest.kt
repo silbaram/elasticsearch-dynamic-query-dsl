@@ -71,4 +71,24 @@ class ExistsQueryTest: FunSpec ({
         mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.field() shouldBe "a"
         mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.boost() shouldBe 2.0F
     }
+
+    test("exists 쿼리에 _name이 설정되면 terms.queryName에 반영되어야함") {
+        val boolQuery = Query.Builder()
+            .boolQuery {
+                mustQuery {
+                    existsQuery(
+                        field = "a",
+                        _name = "named"
+                    )
+                }
+            }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.field() shouldBe "a"
+        mustQuery.filter { it.isExists }.find { it.exists().field() == "a" }?.exists()?.queryName() shouldBe "named"
+    }
 })

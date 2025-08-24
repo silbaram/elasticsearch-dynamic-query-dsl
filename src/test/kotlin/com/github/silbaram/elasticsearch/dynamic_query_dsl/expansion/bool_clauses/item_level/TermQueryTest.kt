@@ -356,4 +356,27 @@ class TermQueryTest: FunSpec({
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.boost() shouldBe 2.0F
     }
+
+    test("term 쿼리에 _name이 설정되면 term.queryName에 반영되어야함") {
+        val boolQuery = Query.Builder().boolQuery {
+            mustQuery {
+                termQuery(
+                    field = "a",
+                    value = "1111",
+                    _name = "named"
+                )
+            }
+        }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustList = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustList.size shouldBe 1
+
+        val term = mustList.first().term()
+        term.field() shouldBe "a"
+        term.value().stringValue() shouldBe "1111"
+        term.queryName() shouldBe "named"
+    }
 })
