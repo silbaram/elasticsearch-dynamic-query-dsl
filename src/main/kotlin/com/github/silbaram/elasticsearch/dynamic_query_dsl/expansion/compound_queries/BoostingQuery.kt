@@ -65,14 +65,12 @@ class BoostingQueryDsl {
     }
 }
 
-fun boostingQuery(fn: BoostingQueryDsl.() -> Unit): Query {
+fun Query.Builder.boostingQuery(fn: BoostingQueryDsl.() -> Unit) {
     val dsl = BoostingQueryDsl().apply(fn)
-    return Query.of { q ->
-        q.boosting { b ->
-            dsl.buildPositiveQuery()?.let { b.positive(it) }
-            dsl.buildNegativeQuery()?.let { b.negative(it) }
-            b.negativeBoost(dsl.negativeBoost)
-            b
-        }
+    this.boosting { b ->
+        dsl.buildPositiveQuery()?.let { b.positive(it) }
+        dsl.buildNegativeQuery()?.let { b.negative(it) }
+        b.negativeBoost(dsl.negativeBoost)
+        b
     }
 }

@@ -1,26 +1,29 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.item_level.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 class BoostingQueryTest : FunSpec({
 
     test("boosting query에 단일 positive, negative query가 추가되어야 함") {
-        val boostingQuery = boostingQuery {
-            positive {
-                termQuery(
-                    field = "field1",
-                    value = "value1"
-                )
+        val boostingQuery = query {
+            boostingQuery {
+                positive {
+                    termQuery(
+                        field = "field1",
+                        value = "value1"
+                    )
+                }
+                negative {
+                    termQuery(
+                        field = "field2",
+                        value = "value2"
+                    )
+                }
+                negativeBoost = 0.2
             }
-            negative {
-                termQuery(
-                    field = "field2",
-                    value = "value2"
-                )
-            }
-            negativeBoost = 0.2
         }
 
         boostingQuery.isBoosting shouldBe true
@@ -36,28 +39,30 @@ class BoostingQueryTest : FunSpec({
     }
 
     test("boosting query에 여러개의 positive, negative query가 추가되어야 함") {
-        val boostingQuery = boostingQuery {
-            positive {
-                queries[
-                    termQuery(
-                        field = "field1",
-                        value = "value1"
-                    ),
-                    termQuery(
-                        field = "field1-2",
-                        value = "value1-2"
-                    )
-                ]
+        val boostingQuery = query {
+            boostingQuery {
+                positive {
+                    queries[
+                        termQuery(
+                            field = "field1",
+                            value = "value1"
+                        ),
+                        termQuery(
+                            field = "field1-2",
+                            value = "value1-2"
+                        )
+                    ]
+                }
+                negative {
+                    queries[
+                        termQuery(
+                            field = "field2",
+                            value = "value2"
+                        )
+                    ]
+                }
+                negativeBoost = 0.2
             }
-            negative {
-                queries[
-                    termQuery(
-                        field = "field2",
-                        value = "value2"
-                    )
-                ]
-            }
-            negativeBoost = 0.2
         }
 
         boostingQuery.isBoosting shouldBe true
