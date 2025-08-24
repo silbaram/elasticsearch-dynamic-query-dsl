@@ -3,7 +3,7 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_claus
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery
 
-fun termQuery(field: String, value: String?, boost: Float? = null): Query? {
+fun termQuery(field: String, value: String?, boost: Float? = null, _name: String? = null): Query? {
     return if (value.isNullOrEmpty()) {
         null
     } else {
@@ -12,6 +12,7 @@ fun termQuery(field: String, value: String?, boost: Float? = null): Query? {
             .value(value)
 
         boost?.let { builder.boost(it) }
+        _name?.let { builder.queryName(it) }
 
         builder.build()._toQuery()
     }

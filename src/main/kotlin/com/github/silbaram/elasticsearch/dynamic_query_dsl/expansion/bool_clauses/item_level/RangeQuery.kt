@@ -21,7 +21,8 @@ fun rangeQuery(
     lt: Any? = null,
     gte: Any? = null,
     lte: Any? = null,
-    boost: Float? = null): Query? {
+    boost: Float? = null,
+    _name: String? = null): Query? {
 
     return if (from.isNullOrEmpty() && to.isNullOrEmpty() && gt == null && lt == null && gte == null && lte == null) {
         null
@@ -34,7 +35,9 @@ fun rangeQuery(
             .lt(jsonDataConvert(lt))
             .gte(jsonDataConvert(gte))
             .lte(jsonDataConvert(lte))
+
         boost?.let { builder.boost(it) }
+        _name?.let { builder.queryName(it) }
 
         builder.build()._toQuery()
     }

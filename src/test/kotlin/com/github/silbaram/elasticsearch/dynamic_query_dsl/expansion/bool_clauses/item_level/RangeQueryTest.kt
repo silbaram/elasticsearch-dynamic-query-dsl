@@ -5,6 +5,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clause
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries.boolQuery
 import io.kotest.assertions.print.print
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 
 class RangeQueryTest: FunSpec ({
@@ -74,5 +75,25 @@ class RangeQueryTest: FunSpec ({
         boolQueryBuild.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isRange }.find { it.range().field() == "d" }?.range()?.boost() shouldBe 3.0F
+    }
+
+    test("range 쿼리에 _name이 설정되면 range.queryName에 반영되어야함") {
+        val boolQuery = Query.Builder().boolQuery {
+            mustQuery {
+                rangeQuery(
+                    field = "d",
+                    gte = 10,
+                    lte = 20,
+                    _name = "named"
+                )
+            }
+        }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isRange }.find { it.range().field() == "d" }!!.range().queryName() shouldBe "named"
     }
 })

@@ -376,4 +376,24 @@ class TermsQueryTest: FunSpec({
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().boost() shouldBe 2.5F
     }
+
+    test("terms 쿼리에 _name이 설정되면 terms.queryName에 반영되어야함") {
+        val boolQuery = Query.Builder().boolQuery {
+            mustQuery {
+                termsQuery(
+                    field = "a",
+                    values = listOf("1111", "2222"),
+                    _name = "named"
+                )
+            }
+        }
+
+        val boolQueryBuild = boolQuery.build()
+        val mustQuery = boolQueryBuild.bool().must()
+
+        boolQueryBuild.isBool shouldBe true
+        mustQuery.size shouldBe 1
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
+        mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().queryName() shouldBe "named"
+    }
 })
