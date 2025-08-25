@@ -5,8 +5,6 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_qu
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.SubQueryBuilders
 
 fun SubQueryBuilders.constantScoreQuery(
-    boost: Float? = null,
-    _name: String? = null,
     fn: ConstantScoreQueryDsl.() -> Unit,
 ): Query? {
     val dsl = ConstantScoreQueryDsl().apply(fn)
@@ -15,8 +13,8 @@ fun SubQueryBuilders.constantScoreQuery(
     val constantScoreQuery = Query.of { q ->
         q.constantScore { cs ->
             cs.filter(filterQuery)
-            boost?.let { cs.boost(it) }
-            _name?.let { cs.queryName(it) }
+            dsl.boost?.let { cs.boost(it) }
+            dsl._name?.let { cs.queryName(it) }
             cs
         }
     }

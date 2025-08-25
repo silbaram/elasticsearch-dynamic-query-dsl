@@ -37,10 +37,12 @@ class ConstantScoreQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     +termQuery(field = "description", value = "노트북")
-                    constantScoreQuery(boost = 5.0f) {
+                    constantScoreQuery {
                         filter {
                             termQuery(field = "brand", value = "Samsung")
                         }
+                        boost = 5.0f
+                        _name = "cs-boost"
                     }
                 }
             }
@@ -50,6 +52,10 @@ class ConstantScoreQueryTest : FunSpec({
         shouldClauses.size shouldBe 2
         shouldClauses.any { it.isTerm && it.term().field() == "description" } shouldBe true
         shouldClauses.any { it.isConstantScore } shouldBe true
+
+        val cs = shouldClauses.first { it.isConstantScore }.constantScore()
+        cs.boost() shouldBe 5.0f
+        cs.queryName() shouldBe "cs-boost"
     }
 
     test("constant_score can be used in must, filter and mustNot clauses") {
