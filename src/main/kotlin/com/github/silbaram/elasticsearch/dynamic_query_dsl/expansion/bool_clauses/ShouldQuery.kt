@@ -12,8 +12,8 @@ fun BoolQuery.Builder.shouldQuery(fn: SubQueryBuilders.() -> Any?): BoolQuery.Bu
     val builder = SubQueryBuilders()
     val result = builder.fn()
 
-    // 람다의 마지막 표현식이 Query 타입이면 단일 쿼리로 간주하여 추가
-    if (result is Query) {
+    // 람다의 마지막 표현식이 Query 타입이고 내부에서 쿼리가 수집되지 않았다면 추가
+    if (builder.size() == 0 && result is Query) {
         builder.addQuery(result)
     }
 
