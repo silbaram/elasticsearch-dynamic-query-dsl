@@ -8,7 +8,7 @@ class ConstantScoreQueryDsl {
     var boost: Float? = null
     var _name: String? = null
 
-    fun filter(fn: SubQueryBuilders.() -> Any?) {
+    fun filterQuery(fn: SubQueryBuilders.() -> Any?) {
         val subQuery = SubQueryBuilders()
         val result = subQuery.fn()
         if (result is Query) {

@@ -8,7 +8,9 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.SubQueryBuilde
  * 람다를 사용하여 `must` 절에 쿼리를 추가하는 통합 DSL 함수입니다.
  * 단일 쿼리 또는 `queries[...]`를 사용한 여러 쿼리를 모두 지원합니다.
  */
-fun BoolQuery.Builder.mustQuery(fn: SubQueryBuilders.() -> Any?): BoolQuery.Builder {
+fun BoolQuery.Builder.mustQuery(
+    fn: SubQueryBuilders.() -> Any?
+): BoolQuery.Builder {
     val builder = SubQueryBuilders()
     val result = builder.fn()
 

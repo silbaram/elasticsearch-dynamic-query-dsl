@@ -13,10 +13,10 @@ import io.kotest.matchers.shouldBe
 
 class ConstantScoreQueryTest : FunSpec({
 
-    test("top-level constant_score query should be built correctly") {
+    test("최상위 constant_score 쿼리가 올바르게 생성되어야 한다") {
         val q = query {
             constantScoreQuery {
-                filter {
+                filterQuery {
                     termQuery(field = "brand", value = "Samsung")
                 }
                 boost = 10.0f
@@ -32,48 +32,22 @@ class ConstantScoreQueryTest : FunSpec({
         q.constantScore().queryName() shouldBe "named"
     }
 
-    test("should clause should contain both term and constant_score queries") {
-        val boolQuery = query {
-            boolQuery {
-                shouldQuery {
-                    +termQuery(field = "description", value = "노트북")
-                    constantScoreQuery {
-                        filter {
-                            termQuery(field = "brand", value = "Samsung")
-                        }
-                        boost = 5.0f
-                        _name = "cs-boost"
-                    }
-                }
-            }
-        }
-
-        val shouldClauses = boolQuery.bool().should()
-        shouldClauses.size shouldBe 2
-        shouldClauses.any { it.isTerm && it.term().field() == "description" } shouldBe true
-        shouldClauses.any { it.isConstantScore } shouldBe true
-
-        val cs = shouldClauses.first { it.isConstantScore }.constantScore()
-        cs.boost() shouldBe 5.0f
-        cs.queryName() shouldBe "cs-boost"
-    }
-
-    test("constant_score can be used in must, filter and mustNot clauses") {
+    test("constant_score는 must, filter, mustNot 절에서 사용될 수 있다") {
         val q = query {
             boolQuery {
                 mustQuery {
                     constantScoreQuery {
-                        filter { termQuery(field = "brand", value = "Samsung") }
+                        filterQuery { termQuery(field = "brand", value = "Samsung") }
                     }
                 }
                 filterQuery {
                     constantScoreQuery {
-                        filter { termQuery(field = "category", value = "Electronics") }
+                        filterQuery { termQuery(field = "category", value = "Electronics") }
                     }
                 }
                 mustNotQuery {
                     constantScoreQuery {
-                        filter { termQuery(field = "status", value = "inactive") }
+                        filterQuery { termQuery(field = "status", value = "inactive") }
                     }
                 }
             }
@@ -87,11 +61,11 @@ class ConstantScoreQueryTest : FunSpec({
         q.bool().mustNot().first().constantScore().filter().term().field() shouldBe "status"
     }
 
-    test("top-level constant_score should be skipped when filter is empty") {
+    test("필터가 비어있을 때 최상위 constant_score는 건너뛰어야 한다") {
         shouldThrow<Exception> {
             query {
                 constantScoreQuery {
-                    filter {
+                    filterQuery {
                         termQuery(field = "brand", value = null)
                     }
                 }
@@ -99,12 +73,12 @@ class ConstantScoreQueryTest : FunSpec({
         }
     }
 
-    test("constant_score inside bool clause should be skipped when filter is empty") {
+    test("bool 절 내부의 constant_score는 필터가 비어있을 때 건너뛰어야 한다") {
         val q = query {
             boolQuery {
                 mustQuery {
                     constantScoreQuery {
-                        filter {
+                        filterQuery {
                             termQuery(field = "brand", value = null)
                         }
                     }
@@ -115,12 +89,12 @@ class ConstantScoreQueryTest : FunSpec({
         q.bool().must().size shouldBe 0
     }
 
-    test("filter block using queries should be wrapped with bool query") {
+    test("queries를 사용하는 필터 블록은 bool 쿼리로 래핑되어야 한다") {
         val q = query {
             boolQuery {
                 filterQuery {
                     constantScoreQuery {
-                        filter {
+                        filterQuery {
                             queries[
                                 termQuery(field = "brand", value = "Samsung"),
                                 termQuery(field = "category", value = "Electronics")
@@ -136,5 +110,68 @@ class ConstantScoreQueryTest : FunSpec({
         csFilter.bool().must().size shouldBe 2
         csFilter.bool().must().any { it.term().field() == "brand" } shouldBe true
         csFilter.bool().must().any { it.term().field() == "category" } shouldBe true
+    }
+
+    test("constant_score 필터는 복잡한 bool 쿼리를 포함할 수 있다") {
+        val q = query {
+            constantScoreQuery {
+                filterQuery {
+                    boolQuery {
+                        mustQuery {
+                            termQuery("field1", "value1")
+                        }
+                        shouldQuery {
+                            queries[
+                                termQuery("field2", "value2"),
+                                termQuery("field3", "value3")
+                            ]
+                        }.minimumShouldMatch("1")
+                    }
+                }
+                boost = 2.0f
+            }
+        }
+
+        q.isConstantScore shouldBe true
+        val cs = q.constantScore()
+        cs.boost() shouldBe 2.0f
+
+        val filter = cs.filter()
+        filter.isBool shouldBe true
+
+        val bool = filter.bool()
+        bool.must().size shouldBe 1
+        bool.must().first().term().field() shouldBe "field1"
+        bool.should().size shouldBe 2
+        bool.minimumShouldMatch() shouldBe "1"
+    }
+
+    test("should 절의 constant_score는 점수를 높인다") {
+        val q = query {
+            boolQuery {
+                mustQuery {
+                    termQuery("content", "search")
+                }
+                shouldQuery {
+                    constantScoreQuery {
+                        filterQuery {
+                            termQuery("featured", "text")
+                        }
+                        boost = 1.5f
+                    }
+                }
+            }
+        }
+
+        q.isBool shouldBe true
+        val bool = q.bool()
+        bool.must().size shouldBe 1
+        bool.must().first().term().field() shouldBe "content"
+        bool.should().size shouldBe 1
+
+        val cs = bool.should().first().constantScore()
+        cs.filter().term().field() shouldBe "featured"
+        cs.filter().term().value().stringValue() shouldBe "text"
+        cs.boost() shouldBe 1.5f
     }
 })

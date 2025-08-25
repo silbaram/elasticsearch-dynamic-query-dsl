@@ -6,9 +6,9 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.SubQueryBuilde
 
 fun SubQueryBuilders.constantScoreQuery(
     fn: ConstantScoreQueryDsl.() -> Unit,
-): Query? {
+): SubQueryBuilders {
     val dsl = ConstantScoreQueryDsl().apply(fn)
-    val filterQuery = dsl.buildFilterQuery() ?: return null
+    val filterQuery = dsl.buildFilterQuery() ?: return this
 
     val constantScoreQuery = Query.of { q ->
         q.constantScore { cs ->
@@ -20,6 +20,6 @@ fun SubQueryBuilders.constantScoreQuery(
     }
 
     this.addQuery(constantScoreQuery)
-    return null
+    return this
 }
 
