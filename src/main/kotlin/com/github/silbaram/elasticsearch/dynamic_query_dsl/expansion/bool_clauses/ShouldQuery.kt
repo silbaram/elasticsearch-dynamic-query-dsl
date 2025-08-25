@@ -8,12 +8,14 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.SubQueryBuilde
  * 람다를 사용하여 `should` 절에 쿼리를 추가하는 통합 DSL 함수입니다.
  * 단일 쿼리 또는 `queries[...]`를 사용한 여러 쿼리를 모두 지원합니다.
  */
-fun BoolQuery.Builder.shouldQuery(fn: SubQueryBuilders.() -> Any?): BoolQuery.Builder {
+fun BoolQuery.Builder.shouldQuery(
+    fn: SubQueryBuilders.() -> Any?
+): BoolQuery.Builder {
     val builder = SubQueryBuilders()
     val result = builder.fn()
 
-    // 람다의 마지막 표현식이 Query 타입이면 단일 쿼리로 간주하여 추가
-    if (result is Query) {
+    // 람다의 마지막 표현식이 Query 타입이고 내부에서 쿼리가 수집되지 않았다면 추가
+    if (builder.size() == 0 && result is Query) {
         builder.addQuery(result)
     }
 
