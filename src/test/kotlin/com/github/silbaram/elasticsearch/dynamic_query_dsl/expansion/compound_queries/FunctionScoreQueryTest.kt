@@ -11,6 +11,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clause
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.helper.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 class FunctionScoreQueryTest : FunSpec({
 
@@ -25,11 +26,6 @@ class FunctionScoreQueryTest : FunSpec({
                         field("rating")
                         modifier("ln2p")
                         factor(1.5)
-                    }
-                    fieldValueFactorQuery {
-                        field("rating")
-                        factor(1.5)
-                        modifier("ln2p")
                     }
                 }
                 scoreMode = FunctionScoreMode.Sum
@@ -55,14 +51,14 @@ class FunctionScoreQueryTest : FunSpec({
                     ]
                 }
                 function {
-                    this.fieldValueFactor { it.field("a") }
+                    fieldValueFactorQuery { field("a") }
                 }
                 function {
-                    this.fieldValueFactor { it.field("b") }
+                    fieldValueFactorQuery { field("b") }
                 }
             }
         }
-
+        println("functionScore = $functionScore")
         functionScore.isFunctionScore shouldBe true
         functionScore.functionScore().query()!!.isBool shouldBe true
         functionScore.functionScore().query()!!.bool().must().size shouldBe 2
@@ -186,5 +182,48 @@ class FunctionScoreQueryTest : FunSpec({
         disMaxQuery.isDisMax shouldBe true
         disMaxQuery.disMax().queries().size shouldBe 3
         disMaxQuery.disMax().queries().any { it.isFunctionScore } shouldBe true
+    }
+
+    test("function_score: filter + weight 가중치 적용") {
+        val q = query {
+            functionScoreQuery {
+                query {
+                    termQuery(field = "message", value = "elasticsearch")
+                }
+                function {
+                    // is_premium=true 인 문서에 weight 2 적용
+                    this.filter(Query.of { it.term { t -> t.field("is_premium").value(true) } })
+                    this.weight(2.0)
+                }
+                boostMode = FunctionBoostMode.Multiply
+            }
+        }
+
+        q.isFunctionScore shouldBe true
+        val fsq = q.functionScore()
+        fsq.functions().size shouldBe 1
+        val f = fsq.functions()[0]
+        f.weight() shouldBe 2.0
+        f.filter()!!.isTerm shouldBe true
+        fsq.boostMode() shouldBe FunctionBoostMode.Multiply
+    }
+
+    test("function_score: random_score로 랜덤 정렬 (boost_mode=replace)") {
+        val q = query {
+            functionScoreQuery {
+                query { Query.of { it.matchAll { ma -> ma } } }
+                function {
+                    // 랜덤 점수 사용 (seed 생략)
+                    this.randomScore { r -> r }
+                }
+                boostMode = FunctionBoostMode.Replace
+            }
+        }
+
+        q.isFunctionScore shouldBe true
+        val fsq = q.functionScore()
+        fsq.functions().size shouldBe 1
+        fsq.functions()[0].randomScore() shouldNotBe null
+        fsq.boostMode() shouldBe FunctionBoostMode.Replace
     }
 })
