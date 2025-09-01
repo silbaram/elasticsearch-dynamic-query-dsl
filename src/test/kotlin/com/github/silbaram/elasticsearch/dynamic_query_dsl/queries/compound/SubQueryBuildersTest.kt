@@ -1,10 +1,10 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -12,8 +12,8 @@ class NestedBoolQueryTest : FunSpec({
 
     test("mustQuery 내부에 중첩된 bool 쿼리가 올바르게 생성되어야 한다") {
         // given
-        val query = Query.Builder()
-            .boolQuery { // 최상위 bool
+        val query = query {
+            boolQuery { // 최상위 bool
                 mustQuery {
                     // 중첩 bool 쿼리 생성
                     boolQuery {
@@ -26,7 +26,7 @@ class NestedBoolQueryTest : FunSpec({
                     }
                 }
             }
-            .build()
+        }
 
         // when
         val topLevelBool = query.bool()
@@ -47,8 +47,8 @@ class NestedBoolQueryTest : FunSpec({
 
     test("shouldQuery 내부에 중첩된 bool 쿼리가 올바르게 생성되어야 한다") {
         // given
-        val query = Query.Builder()
-            .boolQuery { // 최상위 bool
+        val query = query {
+            boolQuery { // 최상위 bool
                 shouldQuery {
                     // 중첩 bool 쿼리 생성
                     boolQuery {
@@ -58,7 +58,7 @@ class NestedBoolQueryTest : FunSpec({
                     }
                 }
             }
-            .build()
+        }
 
         // when
         val topLevelBool = query.bool()
@@ -80,8 +80,8 @@ class NestedBoolQueryTest : FunSpec({
 
     test("하나의 절에 여러 개의 중첩 bool 쿼리를 추가할 수 있어야 한다") {
         // given
-        val query = Query.Builder()
-            .boolQuery {
+        val query = query {
+            boolQuery {
                 mustQuery {
                     queries[
                         // 첫 번째 중첩 bool
@@ -95,7 +95,7 @@ class NestedBoolQueryTest : FunSpec({
                     ]
                 }
             }
-            .build()
+        }
 
         // when
         val mustClauses = query.bool().must()
