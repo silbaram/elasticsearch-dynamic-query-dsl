@@ -21,9 +21,9 @@
 `boolQuery` 블록 안에서 `must`, `filter`, `should`, `mustNot` 절을 사용하여 쿼리를 구성합니다.
 
 ```kotlin
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.compound_queries.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.*
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.expansion.bool_clauses.item_level.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 
 // ...
 
@@ -102,10 +102,12 @@ val query = Query.Builder()
 
 ## 🛠️ 프로젝트 구조
 
-- **`expansion/compound_queries`**: `boolQuery`와 같은 복합 쿼리의 시작점을 정의합니다.
-- **`expansion/bool_clauses`**: `mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery` 확장 함수를 정의합니다.
-- **`expansion/bool_clauses/item_level`**: `termQuery`, `termsQuery`, `existsQuery`, `rangeQuery` 등 개별 쿼리(Leaf Query)를 생성하는 함수들을 정의합니다. 각 함수는 입력값 유효성 검사를 포함합니다.
-- **`helper`**: DSL의 핵심 로직을 담당하는 `SubQueryBuilders` 클래스를 포함합니다. 이 클래스는 `queries[...]` 구문을 처리하고, 단일/여러 쿼리 호출 모드를 관리하여 잘못된 사용을 방지합니다.
+- `core`: DSL 핵심 유틸과 공통 빌더 (`QueryDsl`, `SubQueryBuilders`, `ElasticsearchJavaVersion`).
+- `queries.compound`: `boolQuery`, `boostingQuery`, `constantScoreQuery` 등 복합(Compound) 쿼리 시작점.
+- `queries.fulltext`: `matchQuery` 등 전문(Full-text) 쿼리.
+- `queries.termlevel`: `termQuery`, `termsQuery`, `existsQuery`, `rangeQuery` 등 용어/범위(Term-level) 쿼리.
+- `clauses`: `mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery` 같은 Bool 절 확장.
+- `clauses.integrations`: Bool 절 내부에서 사용하는 Compound 어댑터(`constantScoreQuery` 등).
 
 ## 📜 라이선스
 
