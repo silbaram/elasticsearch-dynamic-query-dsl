@@ -1,20 +1,20 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.filterQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustNotQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 class TermQueryTest: FunSpec({
 
     test("must 쿼리에서 term 쿼리 생성이 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustQuery {
                     queries[
                         termQuery(
@@ -28,19 +28,18 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustQuery = q.bool().must()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustQuery = boolQueryBuild.bool().must()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("must 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustQuery {
                     queries[
                         termQuery(
@@ -58,11 +57,10 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustQuery = q.bool().must()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustQuery = boolQueryBuild.bool().must()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         mustQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -70,8 +68,8 @@ class TermQueryTest: FunSpec({
     }
 
     test("must 쿼리에서 termQuery 송성값이 없어 생성이 안되어 하위 쿼리가 없을때 must쿼리는 생성 안되야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustQuery {
                     queries[
                         termQuery(
@@ -85,18 +83,16 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustQuery = q.bool().must()
 
-        val boolQueryBuild = boolQuery.build()
-        println("boolQueryBuild = $boolQueryBuild")
-        val mustQuery = boolQueryBuild.bool().must()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustQuery.size shouldBe 0
     }
 
     test("filter 쿼리에서 term 쿼리 생성이 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 filterQuery {
                     queries[
                         termQuery(
@@ -110,19 +106,18 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val filterQuery = q.bool().filter()
 
-        val boolQueryBuild = boolQuery.build()
-        val filterQuery = boolQueryBuild.bool().filter()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         filterQuery.size shouldBe 2
         filterQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         filterQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("filter 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 filterQuery {
                     queries[
                         termQuery(
@@ -140,11 +135,10 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val filterQuery = q.bool().filter()
 
-        val boolQueryBuild = boolQuery.build()
-        val filterQuery = boolQueryBuild.bool().filter()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         filterQuery.size shouldBe 1
         filterQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         filterQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -152,8 +146,8 @@ class TermQueryTest: FunSpec({
     }
 
     test("filter 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 filterQuery {
                     queries[
                         termQuery(
@@ -167,17 +161,16 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val filterQuery = q.bool().filter()
 
-        val boolQueryBuild = boolQuery.build()
-        val filterQuery = boolQueryBuild.bool().filter()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         filterQuery.size shouldBe 0
     }
 
     test("mustNot 쿼리에서 term 쿼리 생성이 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustNotQuery {
                     queries[
                         termQuery(
@@ -191,19 +184,18 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustNotQuery = q.bool().mustNot()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustNotQuery = boolQueryBuild.bool().mustNot()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustNotQuery.size shouldBe 2
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("mustNot 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustNotQuery {
                     queries[
                         termQuery(
@@ -221,11 +213,10 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustNotQuery = q.bool().mustNot()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustNotQuery = boolQueryBuild.bool().mustNot()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustNotQuery.size shouldBe 1
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -233,8 +224,8 @@ class TermQueryTest: FunSpec({
     }
 
     test("mustNot 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 mustNotQuery {
                     queries[
                         termQuery(
@@ -248,17 +239,16 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val mustNotQuery = q.bool().mustNot()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustNotQuery = boolQueryBuild.bool().mustNot()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustNotQuery.size shouldBe 0
     }
 
     test("should 쿼리에서 term 쿼리 생성이 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 shouldQuery {
                     queries[
                         termQuery(
@@ -272,20 +262,18 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val shouldQuery = q.bool().should()
 
-        val boolQueryBuild = boolQuery.build()
-        println("boolQueryBuild = $boolQueryBuild")
-        val shouldQuery = boolQueryBuild.bool().should()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         shouldQuery.size shouldBe 2
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("should 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 shouldQuery {
                     queries[
                         termQuery(
@@ -303,11 +291,10 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val shouldQuery = q.bool().should()
 
-        val boolQueryBuild = boolQuery.build()
-        val shouldQuery = boolQueryBuild.bool().should()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         shouldQuery.size shouldBe 1
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -315,8 +302,8 @@ class TermQueryTest: FunSpec({
     }
 
     test("should 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val boolQuery = Query.Builder()
-            .boolQuery {
+        val q = query {
+            boolQuery {
                 shouldQuery {
                     queries[
                         termQuery(
@@ -330,49 +317,48 @@ class TermQueryTest: FunSpec({
                     ]
                 }
             }
+        }
+        val shouldQuery = q.bool().should()
 
-        val boolQueryBuild = boolQuery.build()
-        val shouldQuery = boolQueryBuild.bool().should()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         shouldQuery.size shouldBe 0
     }
 
     test("term 쿼리에 boost 설정시 적용이 되어야함") {
-        val boolQuery = Query.Builder().boolQuery {
-            mustQuery {
-                termQuery(
-                    field = "a",
-                    value = "1111",
-                    boost = 2.0F
-                )
+        val q = query {
+            boolQuery {
+                mustQuery {
+                    termQuery(
+                        field = "a",
+                        value = "1111",
+                        boost = 2.0F
+                    )
+                }
             }
         }
+        val mustQuery = q.bool().must()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustQuery = boolQueryBuild.bool().must()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.boost() shouldBe 2.0F
     }
 
     test("term 쿼리에 _name이 설정되면 term.queryName에 반영되어야함") {
-        val boolQuery = Query.Builder().boolQuery {
-            mustQuery {
-                termQuery(
-                    field = "a",
-                    value = "1111",
-                    _name = "named"
-                )
+        val q = query {
+            boolQuery {
+                mustQuery {
+                    termQuery(
+                        field = "a",
+                        value = "1111",
+                        _name = "named"
+                    )
+                }
             }
         }
+        val mustList = q.bool().must()
 
-        val boolQueryBuild = boolQuery.build()
-        val mustList = boolQueryBuild.bool().must()
-
-        boolQueryBuild.isBool shouldBe true
+        q.isBool shouldBe true
         mustList.size shouldBe 1
 
         val term = mustList.first().term()
