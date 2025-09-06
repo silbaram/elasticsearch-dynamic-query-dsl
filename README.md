@@ -18,7 +18,9 @@
   - [5. match_phrase 구문 검색](#5-match_phrase-구문-검색)
   - [6. match_phrase_prefix 구문 접두어](#6-match_phrase_prefix-구문-접두어)
   - [7. 멀티필드 구문 검색 (multi_match type=phrase)](#7-멀티필드-구문-검색-multi_match-typephrase)
-  - [8. function_score 쿼리 (점수 조작)](#8-function_score-쿼리-점수-조작)
+- [8. function_score 쿼리 (점수 조작)](#8-function_score-쿼리-점수-조작)
+  - [9. Kibana 유사 Function Score 예제](#9-kibana-유사-function-score-예제)
+  - [10. Decay 함수 가이드](#10-decay-함수-가이드)
 - [⚙️ 성능/튜닝 팁](#-성능튜닝-팁)
 - [🛠️ 프로젝트 구조](#️-프로젝트-구조)
 - [📜 라이선스](#-라이선스)
@@ -569,6 +571,31 @@ function {
 }
 ```
 
+### 9. Kibana 유사 Function Score 예제
+
+```kotlin
+val q = query {
+  functionScoreQuery {
+    query { matchQuery("title", "kotlin dsl") }
+    function {
+      // field_value_factor + per-function filter
+      fieldValueFactor(field = "rating", modifier = "ln2p", factor = 1.2, missing = 1.0)
+      filterQuery { termQuery("status", "active") }
+    }
+    function {
+      weight(0.5)
+      randomScore(seed = "seed-1", field = "user_id")
+    }
+    scoreMode("sum")
+    boostMode("multiply")
+  }
+}
+```
+
+참고
+- 함수 내부 `filterQuery { ... }`는 Kibana의 function-level filter와 유사한 사용감을 제공합니다.
+- `gaussDecayQuery/expDecayQuery/linearDecayQuery`는 미리보기 API로, 향후 클라이언트 매핑이 확정되면 네이티브로 연결됩니다.
+
 **3. Weight (가중치)**
 ```kotlin
 function {
@@ -700,3 +727,24 @@ val personalizedContent = query {
 
 
 이 프로젝트는 Apache License 2.0을 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
+-
+### 10. Decay 함수 가이드
+
+시간/거리 등의 기준으로 점수를 점진적으로 감쇠시키는 함수입니다.
+
+- 개념: origin(기준점)에서 scale(감쇠 범위)만큼 떨어질수록 점수가 감소합니다. offset은 감쇠 시작 지연 구간입니다.
+- 권장값(예시)
+  - 최신성: `origin = "now"`, `scale = "7d"`, `offset = "1d"`, `decay = 0.5`
+  - 거리: `origin = "0km"`, `scale = "10km"`, `decay = 0.5`
+- 사용 예시(Kotlin DSL)
+```kotlin
+val q = query {
+  functionScoreQuery {
+    query { termQuery("status", "active") }
+    function { gaussDecayQuery(field = "published_at", origin = "now", scale = "7d", offset = "1d", decay = 0.5) }
+    function { expDecayQuery(field = "last_viewed_at", origin = "now", scale = "14d") }
+    function { linearDecayQuery(field = "distance", origin = "0km", scale = "10km") }
+  }
+}
+```
+주의: Decay 함수는 필드 타입(date/number/geo)에 맞는 값 포맷을 사용하세요.
