@@ -60,6 +60,7 @@ matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
 queryStringQuery("kotlin* AND \"structured query\"", listOf("title","body"))
+simpleQueryStringQuery("kotlin +coroutine | \"structured query\"", listOf("title","body"))
 ```
 
 간단 JSON
@@ -122,6 +123,41 @@ JSON
 
 테스트: [QueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/QueryStringQueryTest.kt)
 
+### Simple query string
+파싱 오류를 던지지 않는 관대한 문법으로, 지원되지 않는 구문은 무시됩니다.
+
+```kotlin
+simpleQueryStringQuery(
+  query = "kotlin +coroutine | \"structured query\"",
+  fields = listOf("title^2","body"),
+  // 자주 쓰는 옵션
+  defaultOperator = Operator.Or,
+  minimumShouldMatch = "2",
+  analyzeWildcard = true,
+  flags = listOf(SimpleQueryStringFlag.Prefix, SimpleQueryStringFlag.Phrase),
+  fuzzyMaxExpansions = 50,
+  fuzzyPrefixLength = 1,
+  fuzzyTranspositions = true
+)
+```
+
+JSON
+```json
+{ "query": { "simple_query_string": {
+  "query": "kotlin +coroutine | \"structured query\"",
+  "fields": ["title^2","body"],
+  "default_operator": "or",
+  "minimum_should_match": "2",
+  "analyze_wildcard": true,
+  "flags": "PREFIX|PHRASE",
+  "fuzzy_max_expansions": 50,
+  "fuzzy_prefix_length": 1,
+  "fuzzy_transpositions": true
+} } }
+```
+
+테스트: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
+
 - Combined fields
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
@@ -159,3 +195,62 @@ Apache License 2.0 — LICENSE 참조.
 repositories { mavenLocal(); mavenCentral() }
 dependencies { implementation("com.github.silbaram:elasticsearch-dynamic-query-dsl:1.0-SNAPSHOT") }
 ```
+
+## 고급 옵션 요약
+
+Combined fields (combined_fields)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `fields` | List<String> | 대상 필드(`^`로 가중치) |
+| `operator` | CombinedFieldsOperator | `And`/`Or` |
+| `minimumShouldMatch` | String | 예: `2`, `75%` |
+| `autoGenerateSynonymsPhraseQuery` | Boolean | 구문 동의어 생성 |
+| `boost` | Float | 가중치 |
+
+Multi‑match (일반형)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `type` | TextQueryType | `best_fields`, `most_fields`, `cross_fields`, `phrase(_prefix)`, `bool_prefix` |
+| `operator` | Operator | 토큰 결합 방식 |
+| `minimumShouldMatch` | String | 예: `2`, `75%` |
+| `analyzer` | String | 질의어 분석기 |
+| `slop` | Int | 구문 허용 간격 |
+| `tieBreaker` | Double | `best_fields` 블렌딩 |
+| `fuzziness` | String | `AUTO`, `1`, `2` |
+| `prefixLength`/`maxExpansions` | Int | 퍼지/프리픽스 제어 |
+| `lenient` | Boolean | 포맷 오류 무시 |
+| `zeroTermsQuery` | ZeroTermsQuery | `All` 또는 `None` |
+
+Query string
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `fields`/`defaultField` | List<String>/String | 대상/기본 필드 |
+| `analyzer`/`quoteAnalyzer` | String | 분석기 지정 |
+| `quoteFieldSuffix` | String | 따옴표 용어 접미사 |
+| `defaultOperator` | Operator | `And`/`Or` |
+| `allowLeadingWildcard` | Boolean | `*term` 허용(비용 큼) |
+| `analyzeWildcard` | Boolean | 와일드카드 분석 |
+| `fuzziness` | String | 퍼지 레벨 |
+| `fuzzyMaxExpansions`/`fuzzyPrefixLength` | Int | 퍼지 제어 |
+| `fuzzyTranspositions` | Boolean | 전치 허용 |
+| `minimumShouldMatch` | String | 예: `2`, `75%` |
+| `phraseSlop` | Double | 구문 간격 |
+| `lenient` | Boolean | 포맷 오류 무시 |
+
+Simple query string
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `fields` | List<String> | 대상 필드 |
+| `defaultOperator` | Operator | `And`/`Or` |
+| `analyzer` | String | 분석기 지정 |
+| `quoteFieldSuffix` | String | 따옴표 용어 접미사 |
+| `analyzeWildcard` | Boolean | 와일드카드 분석 |
+| `flags` | List<SimpleQueryStringFlag> | 예: `Prefix`, `Phrase`, `And`, `Or`, `All` |
+| `fuzzyMaxExpansions`/`fuzzyPrefixLength` | Int | 퍼지 제어 |
+| `fuzzyTranspositions` | Boolean | 전치 허용 |
+| `minimumShouldMatch` | String | 예: `2`, `75%` |
+| `lenient` | Boolean | 포맷 오류 무시 |
