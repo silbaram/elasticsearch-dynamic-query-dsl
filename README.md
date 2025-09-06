@@ -60,6 +60,7 @@ matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
 queryStringQuery("kotlin* AND \"structured query\"", listOf("title","body"))
+simpleQueryStringQuery("kotlin +coroutine | \"structured query\"", listOf("title","body"))
 ```
 
 Small JSON
@@ -70,7 +71,7 @@ Small JSON
 ```
 
 ### Multi‑match (general)
-Use `multiMatchQuery` or `Query.Builder.multiMatch`.
+Apply a single query string across multiple fields; use `multiMatchQuery` or `Query.Builder.multiMatch`. Supports types: `best_fields`, `most_fields`, `cross_fields`, `phrase(_prefix)`, `bool_prefix`.
 
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType
@@ -113,7 +114,7 @@ combinedFields(
 Notes: Use text fields; null/blank inputs are omitted.
 
 ### Query string
-Lucene query syntax across one or multiple fields.
+Lucene query syntax across one or multiple fields. Supports quoted-field analyzer/suffix, wildcards (with `analyzeWildcard`/`allowLeadingWildcard`), fuzziness and phrase slop.
 
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
@@ -135,6 +136,41 @@ JSON
 ```
 
 See tests: [QueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/QueryStringQueryTest.kt)
+
+### Simple query string
+Forgiving Lucene-like syntax that never throws on parse; unsupported/invalid parts are skipped. Supports flags (e.g., `Prefix`, `Phrase`, `And`, `Or`, `All`).
+
+```kotlin
+simpleQueryStringQuery(
+  query = "kotlin +coroutine | \"structured query\"",
+  fields = listOf("title^2","body"),
+  // common options
+  defaultOperator = Operator.Or,
+  minimumShouldMatch = "2",
+  analyzeWildcard = true,
+  flags = listOf(SimpleQueryStringFlag.Prefix, SimpleQueryStringFlag.Phrase),
+  fuzzyMaxExpansions = 50,
+  fuzzyPrefixLength = 1,
+  fuzzyTranspositions = true
+)
+```
+
+JSON
+```json
+{ "query": { "simple_query_string": {
+  "query": "kotlin +coroutine | \"structured query\"",
+  "fields": ["title^2","body"],
+  "default_operator": "or",
+  "minimum_should_match": "2",
+  "analyze_wildcard": true,
+  "flags": "PREFIX|PHRASE",
+  "fuzzy_max_expansions": 50,
+  "fuzzy_prefix_length": 1,
+  "fuzzy_transpositions": true
+} } }
+```
+
+See tests: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
 
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
@@ -160,3 +196,62 @@ Apache License 2.0 — see LICENSE.
 repositories { mavenLocal(); mavenCentral() }
 dependencies { implementation("com.github.silbaram:elasticsearch-dynamic-query-dsl:1.0-SNAPSHOT") }
 ```
+
+## Advanced Options Summary
+
+Combined fields (combined_fields)
+
+| Option | Type | Notes |
+|---|---|---|
+| `fields` | List<String> | Target fields (weights via `^`) |
+| `operator` | CombinedFieldsOperator | `And` or `Or` |
+| `minimumShouldMatch` | String | e.g., `2`, `75%` |
+| `autoGenerateSynonymsPhraseQuery` | Boolean | Phrase synonyms |
+| `boost` | Float | Weight |
+
+Multi‑match (general)
+
+| Option | Type | Notes |
+|---|---|---|
+| `type` | TextQueryType | `best_fields`, `most_fields`, `cross_fields`, `phrase(_prefix)`, `bool_prefix` |
+| `operator` | Operator | Token combine mode |
+| `minimumShouldMatch` | String | e.g., `2`, `75%` |
+| `analyzer` | String | Query analyzer |
+| `slop` | Int | Phrase slack |
+| `tieBreaker` | Double | `best_fields` blending |
+| `fuzziness` | String | `AUTO`, `1`, `2` |
+| `prefixLength`/`maxExpansions` | Int | Fuzzy/prefix controls |
+| `lenient` | Boolean | Ignore format errors |
+| `zeroTermsQuery` | ZeroTermsQuery | `All` or `None` |
+
+Query string
+
+| Option | Type | Notes |
+|---|---|---|
+| `fields`/`defaultField` | List<String>/String | Target fields / default |
+| `analyzer`/`quoteAnalyzer` | String | Analyzer overrides |
+| `quoteFieldSuffix` | String | Suffix for quoted terms |
+| `defaultOperator` | Operator | `And`/`Or` |
+| `allowLeadingWildcard` | Boolean | Enable `*term` (expensive) |
+| `analyzeWildcard` | Boolean | Analyze wildcards |
+| `fuzziness` | String | Fuzzy level |
+| `fuzzyMaxExpansions`/`fuzzyPrefixLength` | Int | Fuzzy controls |
+| `fuzzyTranspositions` | Boolean | Fuzzy transpositions |
+| `minimumShouldMatch` | String | e.g., `2`, `75%` |
+| `phraseSlop` | Double | Phrase slack |
+| `lenient` | Boolean | Ignore format errors |
+
+Simple query string
+
+| Option | Type | Notes |
+|---|---|---|
+| `fields` | List<String> | Target fields |
+| `defaultOperator` | Operator | `And`/`Or` |
+| `analyzer` | String | Analyzer override |
+| `quoteFieldSuffix` | String | Suffix for quoted terms |
+| `analyzeWildcard` | Boolean | Analyze wildcards |
+| `flags` | List<SimpleQueryStringFlag> | e.g., `Prefix`, `Phrase`, `And`, `Or`, `All` |
+| `fuzzyMaxExpansions`/`fuzzyPrefixLength` | Int | Fuzzy controls |
+| `fuzzyTranspositions` | Boolean | Fuzzy transpositions |
+| `minimumShouldMatch` | String | e.g., `2`, `75%` |
+| `lenient` | Boolean | Ignore format errors |
