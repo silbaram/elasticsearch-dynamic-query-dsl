@@ -39,7 +39,7 @@ val q: Query = query {
 }
 ```
 
-## Usage Snippets
+## Usage (brief)
 - Bool + clauses
 ```kotlin
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
@@ -54,19 +54,48 @@ val q = query {
 }
 ```
 
-- Full‑text
+- Full‑text (one‑liners)
 ```kotlin
 matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
 ```
 
-Small JSON equivalents
+Small JSON
 ```json
 { "query": { "bool": { "must": [{ "term": { "user.id": "silbaram" }}] } } }
 { "query": { "match_phrase": { "title": { "query": "exact order", "slop": 1 } } } }
 { "query": { "combined_fields": { "query": "john smith", "fields": ["first_name","last_name"], "operator": "and", "minimum_should_match": "2" } } }
 ```
+
+### Multi‑match (general)
+Use `multiMatchQuery` or `Query.Builder.multiMatch`.
+
+```kotlin
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator
+
+multiMatchQuery(
+  query = "kotlin coroutine",
+  fields = listOf("title^2", "description"),
+  type = TextQueryType.BestFields,
+  operator = Operator.Or,
+  minimumShouldMatch = "2"
+)
+```
+
+JSON
+```json
+{ "query": { "multi_match": {
+  "query": "kotlin coroutine",
+  "fields": ["title^2", "description"],
+  "type": "best_fields",
+  "operator": "or",
+  "minimum_should_match": "2"
+} } }
+```
+
+See tests: [MultiMatchQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/MultiMatchQueryTest.kt)
 
 - Combined fields
 ```kotlin
@@ -80,15 +109,15 @@ combinedFields(
 )
 ```
 
-Notes: Use text fields; queries with null/blank inputs are omitted.
+Notes: Use text fields; null/blank inputs are omitted.
 
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
 
-See tests
-- Function score core: [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
-- Kibana‑like examples: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
-- Decay functions: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
+See tests:
+- Core: [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
+- Kibana‑like: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
+- Decay: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
 
 ## Project Structure
 - `src/main/kotlin`: Core DSL and query builders.
