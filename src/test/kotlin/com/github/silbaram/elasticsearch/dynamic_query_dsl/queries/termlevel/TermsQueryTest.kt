@@ -11,10 +11,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 
-class TermsQueryTest: FunSpec({
+class TermsQueryTest : FunSpec({
 
     test("must 쿼리에서 terms 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -30,16 +30,16 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("must 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -63,9 +63,9 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
@@ -74,7 +74,7 @@ class TermsQueryTest: FunSpec({
     }
 
     test("must 쿼리에서 termsQuery가 없을때 must쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -91,14 +91,14 @@ class TermsQueryTest: FunSpec({
             }
         }
 
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 0
     }
 
     test("filter 쿼리에서 terms 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery{
                     queries[
@@ -114,16 +114,16 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 2
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("filter 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -147,9 +147,9 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 2
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         filterQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
@@ -158,7 +158,7 @@ class TermsQueryTest: FunSpec({
     }
 
     test("filter 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -175,14 +175,14 @@ class TermsQueryTest: FunSpec({
             }
         }
 
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 0
     }
 
     test("mustNot 쿼리에서 terms 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustNotQuery {
                     queries[
@@ -198,16 +198,16 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
+        val mustNotQuery = query.bool().mustNot()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 2
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("mustNot 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustNotQuery {
                     queries[
@@ -231,9 +231,9 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
+        val mustNotQuery = query.bool().mustNot()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 2
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         mustNotQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
@@ -242,7 +242,7 @@ class TermsQueryTest: FunSpec({
     }
 
     test("mustNot 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -258,14 +258,14 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
+        val mustNotQuery = query.bool().mustNot()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 0
     }
 
     test("should 쿼리에서 terms 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -281,16 +281,16 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 2
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "b" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("3333", "4444")
     }
 
     test("should 쿼리에서 termsQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -314,9 +314,9 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 2
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "a" } shouldBe null
         shouldQuery.filter { it.isTerms }.find { it.terms().field() == "b" } shouldBe null
@@ -325,7 +325,7 @@ class TermsQueryTest: FunSpec({
     }
 
     test("should 쿼리에서 termsQuery가 없을때 filter쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -341,14 +341,14 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 0
     }
 
     test("terms 쿼리에 boost 설정시 적용이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     termsQuery(
@@ -359,16 +359,16 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().boost() shouldBe 2.5F
     }
 
     test("terms 쿼리에 _name이 설정되면 terms.queryName에 반영되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     termsQuery(
@@ -379,9 +379,9 @@ class TermsQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().queryName() shouldBe "named"

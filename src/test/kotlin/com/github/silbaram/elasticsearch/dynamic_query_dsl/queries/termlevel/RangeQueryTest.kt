@@ -6,13 +6,12 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.ran
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.assertions.print.print
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 
-class RangeQueryTest: FunSpec ({
+class RangeQueryTest : FunSpec({
 
     test("must 쿼리에서 range 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -38,9 +37,9 @@ class RangeQueryTest: FunSpec ({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 4
 
         mustQuery.filter { it.isRange && it.range().field() == "a"}.size shouldBe 2
@@ -57,7 +56,7 @@ class RangeQueryTest: FunSpec ({
     }
 
     test("must 쿼리에서 rangeQuery에 boost 설정시 적용이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     rangeQuery(
@@ -69,15 +68,15 @@ class RangeQueryTest: FunSpec ({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isRange }.find { it.range().field() == "d" }?.range()?.boost() shouldBe 3.0F
     }
 
     test("range 쿼리에 _name이 설정되면 range.queryName에 반영되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     rangeQuery(
@@ -89,9 +88,9 @@ class RangeQueryTest: FunSpec ({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isRange }.find { it.range().field() == "d" }!!.range().queryName() shouldBe "named"
     }
