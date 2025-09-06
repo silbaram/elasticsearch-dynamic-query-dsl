@@ -59,6 +59,7 @@ val q = query {
 matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
+queryStringQuery("kotlin* AND \"structured query\"", listOf("title","body"))
 ```
 
 간단 JSON
@@ -96,6 +97,30 @@ JSON
 ```
 
 테스트: [MultiMatchQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/MultiMatchQueryTest.kt)
+
+### Query string
+Lucene 질의 문법으로 여러 필드에 질의를 적용합니다.
+
+```kotlin
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator
+
+queryStringQuery(
+  query = "title:(kotlin AND coroutine) AND body:tips",
+  fields = listOf("title^2","body"),
+  defaultOperator = Operator.And
+)
+```
+
+JSON
+```json
+{ "query": { "query_string": {
+  "query": "title:(kotlin AND coroutine) AND body:tips",
+  "fields": ["title^2","body"],
+  "default_operator": "and"
+} } }
+```
+
+테스트: [QueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/QueryStringQueryTest.kt)
 
 - Combined fields
 ```kotlin
