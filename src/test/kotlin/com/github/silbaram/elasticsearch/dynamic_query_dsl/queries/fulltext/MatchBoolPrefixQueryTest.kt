@@ -13,20 +13,20 @@ import io.kotest.matchers.shouldBe
 class MatchBoolPrefixQueryTest : FunSpec({
 
     test("최상위 match_bool_prefix 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             matchBoolPrefix(
                 field = "message",
                 query = "quick brown f"
             )
         }
 
-        q.isMatchBoolPrefix shouldBe true
-        q.matchBoolPrefix().field() shouldBe "message"
-        q.matchBoolPrefix().query() shouldBe "quick brown f"
+        query.isMatchBoolPrefix shouldBe true
+        query.matchBoolPrefix().field() shouldBe "message"
+        query.matchBoolPrefix().query() shouldBe "quick brown f"
     }
 
     test("must 쿼리에서 match_bool_prefix 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -37,15 +37,15 @@ class MatchBoolPrefixQueryTest : FunSpec({
             }
         }
 
-        val must = q.bool().must()
-        q.isBool shouldBe true
+        val must = query.bool().must()
+        query.isBool shouldBe true
         must.size shouldBe 2
         must.filter { it.isMatchBoolPrefix }.find { it.matchBoolPrefix().field() == "title" }?.matchBoolPrefix()?.query() shouldBe "quick brow"
         must.filter { it.isMatchBoolPrefix }.find { it.matchBoolPrefix().field() == "desc" }?.matchBoolPrefix()?.query() shouldBe "kotlin dsl"
     }
 
     test("must 쿼리에서 query가 null/빈 문자열이면 제외되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -57,15 +57,15 @@ class MatchBoolPrefixQueryTest : FunSpec({
             }
         }
 
-        val must = q.bool().must()
-        q.isBool shouldBe true
+        val must = query.bool().must()
+        query.isBool shouldBe true
         must.size shouldBe 1
         must.first().matchBoolPrefix().field() shouldBe "c"
         must.first().matchBoolPrefix().query() shouldBe "hello w"
     }
 
     test("filter/mustNot/should 절에서도 동일하게 동작해야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -85,9 +85,9 @@ class MatchBoolPrefixQueryTest : FunSpec({
             }
         }
 
-        val filter = q.bool().filter()
-        val mustNot = q.bool().mustNot()
-        val should = q.bool().should()
+        val filter = query.bool().filter()
+        val mustNot = query.bool().mustNot()
+        val should = query.bool().should()
 
         filter.size shouldBe 1
         mustNot.size shouldBe 1
@@ -99,7 +99,7 @@ class MatchBoolPrefixQueryTest : FunSpec({
     }
 
     test("옵션: operator, minimum_should_match, analyzer, boost, _name 적용 확인") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     matchBoolPrefixQuery(
@@ -120,7 +120,7 @@ class MatchBoolPrefixQueryTest : FunSpec({
             }
         }
 
-        val qb = q.bool().must().first().matchBoolPrefix()
+        val qb = query.bool().must().first().matchBoolPrefix()
         qb.field() shouldBe "title"
         qb.query() shouldBe "quick brown f"
         qb.operator() shouldBe Operator.And

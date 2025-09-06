@@ -10,10 +10,10 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-class TermQueryTest: FunSpec({
+class TermQueryTest : FunSpec({
 
     test("must 쿼리에서 term 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -29,16 +29,16 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("must 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -58,9 +58,9 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         mustQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -68,7 +68,7 @@ class TermQueryTest: FunSpec({
     }
 
     test("must 쿼리에서 termQuery 송성값이 없어 생성이 안되어 하위 쿼리가 없을때 must쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -84,14 +84,14 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 0
     }
 
     test("filter 쿼리에서 term 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -107,16 +107,16 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 2
         filterQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         filterQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("filter 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -136,9 +136,9 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 1
         filterQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         filterQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -146,7 +146,7 @@ class TermQueryTest: FunSpec({
     }
 
     test("filter 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[
@@ -162,14 +162,14 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val filterQuery = q.bool().filter()
+        val filterQuery = query.bool().filter()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         filterQuery.size shouldBe 0
     }
 
     test("mustNot 쿼리에서 term 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustNotQuery {
                     queries[
@@ -185,16 +185,16 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
+        val mustNotQuery = query.bool().mustNot()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 2
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("mustNot 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustNotQuery {
                     queries[
@@ -214,9 +214,9 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
+        val mustNotQuery = query.bool().mustNot()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 1
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         mustNotQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -224,7 +224,7 @@ class TermQueryTest: FunSpec({
     }
 
     test("mustNot 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustNotQuery {
                     queries[
@@ -240,14 +240,14 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustNotQuery = q.bool().mustNot()
-
-        q.isBool shouldBe true
+        val mustNotQuery = query.bool().mustNot()
+        
+        query.isBool shouldBe true
         mustNotQuery.size shouldBe 0
     }
 
     test("should 쿼리에서 term 쿼리 생성이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -263,16 +263,16 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 2
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "b" }?.term()?.value()?.stringValue() shouldBe "2222"
     }
 
     test("should 쿼리에서 termQuery에 value 값이 비었거나 null면 제외가 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -292,9 +292,9 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 1
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "a" } shouldBe null
         shouldQuery.filter { it.isTerm }.find { it.term().field() == "b" } shouldBe null
@@ -302,7 +302,7 @@ class TermQueryTest: FunSpec({
     }
 
     test("should 쿼리에서 termQuery가 없을때 must쿼리는 생성 안되야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 shouldQuery {
                     queries[
@@ -318,14 +318,14 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val shouldQuery = q.bool().should()
+        val shouldQuery = query.bool().should()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         shouldQuery.size shouldBe 0
     }
 
     test("term 쿼리에 boost 설정시 적용이 되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     termQuery(
@@ -336,16 +336,16 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustQuery = q.bool().must()
+        val mustQuery = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustQuery.size shouldBe 1
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.value()?.stringValue() shouldBe "1111"
         mustQuery.filter { it.isTerm }.find { it.term().field() == "a" }?.term()?.boost() shouldBe 2.0F
     }
 
     test("term 쿼리에 _name이 설정되면 term.queryName에 반영되어야함") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     termQuery(
@@ -356,9 +356,9 @@ class TermQueryTest: FunSpec({
                 }
             }
         }
-        val mustList = q.bool().must()
+        val mustList = query.bool().must()
 
-        q.isBool shouldBe true
+        query.isBool shouldBe true
         mustList.size shouldBe 1
 
         val term = mustList.first().term()

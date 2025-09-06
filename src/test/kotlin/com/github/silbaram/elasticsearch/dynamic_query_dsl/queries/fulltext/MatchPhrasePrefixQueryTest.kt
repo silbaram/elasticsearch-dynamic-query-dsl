@@ -13,20 +13,20 @@ import io.kotest.matchers.shouldBe
 class MatchPhrasePrefixQueryTest : FunSpec({
 
     test("최상위 match_phrase_prefix 쿼리 생성") {
-        val q = query {
+        val query = query {
             matchPhrasePrefix(
                 field = "path",
                 query = "/api/ad"
             )
         }
 
-        q.isMatchPhrasePrefix shouldBe true
-        q.matchPhrasePrefix().field() shouldBe "path"
-        q.matchPhrasePrefix().query() shouldBe "/api/ad"
+        query.isMatchPhrasePrefix shouldBe true
+        query.matchPhrasePrefix().field() shouldBe "path"
+        query.matchPhrasePrefix().query() shouldBe "/api/ad"
     }
 
     test("must/filter/mustNot/should에서 생성/생략 동작") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery { queries[ matchPhrasePrefixQuery("a", "quick bro") ] }
                 filterQuery { queries[ matchPhrasePrefixQuery("b", "fox ju") ] }
@@ -35,14 +35,14 @@ class MatchPhrasePrefixQueryTest : FunSpec({
             }
         }
 
-        q.bool().must().first().matchPhrasePrefix().field() shouldBe "a"
-        q.bool().filter().first().matchPhrasePrefix().field() shouldBe "b"
-        q.bool().mustNot().first().matchPhrasePrefix().field() shouldBe "c"
-        q.bool().should().first().matchPhrasePrefix().field() shouldBe "d"
+        query.bool().must().first().matchPhrasePrefix().field() shouldBe "a"
+        query.bool().filter().first().matchPhrasePrefix().field() shouldBe "b"
+        query.bool().mustNot().first().matchPhrasePrefix().field() shouldBe "c"
+        query.bool().should().first().matchPhrasePrefix().field() shouldBe "d"
     }
 
     test("옵션 slop/zero_terms_query/max_expansions/boost/_name 적용") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     matchPhrasePrefixQuery(
@@ -58,7 +58,7 @@ class MatchPhrasePrefixQueryTest : FunSpec({
             }
         }
 
-        val mpp = q.bool().must().first().matchPhrasePrefix()
+        val mpp = query.bool().must().first().matchPhrasePrefix()
         mpp.field() shouldBe "title"
         mpp.query() shouldBe "kotlin cor"
         mpp.slop() shouldBe 2
@@ -68,4 +68,3 @@ class MatchPhrasePrefixQueryTest : FunSpec({
         mpp.queryName() shouldBe "mpp"
     }
 })
-

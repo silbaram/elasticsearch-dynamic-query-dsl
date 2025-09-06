@@ -1,7 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.ZeroTermsQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.filterQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustNotQuery
