@@ -59,6 +59,7 @@ val q = query {
 matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
+queryStringQuery("kotlin* AND \"structured query\"", listOf("title","body"))
 ```
 
 Small JSON
@@ -110,6 +111,30 @@ combinedFields(
 ```
 
 Notes: Use text fields; null/blank inputs are omitted.
+
+### Query string
+Lucene query syntax across one or multiple fields.
+
+```kotlin
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator
+
+queryStringQuery(
+  query = "title:(kotlin AND coroutine) AND body:tips",
+  fields = listOf("title^2","body"),
+  defaultOperator = Operator.And
+)
+```
+
+JSON
+```json
+{ "query": { "query_string": {
+  "query": "title:(kotlin AND coroutine) AND body:tips",
+  "fields": ["title^2","body"],
+  "default_operator": "and"
+} } }
+```
+
+See tests: [QueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/QueryStringQueryTest.kt)
 
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
