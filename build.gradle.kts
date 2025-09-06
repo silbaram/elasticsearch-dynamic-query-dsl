@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.0"
+    `maven-publish`
 }
 
 group = "com.github.silbaram"
@@ -23,4 +24,15 @@ tasks.withType<Test>().configureEach {
 
 kotlin {
     jvmToolchain(17)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            groupId = group as String
+            artifactId = "elasticsearch-dynamic-query-dsl"
+            version = version as String
+        }
+    }
 }

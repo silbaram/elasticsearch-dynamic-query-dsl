@@ -17,7 +17,10 @@
   - [4. match_bool_prefix 쿼리](#4-match_bool_prefix-쿼리)
   - [5. match_phrase 구문 검색](#5-match_phrase-구문-검색)
   - [6. match_phrase_prefix 구문 접두어](#6-match_phrase_prefix-구문-접두어)
-- [7. 멀티필드 구문 검색 (multi_match type=phrase)](#7-멀티필드-구문-검색-multi_match-typephrase)
+  - [7. 멀티필드 구문 검색 (multi_match type=phrase)](#7-멀티필드-구문-검색-multi_match-typephrase)
+- [8. function_score 쿼리 (점수 조작)](#8-function_score-쿼리-점수-조작)
+  - [9. Kibana 유사 Function Score 예제](#9-kibana-유사-function-score-예제)
+  - [10. Decay 함수 가이드](#10-decay-함수-가이드)
 - [⚙️ 성능/튜닝 팁](#-성능튜닝-팁)
 - [🛠️ 프로젝트 구조](#️-프로젝트-구조)
 - [📜 라이선스](#-라이선스)
@@ -30,6 +33,7 @@
 - **혼용 방지**: 단일 쿼리와 여러 쿼리를 묶는 `queries[...]` 구문을 혼용하여 발생할 수 있는 실수를 런타임 예외를 통해 방지합니다.
 - **확장성**: 새로운 쿼리 타입을 쉽게 추가하고 기존 DSL에 통합할 수 있는 구조입니다.
 - **구문 검색 지원**: `match_phrase`, `match_phrase_prefix`, `multi_match(type=phrase)`를 통해 순서·근접성 기반 검색과 접두어 구문 검색을 간결하게 작성합니다.
+- **고급 점수 조작**: `function_score` 쿼리를 통해 필드 값, 스크립트, 거리/시간 기반 감쇠 함수 등을 활용한 복합적인 점수 계산을 직관적으로 구성할 수 있습니다.
 
 ## ⚡ 빠른 시작
 
@@ -476,10 +480,244 @@ val q = query {
 | `boost` | Float? | 1.0 | 가중치 |
 | `_name` | String? | - | 쿼리 식별용 이름 |
 
+### 8. function_score 쿼리 (점수 조작)
+
+복잡한 점수 계산 로직을 통해 검색 결과의 순위를 세밀하게 조정할 수 있습니다. 여러 점수 계산 함수를 조합하여 비즈니스 요구사항에 맞는 정확한 랭킹을 구현할 수 있습니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.functionScoreQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
+import co.elastic.clients.json.JsonData
+
+val query = query {
+    functionScoreQuery {
+        // 기본 검색 쿼리
+        query {
+            boolQuery {
+                mustQuery {
+                    termQuery(field = "status", value = "published")
+                }
+                filterQuery {
+                    rangeQuery(field = "created_date", gte = "2023-01-01")
+                }
+            }
+        }
+        
+        // 평점 기반 점수 조정
+        function {
+            fieldValueFactorQuery(
+                field = "rating",
+                factor = 1.5,
+                modifier = "ln2p",
+                missing = 1.0  // rating이 없는 문서는 1.0으로 처리
+            )
+        }
+        
+        // 프리미엄 문서에 가중치 부여
+        function {
+            filter(Query.of { it.term { t -> t.field("is_premium").value(true) } })
+            weightQuery(2.0)
+        }
+        
+        // 커스텀 스크립트로 인기도 점수 계산
+        function {
+            scriptScoreQuery(
+                source = "Math.log(2 + doc['view_count'].value) * params.popularity_factor",
+                params = mapOf("popularity_factor" to JsonData.of(0.8))
+            )
+        }
+        
+        // 점수 결합 방식 설정
+        scoreMode = FunctionScoreMode.Sum      // 함수들의 점수를 합산
+        boostMode = FunctionBoostMode.Multiply // 원본 점수와 곱셈
+        maxBoost = 10.0                        // 최대 점수 제한
+        minScore = 0.5                         // 최소 점수 임계값
+    }
+}
+```
+
+#### 지원하는 점수 함수들
+
+**1. Field Value Factor**
+```kotlin
+function {
+    fieldValueFactorQuery(
+        field = "popularity_score",
+        factor = 1.2,
+        modifier = "sqrt",  // none, log, log1p, log2p, ln, ln1p, ln2p, sqrt, square, reciprocal
+        missing = 0.0       // 필드가 없을 때 기본값
+    )
+}
+```
+
+**2. Script Score**
+```kotlin
+// 인라인 스크립트
+function {
+    scriptScoreQuery(
+        source = "_score * Math.max(1, doc['boost_multiplier'].value)",
+        params = mapOf("factor" to JsonData.of(1.5))
+    )
+}
+
+// 저장된 스크립트
+function {
+    scriptScoreStoredQuery(
+        id = "popularity_calculator",
+        params = mapOf("base_score" to JsonData.of(1.0))
+    )
+}
+```
+
+### 9. Kibana 유사 Function Score 예제
+
+```kotlin
+val q = query {
+  functionScoreQuery {
+    query { matchQuery("title", "kotlin dsl") }
+    function {
+      // field_value_factor + per-function filter
+      fieldValueFactor(field = "rating", modifier = "ln2p", factor = 1.2, missing = 1.0)
+      filterQuery { termQuery("status", "active") }
+    }
+    function {
+      weight(0.5)
+      randomScore(seed = "seed-1", field = "user_id")
+    }
+    scoreMode("sum")
+    boostMode("multiply")
+  }
+}
+```
+
+참고
+- 함수 내부 `filterQuery { ... }`는 Kibana의 function-level filter와 유사한 사용감을 제공합니다.
+- `gaussDecayQuery/expDecayQuery/linearDecayQuery`는 미리보기 API로, 향후 클라이언트 매핑이 확정되면 네이티브로 연결됩니다.
+
+**3. Weight (가중치)**
+```kotlin
+function {
+    // 특정 조건의 문서에만 가중치 적용
+    filter(Query.of { it.term { t -> t.field("featured").value(true) } })
+    weightQuery(1.8)
+}
+```
+
+**4. Random Score**
+```kotlin
+function {
+    randomScoreQuery(
+        seed = "daily_random_${LocalDate.now()}",  // 일별 동일한 랜덤 순서
+        field = "user_id"  // 사용자별 개인화된 랜덤
+    )
+}
+```
+
+#### 점수 결합 방식
+
+**Score Mode** (여러 함수의 점수를 어떻게 결합할지):
+- `Sum`: 모든 함수 점수를 합산 (기본값)
+- `Multiply`: 모든 함수 점수를 곱셈
+- `Avg`: 함수 점수들의 평균
+- `First`: 첫 번째 매칭되는 함수의 점수
+- `Max`/`Min`: 최대/최소 함수 점수
+
+**Boost Mode** (원본 쿼리 점수와 함수 점수를 어떻게 결합할지):
+- `Multiply`: 원본 점수 × 함수 점수 (기본값)
+- `Replace`: 함수 점수로 완전 대체
+- `Sum`: 원본 점수 + 함수 점수
+- `Avg`/`Max`/`Min`: 평균/최대/최소값 사용
+
+#### 실전 활용 예시
+
+**전자상거래 상품 랭킹**
+```kotlin
+val productRanking = query {
+    functionScoreQuery {
+        query {
+            multiMatchQuery("노트북", listOf("name^2", "description"))
+        }
+        
+        function {
+            // 평점이 높을수록 점수 증가
+            fieldValueFactorQuery("rating", "log1p", 1.2)
+        }
+        
+        function {
+            // 리뷰 수가 많을수록 점수 증가 (단, 로그 스케일)
+            fieldValueFactorQuery("review_count", "ln1p", 0.8)
+        }
+        
+        function {
+            // 할인 상품에 보너스 점수
+            filter(Query.of { it.range { r -> r.field("discount_rate").gt(JsonData.of(0)) } })
+            weightQuery(1.3)
+        }
+        
+        function {
+            // 재고가 적으면 점수 하락
+            scriptScoreQuery(
+                source = "_score * Math.max(0.5, Math.min(1.0, doc['stock_quantity'].value / 10.0))"
+            )
+        }
+        
+        scoreMode = FunctionScoreMode.Sum
+        boostMode = FunctionBoostMode.Multiply
+    }
+}
+```
+
+**콘텐츠 개인화 추천**
+```kotlin
+val personalizedContent = query {
+    functionScoreQuery {
+        query {
+            boolQuery {
+                shouldQuery {
+                    queries[
+                        termQuery("category", userPreferredCategory),
+                        termQuery("tags", userInterests)
+                    ]
+                }
+            }
+        }
+        
+        function {
+            // 최신 콘텐츠일수록 높은 점수
+            scriptScoreQuery(
+                source = "_score * Math.exp(-(System.currentTimeMillis() - doc['published_date'].value.millis) / params.decay_rate)",
+                params = mapOf("decay_rate" to JsonData.of(7 * 24 * 3600 * 1000)) // 7일 감쇠
+            )
+        }
+        
+        function {
+            // 사용자가 팔로우하는 작성자의 콘텐츠 부스트
+            filter(Query.of { it.terms { t -> t.field("author_id").terms { terms -> 
+                followingAuthorIds.forEach { terms.value(it) }
+                terms
+            }}})
+            weightQuery(2.5)
+        }
+        
+        scoreMode = FunctionScoreMode.Sum
+        boostMode = FunctionBoostMode.Sum
+    }
+}
+```
+
+#### 성능 최적화 팁
+
+- **Script Score 주의**: 스크립트는 비용이 높으므로 가능한 한 필드 기반 함수 사용을 권장합니다.
+- **필터 활용**: `filter`를 사용해 특정 조건의 문서에만 함수를 적용하면 성능이 향상됩니다.
+- **적절한 Score Mode**: 대부분의 경우 `Sum`이나 `Multiply`가 적절하며, `First`는 성능상 이점이 있습니다.
+- **최대/최소 점수 설정**: `maxBoost`와 `minScore`로 점수 범위를 제한하여 예측 가능한 결과를 얻을 수 있습니다.
+
 ## 🛠️ 프로젝트 구조
 
 - `core`: DSL 핵심 유틸과 공통 빌더 (`QueryDsl`, `SubQueryBuilders`, `ElasticsearchJavaVersion`).
-- `queries.compound`: `boolQuery`, `boostingQuery`, `constantScoreQuery` 등 복합(Compound) 쿼리 시작점.
+- `queries.compound`: `boolQuery`, `boostingQuery`, `constantScoreQuery`, `functionScoreQuery` 등 복합(Compound) 쿼리 시작점.
 - `queries.fulltext`: `matchQuery`, `matchBoolPrefixQuery` 등 전문(Full-text) 쿼리.
 - `queries.termlevel`: `termQuery`, `termsQuery`, `existsQuery`, `rangeQuery` 등 용어/범위(Term-level) 쿼리.
 - `clauses`: `mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery` 같은 Bool 절 확장.
@@ -489,3 +727,24 @@ val q = query {
 
 
 이 프로젝트는 Apache License 2.0을 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
+-
+### 10. Decay 함수 가이드
+
+시간/거리 등의 기준으로 점수를 점진적으로 감쇠시키는 함수입니다.
+
+- 개념: origin(기준점)에서 scale(감쇠 범위)만큼 떨어질수록 점수가 감소합니다. offset은 감쇠 시작 지연 구간입니다.
+- 권장값(예시)
+  - 최신성: `origin = "now"`, `scale = "7d"`, `offset = "1d"`, `decay = 0.5`
+  - 거리: `origin = "0km"`, `scale = "10km"`, `decay = 0.5`
+- 사용 예시(Kotlin DSL)
+```kotlin
+val q = query {
+  functionScoreQuery {
+    query { termQuery("status", "active") }
+    function { gaussDecayQuery(field = "published_at", origin = "now", scale = "7d", offset = "1d", decay = 0.5) }
+    function { expDecayQuery(field = "last_viewed_at", origin = "now", scale = "14d") }
+    function { linearDecayQuery(field = "distance", origin = "0km", scale = "10km") }
+  }
+}
+```
+주의: Decay 함수는 필드 타입(date/number/geo)에 맞는 값 포맷을 사용하세요.
