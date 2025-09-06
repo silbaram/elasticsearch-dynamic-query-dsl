@@ -1,23 +1,23 @@
-# Elasticsearch Dynamic Query DSL for Kotlin
+# Kotlin용 Elasticsearch 동적 쿼리 DSL
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Type-safe Kotlin DSL for building Elasticsearch queries dynamically. Compose queries with concise builders that omit null/blank inputs, keeping the emitted JSON minimal and valid.
+코틀린 타입‑세이프 빌더로 Elasticsearch 쿼리를 동적으로 조합하는 DSL입니다. null/빈 입력은 자동 생략되어 출력 JSON을 간결하고 유효하게 유지합니다.
 
-Read this in Korean: README.ko.md
+영문 문서: README.md
 
-## Features
-- Intuitive DSL: Kotlin builders instead of raw JSON.
-- Dynamic omission: Skip invalid inputs automatically.
-- Full‑text helpers: match, match_phrase, match_bool_prefix, multi_match(type=phrase), combined_fields.
-- Function score: field value factor, script score, weight, random score, decay.
-- Kotlin/JDK 17; Kotest + JUnit 5.
+## 주요 특징
+- 직관적 DSL: JSON 대신 코틀린 빌더 사용
+- 동적 생략: null/빈 값은 자동 제외
+- 전문 쿼리: match, match_phrase, match_bool_prefix, multi_match(type=phrase), combined_fields
+- 점수 조작: field value factor, script score, weight, random score, decay
+- Kotlin/JDK 17, Kotest + JUnit 5
 
-## Quick Start
-- Build/test: `./gradlew clean build`
-- Publish locally: `./gradlew publishToMavenLocal`
+## 빠른 시작
+- 빌드/테스트: `./gradlew clean build`
+- 로컬 배포: `./gradlew publishToMavenLocal`
 
-Minimal example
+최소 예제
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
@@ -39,8 +39,8 @@ val q: Query = query {
 }
 ```
 
-## Usage Snippets
-- Bool + clauses
+## 사용 예시
+- Bool + 절 구성
 ```kotlin
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 
@@ -54,14 +54,14 @@ val q = query {
 }
 ```
 
-- Full‑text
+- 전문 검색 스니펫
 ```kotlin
 matchPhraseQuery("title", "exact order", slop = 1)
 matchBoolPrefixQuery(field = "title", query = "quick bro")
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
 ```
 
-Small JSON equivalents
+간단 JSON 예시
 ```json
 { "query": { "bool": { "must": [{ "term": { "user.id": "silbaram" }}] } } }
 { "query": { "match_phrase": { "title": { "query": "exact order", "slop": 1 } } } }
@@ -80,28 +80,28 @@ combinedFields(
 )
 ```
 
-Notes: Use text fields; queries with null/blank inputs are omitted.
+메모: `text` 필드를 사용하세요. null/빈 입력은 쿼리에서 생략됩니다.
 
 ## Function Score
-Compose per‑function filters, field value factor, weight, random, and decay.
+함수별 필터, field value factor, weight, random, decay 등을 조합하세요.
 
-See tests
-- Function score core: [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
-- Kibana‑like examples: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
-- Decay functions: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
+테스트 참고
+- 기본 예제: [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
+- Kibana 유사 예제: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
+- Decay 함수: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
 
-## Project Structure
-- `src/main/kotlin`: Core DSL and query builders.
-- `src/test/kotlin`: Kotest specs on JUnit 5.
-- Gradle Kotlin DSL; JDK 17 toolchain.
+## 프로젝트 구조
+- `src/main/kotlin`: DSL 및 쿼리 빌더
+- `src/test/kotlin`: Kotest 스펙(JUnit 5)
+- Gradle Kotlin DSL, JDK 17 툴체인
 
-## License
-Apache License 2.0 — see LICENSE.
+## 라이선스
+Apache License 2.0 — LICENSE 참조.
 
-## Badges & Release
-- Build/test: `./gradlew clean build`
-- Publish to Maven Local: `./gradlew publishToMavenLocal`
-- Dependency (example)
+## 배지 & 릴리즈
+- 빌드/테스트: `./gradlew clean build`
+- 로컬 배포: `./gradlew publishToMavenLocal`
+- 의존성 예시
 ```kotlin
 repositories { mavenLocal(); mavenCentral() }
 dependencies { implementation("com.github.silbaram:elasticsearch-dynamic-query-dsl:1.0-SNAPSHOT") }
