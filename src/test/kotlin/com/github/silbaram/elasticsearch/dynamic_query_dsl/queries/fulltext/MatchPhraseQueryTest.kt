@@ -13,7 +13,7 @@ import io.kotest.matchers.shouldBe
 class MatchPhraseQueryTest : FunSpec({
 
     test("must 쿼리에서 match_phrase 쿼리 생성/스킵 동작") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     queries[
@@ -25,8 +25,8 @@ class MatchPhraseQueryTest : FunSpec({
             }
         }
 
-        val must = q.bool().must()
-        q.isBool shouldBe true
+        val must = query.bool().must()
+        query.isBool shouldBe true
         must.size shouldBe 1
         must.first().isMatchPhrase shouldBe true
         must.first().matchPhrase().field() shouldBe "message"
@@ -34,7 +34,7 @@ class MatchPhraseQueryTest : FunSpec({
     }
 
     test("filter/mustNot/should 에서도 match_phrase 쿼리 동작") {
-        val q = query {
+        val query = query {
             boolQuery {
                 filterQuery {
                     queries[ matchPhraseQuery("f", "alpha beta") ]
@@ -48,18 +48,18 @@ class MatchPhraseQueryTest : FunSpec({
             }
         }
 
-        q.bool().filter().size shouldBe 1
-        q.bool().filter().first().matchPhrase().field() shouldBe "f"
+        query.bool().filter().size shouldBe 1
+        query.bool().filter().first().matchPhrase().field() shouldBe "f"
 
-        q.bool().mustNot().size shouldBe 1
-        q.bool().mustNot().first().matchPhrase().field() shouldBe "mn"
+        query.bool().mustNot().size shouldBe 1
+        query.bool().mustNot().first().matchPhrase().field() shouldBe "mn"
 
-        q.bool().should().size shouldBe 1
-        q.bool().should().first().matchPhrase().field() shouldBe "s"
+        query.bool().should().size shouldBe 1
+        query.bool().should().first().matchPhrase().field() shouldBe "s"
     }
 
     test("match_phrase 옵션: analyzer, slop, zero_terms_query, boost, _name 적용") {
-        val q = query {
+        val query = query {
             boolQuery {
                 mustQuery {
                     matchPhraseQuery(
@@ -75,7 +75,7 @@ class MatchPhraseQueryTest : FunSpec({
             }
         }
 
-        val mp = q.bool().must().first().matchPhrase()
+        val mp = query.bool().must().first().matchPhrase()
         mp.field() shouldBe "title"
         mp.query() shouldBe "quick brown fox"
         mp.analyzer() shouldBe "standard"

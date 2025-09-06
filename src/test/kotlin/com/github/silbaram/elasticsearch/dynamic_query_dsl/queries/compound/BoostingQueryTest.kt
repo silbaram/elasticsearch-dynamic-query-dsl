@@ -67,10 +67,8 @@ class BoostingQueryTest : FunSpec({
         }
 
         boostingQuery.isBoosting shouldBe true
-        // positive절은 bool query로 감싸져야 함
         boostingQuery.boosting().positive().isBool shouldBe true
         boostingQuery.boosting().positive().bool().must().size shouldBe 2
-        // negative절은 단일 쿼리이므로 bool query로 감싸지지 않아야 함
         boostingQuery.boosting().negative().isTerm shouldBe true
         boostingQuery.boosting().negativeBoost() shouldBe 0.2
     }

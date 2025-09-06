@@ -11,11 +11,9 @@ import io.kotest.matchers.shouldBe
 class NestedBoolQueryTest : FunSpec({
 
     test("mustQuery 내부에 중첩된 bool 쿼리가 올바르게 생성되어야 한다") {
-        // given
         val query = query {
-            boolQuery { // 최상위 bool
+            boolQuery {
                 mustQuery {
-                    // 중첩 bool 쿼리 생성
                     boolQuery {
                         shouldQuery {
                             queries[
@@ -28,50 +26,31 @@ class NestedBoolQueryTest : FunSpec({
             }
         }
 
-        // when
-        val topLevelBool = query.bool()
-        val mustClauses = topLevelBool.must()
-
-        // then
+        val mustClauses = query.bool().must()
         mustClauses.size shouldBe 1
-        val nestedQuery = mustClauses.first()
 
-        nestedQuery.isBool shouldBe true
-        val nestedBool = nestedQuery.bool()
+        val nestedBool = mustClauses.first().bool()
         val nestedShouldClauses = nestedBool.should()
-
         nestedShouldClauses.size shouldBe 2
         nestedShouldClauses.any { it.term().field() == "tags" && it.term().value().stringValue() == "kotlin" } shouldBe true
         nestedShouldClauses.any { it.term().field() == "tags" && it.term().value().stringValue() == "dsl" } shouldBe true
     }
 
     test("shouldQuery 내부에 중첩된 bool 쿼리가 올바르게 생성되어야 한다") {
-        // given
         val query = query {
-            boolQuery { // 최상위 bool
+            boolQuery {
                 shouldQuery {
-                    // 중첩 bool 쿼리 생성
                     boolQuery {
-                        mustQuery {
-                            termQuery(field = "status", value = "active")
-                        }
+                        mustQuery { termQuery(field = "status", value = "active") }
                     }
                 }
             }
         }
 
-        // when
-        val topLevelBool = query.bool()
-        val shouldClauses = topLevelBool.should()
-
-        // then
+        val shouldClauses = query.bool().should()
         shouldClauses.size shouldBe 1
-        val nestedQuery = shouldClauses.first()
 
-        nestedQuery.isBool shouldBe true
-        val nestedBool = nestedQuery.bool()
-        val nestedMustClauses = nestedBool.must()
-
+        val nestedMustClauses = shouldClauses.first().bool().must()
         nestedMustClauses.size shouldBe 1
         val termQuery = nestedMustClauses.first().term()
         termQuery.field() shouldBe "status"
@@ -79,28 +58,18 @@ class NestedBoolQueryTest : FunSpec({
     }
 
     test("하나의 절에 여러 개의 중첩 bool 쿼리를 추가할 수 있어야 한다") {
-        // given
         val query = query {
             boolQuery {
                 mustQuery {
                     queries[
-                        // 첫 번째 중첩 bool
-                        boolQuery {
-                            shouldQuery { termQuery("field1", "A") }
-                        },
-                        // 두 번째 중첩 bool
-                        boolQuery {
-                            mustQuery { termQuery("field2", "B") }
-                        }
+                        boolQuery { shouldQuery { termQuery("field1", "A") } },
+                        boolQuery { mustQuery { termQuery("field2", "B") } }
                     ]
                 }
             }
         }
 
-        // when
         val mustClauses = query.bool().must()
-
-        // then
         mustClauses.size shouldBe 2
         mustClauses.all { it.isBool } shouldBe true
 
