@@ -64,7 +64,8 @@ val q: Query = query {
             queries[
                 matchPhraseQuery("message", "this is a test"),
                 matchPhrasePrefixQuery("path", "/api/ad"),
-                multiMatchPhraseQuery("quick brown fox", listOf("title^2", "body"))
+                multiMatchPhraseQuery("quick brown fox", listOf("title^2", "body")),
+                combinedFields(query = "john smith", fields = listOf("first_name", "last_name"))
             ]
         }
     }
@@ -441,6 +442,27 @@ val q = query {
 }
 ```
 
+### Combined Fields (combined_fields)
+
+여러 필드의 용어 사전을 결합하여 하나의 질의어로 검색합니다. `query`가 비거나 `fields`가 비면 생략됩니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.combinedFields
+import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
+
+val q = query {
+    combinedFields(
+        query = "john smith",
+        fields = listOf("first_name", "last_name"),
+        operator = CombinedFieldsOperator.And,  // 모든 토큰 필수
+        minimumShouldMatch = "2"
+    )
+}
+```
+
+주의: 필드는 분석 가능한 `text` 타입을 사용하세요. 동적 제외 규칙이 적용됩니다.
+
 ## ⚙️ 성능/튜닝 팁
 
 - 분석기 선택: 검색 대상이 자연어면 `text` + 언어별 분석기(`standard`, `nori` 등)를, 경로/식별자/코드면 `keyword` 또는 `analyzer = "keyword"`를 고려하세요. 불용어(stop)로 토큰이 모두 제거될 수 있으므로 필요 시 `zeroTermsQuery = All`을 사용합니다.
@@ -728,23 +750,3 @@ val personalizedContent = query {
 
 이 프로젝트는 Apache License 2.0을 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
 -
-### 10. Decay 함수 가이드
-
-시간/거리 등의 기준으로 점수를 점진적으로 감쇠시키는 함수입니다.
-
-- 개념: origin(기준점)에서 scale(감쇠 범위)만큼 떨어질수록 점수가 감소합니다. offset은 감쇠 시작 지연 구간입니다.
-- 권장값(예시)
-  - 최신성: `origin = "now"`, `scale = "7d"`, `offset = "1d"`, `decay = 0.5`
-  - 거리: `origin = "0km"`, `scale = "10km"`, `decay = 0.5`
-- 사용 예시(Kotlin DSL)
-```kotlin
-val q = query {
-  functionScoreQuery {
-    query { termQuery("status", "active") }
-    function { gaussDecayQuery(field = "published_at", origin = "now", scale = "7d", offset = "1d", decay = 0.5) }
-    function { expDecayQuery(field = "last_viewed_at", origin = "now", scale = "14d") }
-    function { linearDecayQuery(field = "distance", origin = "0km", scale = "10km") }
-  }
-}
-```
-주의: Decay 함수는 필드 타입(date/number/geo)에 맞는 값 포맷을 사용하세요.
