@@ -41,3 +41,6 @@ bin/
 /AGENTS.md
 /CLAUDE.md
 /AGENTS.ko.md
+.claude/commands/developer/kotlin-es/analyze-requirements.md
+.claude/commands/developer/kotlin-es/implement-dsl.md
+.claude/settings.local.json
