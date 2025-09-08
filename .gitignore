@@ -1,4 +1,4 @@
-.gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -41,6 +41,9 @@ bin/
 /AGENTS.md
 /CLAUDE.md
 /AGENTS.ko.md
-.claude/commands/developer/kotlin-es/analyze-requirements.md
-.claude/commands/developer/kotlin-es/implement-dsl.md
-.claude/settings.local.json
+.claude/
+.codex/analyze-requirements.md
+.codex/implement-kotlin-query-dsl.md
+.gemini/analyze-requirements.toml
+.gemini/implement-kotlin-query-dsl.toml
+.requirements/span-containing-query.md
