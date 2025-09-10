@@ -158,6 +158,120 @@ JSON
 
 테스트: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
 
+### 스팬 쿼리 (Span Queries)
+Elasticsearch 스팬 쿼리는 위치 기반 텍스트 매칭을 가능하게 합니다. 이 라이브러리는 함수형과 DSL 형태 모두를 지원하는 스팬 쿼리 DSL을 제공합니다.
+
+#### 스팬 필드 마스킹 쿼리 (Span Field Masking Query)
+`span_field_masking` 쿼리는 서로 다른 필드의 스팬 쿼리들을 span-near나 span-or 쿼리에서 조합할 수 있도록 검색 필드를 "마스킹"합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val maskingQuery = spanFieldMaskingQuery(
+    query = spanTermQuery("text.stems", "fox"),
+    field = "text"
+)
+
+// DSL 형태 사용법
+val q = query {
+    spanFieldMaskingQuery {
+        query { spanTermQuery("text.stems", "fox") }
+        field = "text"
+        boost = 2.0f
+        _name = "mask-query"
+    }
+}
+```
+
+**동적 제외**: 잘못된 입력(null 쿼리, 빈 필드)에 대해 `null`을 반환하여 최종 DSL 출력에서 자동으로 필터링됩니다.
+
+#### 배열 스타일 DSL을 지원하는 스팬 Near 쿼리
+`span_near` 쿼리는 지정된 거리 내에서 스팬을 찾습니다. 이 구현은 전통적인 절 추가 방식과 배열 스타일 구문을 모두 지원합니다.
+
+```kotlin
+// 배열 스타일 DSL (권장)
+val nearQuery = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("text", "quick"),
+            spanFieldMaskingQuery(
+                query = spanTermQuery("text.stems", "fox"),
+                field = "text"
+            )
+        ]
+        slop = 5
+        inOrder = false
+    }
+}
+
+// 대안: 개별 절 추가
+val nearQuery2 = query {
+    spanNearQuery {
+        clause(spanTermQuery("text", "quick"))
+        clause(spanFieldMaskingQuery(
+            query = spanTermQuery("text.stems", "fox"),
+            field = "text"
+        ))
+        slop = 5
+        inOrder = false
+    }
+}
+```
+
+**주요 기능**:
+- **배열 스타일 구문**: `clauses[query1, query2, ...]`로 간결한 다중 절 정의
+- **개별 절 추가**: `clause(query)` 메서드로 점진적 쿼리 구축
+- **자동 스팬 변환**: 비-스팬 쿼리는 자동으로 필터링
+- **타입 안전성**: 유효한 스팬 쿼리만 허용
+
+**생성되는 JSON**:
+```json
+{
+  "span_near": {
+    "clauses": [
+      { "span_term": { "text": "quick" } },
+      {
+        "span_field_masking": {
+          "query": { "span_term": { "text.stems": "fox" } },
+          "field": "text"
+        }
+      }
+    ],
+    "slop": 5,
+    "in_order": false
+  }
+}
+```
+
+**통합 예제**: 복잡한 쿼리에서 스팬 필드 마스킹 사용
+```kotlin
+val complexQuery = query {
+    boolQuery {
+        mustQuery {
+            spanNearQuery {
+                clauses[
+                    spanTermQuery("content", "elasticsearch"),
+                    spanFieldMaskingQuery(
+                        query = spanTermQuery("content.stemmed", "kotlin"),
+                        field = "content"
+                    )
+                ]
+                slop = 10
+                inOrder = true
+            }
+        }
+        shouldQuery {
+            matchQuery("title", "tutorial")
+        }
+    }
+}
+```
+
+테스트: 
+- [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
+- [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
+
 - Combined fields
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
@@ -254,3 +368,31 @@ Simple query string
 | `fuzzyTranspositions` | Boolean | 전치 허용 |
 | `minimumShouldMatch` | String | 예: `2`, `75%` |
 | `lenient` | Boolean | 포맷 오류 무시 |
+
+### 스팬 쿼리 옵션
+
+스팬 필드 마스킹 쿼리 (span_field_masking)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `query` | SpanQuery | 필수. 마스킹할 스팬 쿼리 |
+| `field` | String | 필수. 마스킹할 대상 필드 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+**동적 제외**: 잘못된 입력(null 쿼리, 빈 필드)에 대해 `null` 반환
+
+스팬 Near 쿼리 (span_near)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `clauses` | 배열/리스트 구문 | `clauses[query1, query2, ...]` 또는 `clause(query)` |
+| `slop` | Int | 필수. 스팬 간 최대 허용 거리 |
+| `inOrder` | Boolean | 절이 순서대로 나타나야 하는지 여부 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+**사용 패턴**:
+- 배열 스타일: `clauses[spanTermQuery("field", "value"), ...]`
+- 개별 추가: `clause(spanTermQuery("field", "value"))`
+- 두 패턴 모두 비-스팬 쿼리는 자동 필터링
