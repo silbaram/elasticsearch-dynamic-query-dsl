@@ -29,6 +29,7 @@ class TermQueryTest : FunSpec({
                 }
             }
         }
+
         val mustQuery = query.bool().must()
 
         query.isBool shouldBe true

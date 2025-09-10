@@ -1,10 +1,8 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.matchAllQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
