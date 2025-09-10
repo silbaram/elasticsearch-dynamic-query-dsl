@@ -42,8 +42,4 @@ bin/
 /CLAUDE.md
 /AGENTS.ko.md
 .claude/
-.codex/analyze-requirements.md
-.codex/implement-kotlin-query-dsl.md
-.gemini/analyze-requirements.toml
-.gemini/implement-kotlin-query-dsl.toml
-.requirements/span-containing-query.md
+
