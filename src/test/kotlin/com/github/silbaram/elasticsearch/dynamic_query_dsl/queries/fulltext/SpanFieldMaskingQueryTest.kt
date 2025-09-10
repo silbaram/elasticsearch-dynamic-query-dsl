@@ -77,14 +77,14 @@ class SpanFieldMaskingQueryTest : FunSpec({
         val near =
             query {
                 spanNearQuery {
-                    // DSL 방식으로 clause 추가
-                    clause(spanTermQuery("text", "quick"))
-                    clause(
+                    // Array-style DSL - clauses[query1, query2, ...] 형태로 사용
+                    clauses[
+                        spanTermQuery("text", "quick"),
                         spanFieldMaskingQuery(
                             query = spanTermQuery("text.stems", "fox"),
                             field = "text"
                         )
-                    )
+                    ]
                     slop = 5
                     inOrder = false
                 }

@@ -200,6 +200,16 @@ fun Query.Builder.spanFieldMaskingQuery(fn: SpanFieldMaskingQueryDsl.() -> Unit)
 }
 
 /**
+ * Array-style DSL을 위한 clauses 헬퍼 클래스
+ */
+class ClausesArrayHelper(private val clauseBuilders: MutableList<Query?>) {
+    operator fun get(vararg queries: Query?): Unit {
+        clauseBuilders.clear()
+        queries.filterNotNull().forEach { clauseBuilders.add(it) }
+    }
+}
+
+/**
  * Span Near Query DSL 클래스
  * query { spanNearQuery { ... } } 형태로 사용 가능
  */
@@ -210,13 +220,8 @@ class SpanNearQueryDsl {
     var boost: Float? = null
     var _name: String? = null
     
-    // 기존 방식 - clauses 리스트 직접 설정
-    var clauses: List<Query?>?
-        get() = if (clauseBuilders.isEmpty()) null else clauseBuilders.toList()
-        set(value) {
-            clauseBuilders.clear()
-            value?.let { clauseBuilders.addAll(it) }
-        }
+    // Array-style DSL - clauses[query1, query2, ...] 형태로 사용 가능
+    val clauses = ClausesArrayHelper(clauseBuilders)
     
     // DSL 방식 - clause 블록으로 쿼리 추가
     fun clause(query: Query?) {

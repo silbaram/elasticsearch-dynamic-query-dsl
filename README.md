@@ -172,6 +172,120 @@ JSON
 
 See tests: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
 
+### Span Queries
+Elasticsearch span queries enable position-aware text matching. This library provides DSL support for span queries with both function-style and DSL-style syntax.
+
+#### Span Field Masking Query
+The `span_field_masking` query allows span queries from different fields to be combined in span-near or span-or queries by "masking" the search field.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style usage
+val maskingQuery = spanFieldMaskingQuery(
+    query = spanTermQuery("text.stems", "fox"),
+    field = "text"
+)
+
+// DSL-style usage
+val q = query {
+    spanFieldMaskingQuery {
+        query { spanTermQuery("text.stems", "fox") }
+        field = "text"
+        boost = 2.0f
+        _name = "mask-query"
+    }
+}
+```
+
+**Dynamic Exclusion**: Returns `null` for invalid inputs (null query, blank field), automatically filtered from final DSL output.
+
+#### Span Near Query with Array-Style DSL
+The `span_near` query finds spans within a specified distance. This implementation supports both traditional clause addition and array-style syntax.
+
+```kotlin
+// Array-style DSL (recommended)
+val nearQuery = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("text", "quick"),
+            spanFieldMaskingQuery(
+                query = spanTermQuery("text.stems", "fox"),
+                field = "text"
+            )
+        ]
+        slop = 5
+        inOrder = false
+    }
+}
+
+// Alternative: Individual clause addition
+val nearQuery2 = query {
+    spanNearQuery {
+        clause(spanTermQuery("text", "quick"))
+        clause(spanFieldMaskingQuery(
+            query = spanTermQuery("text.stems", "fox"),
+            field = "text"
+        ))
+        slop = 5
+        inOrder = false
+    }
+}
+```
+
+**Key Features**:
+- **Array-style syntax**: `clauses[query1, query2, ...]` for concise multi-clause definition
+- **Individual clause addition**: `clause(query)` method for building queries incrementally
+- **Automatic span conversion**: Non-span queries are automatically filtered out
+- **Type safety**: Only valid span queries are accepted
+
+**Generated JSON**:
+```json
+{
+  "span_near": {
+    "clauses": [
+      { "span_term": { "text": "quick" } },
+      {
+        "span_field_masking": {
+          "query": { "span_term": { "text.stems": "fox" } },
+          "field": "text"
+        }
+      }
+    ],
+    "slop": 5,
+    "in_order": false
+  }
+}
+```
+
+**Integration Example**: Using span field masking in complex queries
+```kotlin
+val complexQuery = query {
+    boolQuery {
+        mustQuery {
+            spanNearQuery {
+                clauses[
+                    spanTermQuery("content", "elasticsearch"),
+                    spanFieldMaskingQuery(
+                        query = spanTermQuery("content.stemmed", "kotlin"),
+                        field = "content"
+                    )
+                ]
+                slop = 10
+                inOrder = true
+            }
+        }
+        shouldQuery {
+            matchQuery("title", "tutorial")
+        }
+    }
+}
+```
+
+See tests: 
+- [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
+- [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
+
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
 
@@ -255,3 +369,31 @@ Simple query string
 | `fuzzyTranspositions` | Boolean | Fuzzy transpositions |
 | `minimumShouldMatch` | String | e.g., `2`, `75%` |
 | `lenient` | Boolean | Ignore format errors |
+
+### Span Queries Options
+
+Span Field Masking Query (span_field_masking)
+
+| Option | Type | Notes |
+|---|---|---|
+| `query` | SpanQuery | Required. The span query to mask |
+| `field` | String | Required. Target field for masking |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+**Dynamic Exclusion**: Returns `null` for invalid inputs (null query, blank field)
+
+Span Near Query (span_near)
+
+| Option | Type | Notes |
+|---|---|---|
+| `clauses` | Array/List syntax | `clauses[query1, query2, ...]` or `clause(query)` |
+| `slop` | Int | Required. Maximum allowed distance between spans |
+| `inOrder` | Boolean | Whether clauses must appear in order |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+**Usage Patterns**:
+- Array-style: `clauses[spanTermQuery("field", "value"), ...]`
+- Individual: `clause(spanTermQuery("field", "value"))`
+- Both patterns automatically filter non-span queries
