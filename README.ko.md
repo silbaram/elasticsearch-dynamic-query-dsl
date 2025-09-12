@@ -396,3 +396,7 @@ Simple query string
 - 배열 스타일: `clauses[spanTermQuery("field", "value"), ...]`
 - 개별 추가: `clause(spanTermQuery("field", "value"))`
 - 두 패턴 모두 비-스팬 쿼리는 자동 필터링
+
+## 기여하기
+
+기여를 환영합니다. 프로젝트 구조, 코딩 스타일, 테스트, PR 규칙은 [AGENTS.md](AGENTS.md)를 참고하세요.

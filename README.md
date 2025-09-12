@@ -397,3 +397,7 @@ Span Near Query (span_near)
 - Array-style: `clauses[spanTermQuery("field", "value"), ...]`
 - Individual: `clause(spanTermQuery("field", "value"))`
 - Both patterns automatically filter non-span queries
+
+## Contributing
+
+Contributions are welcome. Please read the contributor guide in [AGENTS.md](AGENTS.md) for project structure, coding style, testing, and PR conventions.
