@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.SpanNearQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanTermQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanFieldMaskingQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiQuery
 import co.elastic.clients.util.ObjectBuilder
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
 
@@ -90,6 +91,35 @@ fun spanFieldMaskingQuery(
     val builder = SpanFieldMaskingQuery.Builder()
         .query(span)
         .field(targetField)
+
+    boost?.let { builder.boost(it) }
+    _name?.let { builder.queryName(it) }
+
+    return builder.build()._toQuery()
+}
+
+/**
+ * Build a span_multi as Query
+ */
+fun spanMultiQuery(
+    match: Query?,
+    boost: Float? = null,
+    _name: String? = null
+): Query? {
+    val m = match ?: return null
+    // Allow only multi-term kinds: prefix, wildcard, regexp, fuzzy, range
+    val isMultiTerm = when (m._kind()) {
+        Query.Kind.Prefix,
+        Query.Kind.Wildcard,
+        Query.Kind.Regexp,
+        Query.Kind.Fuzzy,
+        Query.Kind.Range -> true
+        else -> false
+    }
+    if (!isMultiTerm) return null
+
+    val builder = SpanMultiQuery.Builder()
+        .match(m)
 
     boost?.let { builder.boost(it) }
     _name?.let { builder.queryName(it) }
@@ -196,6 +226,83 @@ fun Query.Builder.spanFieldMaskingQuery(fn: SpanFieldMaskingQueryDsl.() -> Unit)
         }
     } else {
         this // no-op if invalid inputs
+    }
+}
+
+/**
+ * Span Multi Query DSL 클래스
+ * query { spanMultiQuery { ... } } 형태로 사용 가능
+ */
+class SpanMultiQueryDsl {
+    internal val matchBuilders = SubQueryBuilders()
+    var boost: Float? = null
+    var _name: String? = null
+
+    /**
+     * 멀티텀(match) 쿼리 설정. 단일 쿼리만 허용.
+     */
+    fun match(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) {
+            sub.addQuery(result)
+        }
+        matchBuilders.addAll(sub)
+    }
+
+    internal fun buildQuery(): Query? {
+        val match = when (matchBuilders.size()) {
+            0 -> return null
+            1 -> {
+                var result: Query? = null
+                matchBuilders.forEach { result = it }
+                result
+            }
+            else -> return null // span_multi는 단일 match만 지원
+        }
+
+        return spanMultiQuery(
+            match = match,
+            boost = boost,
+            _name = _name
+        )
+    }
+}
+
+/**
+ * Query.Builder를 위한 spanMultiQuery DSL 확장 함수
+ * query { spanMultiQuery { ... } } 형태로 사용 가능
+ */
+fun Query.Builder.spanMultiQuery(fn: SpanMultiQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanMultiQueryDsl().apply(fn)
+
+    val match = when (dsl.matchBuilders.size()) {
+        0 -> return this // no-op: match 미제공
+        1 -> {
+            var result: Query? = null
+            dsl.matchBuilders.forEach { result = it }
+            result
+        }
+        else -> return this // 여러 match는 지원하지 않음
+    }
+
+    // 멀티텀 검증
+    val m = match ?: return this
+    val isMultiTerm = when (m._kind()) {
+        Query.Kind.Prefix,
+        Query.Kind.Wildcard,
+        Query.Kind.Regexp,
+        Query.Kind.Fuzzy,
+        Query.Kind.Range -> true
+        else -> false
+    }
+    if (!isMultiTerm) return this
+
+    return this.spanMulti { sm ->
+        sm.match(m)
+        dsl.boost?.let { sm.boost(it) }
+        dsl._name?.let { sm.queryName(it) }
+        sm
     }
 }
 
