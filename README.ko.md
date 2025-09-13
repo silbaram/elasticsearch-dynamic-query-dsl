@@ -186,6 +186,36 @@ val q = query {
 
 **동적 제외**: 잘못된 입력(null 쿼리, 빈 필드)에 대해 `null`을 반환하여 최종 DSL 출력에서 자동으로 필터링됩니다.
 
+#### 스팬 Term 쿼리 (Span Term Query)
+`span_term` 쿼리는 단일 용어의 위치 정보를 이용해 스팬 컨테이너와 조합 가능한 기본 스팬 절을 생성합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val termQ = spanTermQuery(
+    field = "title",
+    value = "kotlin",
+    boost = 1.2f,
+    _name = "term_kotlin"
+)
+
+// 블록 DSL
+val termDsl = query {
+    spanTermQuery {
+        field = "title"
+        value = "kotlin"
+        boost = 1.2f
+        _name = "term_kotlin"
+    }
+}
+```
+
+메모: `field` 또는 `value`가 비어있으면 생략(no-op)됩니다.
+
+테스트: [SpanTermQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanTermQueryTest.kt)
+
 #### 배열 스타일 DSL을 지원하는 스팬 Near 쿼리
 `span_near` 쿼리는 지정된 거리 내에서 스팬을 찾습니다. 이 구현은 전통적인 절 추가 방식과 배열 스타일 구문을 모두 지원합니다.
 
@@ -271,6 +301,156 @@ val complexQuery = query {
 테스트: 
 - [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
 - [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
+- [SpanNearQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNearQueryTest.kt)
+
+#### 고급 조합 예제
+스팬 쿼리는 서로 자유롭게 중첩/조합할 수 있습니다. 아래는 자주 쓰는 패턴입니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 1) span_near + span_or 중첩
+val nearOr = query {
+    spanNearQuery {
+        clauses[
+            spanOrQuery(clauses = listOf(
+                spanTermQuery("title", "elasticsearch"),
+                spanTermQuery("title", "kotlin")
+            )),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 3
+        inOrder = false
+    }
+}
+
+// 2) span_not(pre/post)으로 근접 배제
+val notClose = query {
+    spanNotQuery {
+        include {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 2
+            )
+        }
+        exclude { spanTermQuery("body", "rotten") }
+        pre = 0
+        post = 1
+        _name = "exclude_rotten"
+    }
+}
+
+// 3) span_field_masking으로 다른 분석 필드 조합
+val masked = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("text", "quick"),
+            spanFieldMaskingQuery(
+                query = spanTermQuery("text.stems", "fox"),
+                field = "text"
+            )
+        ]
+        slop = 4
+    }
+}
+
+// 4) span_multi(range/prefix 등 멀티텀을 스팬으로 래핑)
+val withRange = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanMultiQuery(match = rangeQuery("publish_date", gte = "2024-01-01"))
+        ]
+        slop = 5
+    }
+}
+```
+
+#### 스팬 Or 쿼리 (Span Or Query)
+`span_or` 쿼리는 하나 이상의 스팬 절 중 임의의 하나라도 매칭되면 참으로 평가합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val orQuery = spanOrQuery(
+    clauses = listOf(
+        spanTermQuery("title", "kotlin"),
+        spanTermQuery("title", "dsl"),
+        spanNearQuery(
+            clauses = listOf(
+                spanTermQuery("title", "structured"),
+                spanTermQuery("title", "concurrency")
+            ),
+            slop = 1
+        )
+    ),
+    _name = "span_or_example"
+)
+
+// 블록 DSL
+val orDsl = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        _name = "span_or_dsl"
+    }
+}
+```
+
+메모: 비‑스팬 쿼리는 자동 제외됩니다. 유효 절이 없으면 DSL은 no‑op로 동작합니다.
+
+테스트: [SpanOrQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanOrQueryTest.kt)
+
+#### 스팬 Within 쿼리 (Span Within Query)
+`span_within` 쿼리는 작은 스팬(little)이 큰 스팬(big)의 범위 안에 완전히 포함될 때 매칭됩니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val within = spanWithinQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "within_green"
+)
+
+// 블록 DSL
+val withinDsl = query {
+    spanWithinQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1
+            )
+        }
+        _name = "within_dsl"
+    }
+}
+```
+
+메모: `little`/`big`는 모두 스팬 쿼리여야 하며, 누락/비‑스팬 입력 시 DSL은 no‑op로 동작합니다.
+
+테스트: [SpanWithinQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanWithinQueryTest.kt)
 
 - Combined fields
 ```kotlin
@@ -397,6 +577,193 @@ Simple query string
 - 개별 추가: `clause(spanTermQuery("field", "value"))`
 - 두 패턴 모두 비-스팬 쿼리는 자동 필터링
 
+스팬 Or 쿼리 (span_or)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `clauses` | 배열/리스트 | 스팬 쿼리만 허용, 비-스팬은 자동 제외 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Within 쿼리 (span_within)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `little` | SpanQuery | 필수. 작은 스팬(완전히 포함되어야 함) |
+| `big` | SpanQuery | 필수. 큰 스팬(포함 영역) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Not 쿼리 (span_not)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `include` | SpanQuery | 필수. 포함 대상 스팬 쿼리 |
+| `exclude` | SpanQuery | 필수. 제외 대상 스팬 쿼리 |
+| `pre` | Int | 0 이상. 앞쪽 인접 허용 거리 |
+| `post` | Int | 0 이상. 뒤쪽 인접 허용 거리 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Term 쿼리 (span_term)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `field` | String | 필수. 대상 필드 |
+| `value` | String | 필수. 검색어(공백/널 불가) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Containing 쿼리 (span_containing)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `little` | SpanQuery | 필수. 작은 스팬 |
+| `big` | SpanQuery | 필수. 큰 스팬(포함) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 First 쿼리 (span_first)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `match` | SpanQuery | 필수. 매칭 스팬 |
+| `end` | Int | 필수. 시작 위치에서의 상한(포함 전까지) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+**조합 예시**
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// span_term + span_near 조합
+val near = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 2
+        inOrder = true
+    }
+}
+
+// span_term + span_or 조합
+val orQ = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "coroutines")
+        ]
+    }
+}
+```
+
+테스트: [SpanNotQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNotQueryTest.kt)
+
 ## 기여하기
 
 기여를 환영합니다. 프로젝트 구조, 코딩 스타일, 테스트, PR 규칙은 [AGENTS.md](AGENTS.md)를 참고하세요.
+#### 스팬 Containing 쿼리 (Span Containing Query)
+`span_containing` 쿼리는 작은 스팬(little)을 포함하는 큰 스팬(big)이 있을 때 매칭합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val containing = spanContainingQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "containing_green"
+)
+
+// 블록 DSL
+val containingDsl = query {
+    spanContainingQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1,
+                inOrder = true
+            )
+        }
+        _name = "containing_dsl"
+    }
+}
+```
+
+테스트: 
+- [SpanContainingDslTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanContainingDslTest.kt)
+- [SpanQueriesTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanQueriesTest.kt)
+
+#### 스팬 First 쿼리 (Span First Query)
+`span_first` 쿼리는 매칭 스팬이 필드의 시작 부분에서 지정한 위치(`end`) 이전에 나타나는 경우 매칭합니다.
+
+```kotlin
+// 함수형 사용법
+val first = spanFirstQuery {
+    match = spanTermQuery("user.id", "kimchy")
+    end = 3
+    boost = 1.2f
+    _name = "first_query"
+}
+
+// 블록 DSL (확장)
+val firstDsl = query {
+    spanFirstQueryDsl {
+        match { spanTermQuery("user.id", "kimchy") }
+        end = 3
+        boost = 1.2f
+        _name = "first_dsl"
+    }
+}
+```
+
+테스트: 
+- [SpanFirstQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFirstQueryTest.kt)
+- [SpanFirstDslTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFirstDslTest.kt)
+#### 스팬 Multi 쿼리 (Span Multi Query)
+`span_multi` 쿼리는 멀티텀 쿼리(prefix, wildcard, regexp, fuzzy, range 등)를 스팬으로 래핑해 다른 스팬 쿼리들과 조합할 수 있게 합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
+
+// 함수형 사용법
+val sm = spanMultiQuery(
+    match = rangeQuery(
+        field = "publish_date",
+        gte = "2023-01-01"
+    ),
+    boost = 1.1f,
+    _name = "range-as-span"
+)
+
+// 블록 DSL
+val smDsl = query {
+    spanMultiQuery {
+        match { rangeQuery("publish_date", gte = "2023-01-01") }
+        boost = 2.0f
+        _name = "dsl-range-span"
+    }
+}
+```
+
+메모: `match`는 멀티텀 쿼리만 허용(prefix|wildcard|regexp|fuzzy|range). 그 외는 무시되어 no-op 처리됩니다.
+
+테스트: [SpanMultiQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanMultiQueryTest.kt)

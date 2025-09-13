@@ -200,6 +200,36 @@ val q = query {
 
 **Dynamic Exclusion**: Returns `null` for invalid inputs (null query, blank field), automatically filtered from final DSL output.
 
+#### Span Term Query
+The `span_term` query builds a basic span clause for a single term, suitable for composing within other span containers.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val termQ = spanTermQuery(
+    field = "title",
+    value = "kotlin",
+    boost = 1.2f,
+    _name = "term_kotlin"
+)
+
+// DSL-style
+val termDsl = query {
+    spanTermQuery {
+        field = "title"
+        value = "kotlin"
+        boost = 1.2f
+        _name = "term_kotlin"
+    }
+}
+```
+
+Note: If `field` or `value` is blank, the query is omitted (no-op).
+
+See tests: [SpanTermQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanTermQueryTest.kt)
+
 #### Span Near Query with Array-Style DSL
 The `span_near` query finds spans within a specified distance. This implementation supports both traditional clause addition and array-style syntax.
 
@@ -285,6 +315,156 @@ val complexQuery = query {
 See tests: 
 - [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
 - [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
+- [SpanNearQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNearQueryTest.kt)
+
+#### Advanced Combinations
+Span queries can be nested and combined freely. Common patterns include:
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 1) span_near + span_or nesting
+val nearOr = query {
+    spanNearQuery {
+        clauses[
+            spanOrQuery(clauses = listOf(
+                spanTermQuery("title", "elasticsearch"),
+                spanTermQuery("title", "kotlin")
+            )),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 3
+        inOrder = false
+    }
+}
+
+// 2) span_not with pre/post to exclude close terms
+val notClose = query {
+    spanNotQuery {
+        include {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 2
+            )
+        }
+        exclude { spanTermQuery("body", "rotten") }
+        pre = 0
+        post = 1
+        _name = "exclude_rotten"
+    }
+}
+
+// 3) span_field_masking to combine differently analyzed fields
+val masked = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("text", "quick"),
+            spanFieldMaskingQuery(
+                query = spanTermQuery("text.stems", "fox"),
+                field = "text"
+            )
+        ]
+        slop = 4
+    }
+}
+
+// 4) span_multi to wrap multi-term queries (range/prefix/etc)
+val withRange = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanMultiQuery(match = rangeQuery("publish_date", gte = "2024-01-01"))
+        ]
+        slop = 5
+    }
+}
+```
+
+#### Span Or Query
+The `span_or` query matches if any of the provided span clauses match.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val orQuery = spanOrQuery(
+    clauses = listOf(
+        spanTermQuery("title", "kotlin"),
+        spanTermQuery("title", "dsl"),
+        spanNearQuery(
+            clauses = listOf(
+                spanTermQuery("title", "structured"),
+                spanTermQuery("title", "concurrency")
+            ),
+            slop = 1
+        )
+    ),
+    _name = "span_or_example"
+)
+
+// DSL-style
+val orDsl = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        _name = "span_or_dsl"
+    }
+}
+```
+
+Note: Non-span queries are filtered automatically. If no valid clauses remain, the DSL behaves as a no-op.
+
+See tests: [SpanOrQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanOrQueryTest.kt)
+
+#### Span Within Query
+The `span_within` query matches when the little span is entirely contained within the big span.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val within = spanWithinQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "within_green"
+)
+
+// DSL-style
+val withinDsl = query {
+    spanWithinQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1
+            )
+        }
+        _name = "within_dsl"
+    }
+}
+```
+
+Note: Both `little` and `big` must be valid span queries; if either is missing or non-span, the DSL behaves as a no-op.
+
+See tests: [SpanWithinQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanWithinQueryTest.kt)
 
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
@@ -398,6 +578,193 @@ Span Near Query (span_near)
 - Individual: `clause(spanTermQuery("field", "value"))`
 - Both patterns automatically filter non-span queries
 
+Span Or Query (span_or)
+
+| Option | Type | Notes |
+|---|---|---|
+| `clauses` | Array/List | Span-only; non-span inputs are filtered |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span Within Query (span_within)
+
+| Option | Type | Notes |
+|---|---|---|
+| `little` | SpanQuery | Required. The inner (contained) span |
+| `big` | SpanQuery | Required. The outer (containing) span |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span Not Query (span_not)
+
+| Option | Type | Notes |
+|---|---|---|
+| `include` | SpanQuery | Required. The included span query |
+| `exclude` | SpanQuery | Required. The excluded span query |
+| `pre` | Int | >= 0. Max tokens allowed before include |
+| `post` | Int | >= 0. Max tokens allowed after include |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+See tests: [SpanNotQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNotQueryTest.kt)
+
+Span Term Query (span_term)
+
+| Option | Type | Notes |
+|---|---|---|
+| `field` | String | Required. Target field |
+| `value` | String | Required. Term value (non-blank) |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span Containing Query (span_containing)
+
+| Option | Type | Notes |
+|---|---|---|
+| `little` | SpanQuery | Required. The inner (contained) span |
+| `big` | SpanQuery | Required. The outer (containing) span |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span First Query (span_first)
+
+| Option | Type | Notes |
+|---|---|---|
+| `match` | SpanQuery | Required. The span to match |
+| `end` | Int | Required. Upper bound position from start |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+**Combining examples**
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// span_term + span_near
+val near = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 2
+        inOrder = true
+    }
+}
+
+// span_term + span_or
+val orQ = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "coroutines")
+        ]
+    }
+}
+```
+
 ## Contributing
 
 Contributions are welcome. Please read the contributor guide in [AGENTS.md](AGENTS.md) for project structure, coding style, testing, and PR conventions.
+#### Span Containing Query
+The `span_containing` query matches when the big span fully contains the little span.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val containing = spanContainingQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "containing_green"
+)
+
+// DSL-style
+val containingDsl = query {
+    spanContainingQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1,
+                inOrder = true
+            )
+        }
+        _name = "containing_dsl"
+    }
+}
+```
+
+See tests:
+- [SpanContainingDslTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanContainingDslTest.kt)
+- [SpanQueriesTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanQueriesTest.kt)
+
+#### Span First Query
+The `span_first` query matches when the span occurs before a specified position (`end`) in the field.
+
+```kotlin
+// Function-style
+val first = spanFirstQuery {
+    match = spanTermQuery("user.id", "kimchy")
+    end = 3
+    boost = 1.2f
+    _name = "first_query"
+}
+
+// DSL-style extension
+val firstDsl = query {
+    spanFirstQueryDsl {
+        match { spanTermQuery("user.id", "kimchy") }
+        end = 3
+        boost = 1.2f
+        _name = "first_dsl"
+    }
+}
+```
+
+See tests:
+- [SpanFirstQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFirstQueryTest.kt)
+- [SpanFirstDslTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFirstDslTest.kt)
+#### Span Multi Query
+The `span_multi` query wraps a multi-term query (prefix, wildcard, regexp, fuzzy, range) as a span so it can be combined with other span queries.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
+
+// Function-style
+val sm = spanMultiQuery(
+    match = rangeQuery(
+        field = "publish_date",
+        gte = "2023-01-01"
+    ),
+    boost = 1.1f,
+    _name = "range-as-span"
+)
+
+// DSL-style
+val smDsl = query {
+    spanMultiQuery {
+        match { rangeQuery("publish_date", gte = "2023-01-01") }
+        boost = 2.0f
+        _name = "dsl-range-span"
+    }
+}
+```
+
+Note: Only multi-term queries are allowed for `match` (prefix|wildcard|regexp|fuzzy|range). Others are ignored (no-op).
+
+See tests: [SpanMultiQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanMultiQueryTest.kt)
