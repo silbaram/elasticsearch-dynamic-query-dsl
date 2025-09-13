@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.SpanQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanTermQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanFieldMaskingQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanNotQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanFirstQuery as EsSpanFirstQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiTermQuery
 import co.elastic.clients.util.ObjectBuilder
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
@@ -232,6 +233,103 @@ fun spanOrQuery(
     _name?.let { builder.queryName(it) }
 
     return builder.build()._toQuery()
+}
+
+/**
+ * Span Containing Query DSL 클래스
+ * query { spanContainingQuery { ... } } 형태로 사용 가능
+ */
+class SpanContainingQueryDsl {
+    internal val littleBuilders = SubQueryBuilders()
+    internal val bigBuilders = SubQueryBuilders()
+    var boost: Float? = null
+    var _name: String? = null
+
+    fun little(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) sub.addQuery(result)
+        littleBuilders.addAll(sub)
+    }
+
+    fun big(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) sub.addQuery(result)
+        bigBuilders.addAll(sub)
+    }
+}
+
+/**
+ * Query.Builder를 위한 spanContainingQuery DSL 확장 함수
+ */
+fun Query.Builder.spanContainingQuery(fn: SpanContainingQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanContainingQueryDsl().apply(fn)
+
+    val little = when (dsl.littleBuilders.size()) {
+        0 -> null
+        1 -> { var r: Query? = null; dsl.littleBuilders.forEach { r = it }; r }
+        else -> null
+    }
+    val big = when (dsl.bigBuilders.size()) {
+        0 -> null
+        1 -> { var r: Query? = null; dsl.bigBuilders.forEach { r = it }; r }
+        else -> null
+    }
+    val littleSpan = little?.toSpanQuery()
+    val bigSpan = big?.toSpanQuery()
+    if (littleSpan == null || bigSpan == null) return this
+
+    return this.spanContaining { sc ->
+        sc.little(littleSpan)
+        sc.big(bigSpan)
+        dsl.boost?.let { sc.boost(it) }
+        dsl._name?.let { sc.queryName(it) }
+        sc
+    }
+}
+
+/**
+ * Span First Query DSL 클래스
+ * query { spanFirstQuery { ... } } 형태로 사용 가능
+ */
+class SpanFirstQueryDsl {
+    internal val matchBuilders = SubQueryBuilders()
+    var match: Query? = null
+    var end: Int? = null
+    var boost: Float? = null
+    var _name: String? = null
+
+    fun match(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) sub.addQuery(result)
+        matchBuilders.addAll(sub)
+    }
+}
+
+/**
+ * Query.Builder를 위한 spanFirstQuery DSL 확장 함수
+ */
+fun Query.Builder.spanFirstQueryDsl(fn: SpanFirstQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanFirstQueryDsl().apply(fn)
+
+    val matchFromBuilders = when (dsl.matchBuilders.size()) {
+        0 -> null
+        1 -> { var r: Query? = null; dsl.matchBuilders.forEach { r = it }; r }
+        else -> null
+    }
+    val matchQuery = matchFromBuilders ?: dsl.match
+    val span = matchQuery?.toSpanQuery() ?: return this
+    val end = dsl.end ?: return this
+
+    return this.spanFirst { sf ->
+        sf.match(span)
+        sf.end(end)
+        dsl.boost?.let { sf.boost(it) }
+        dsl._name?.let { sf.queryName(it) }
+        sf
+    }
 }
 
 /**
