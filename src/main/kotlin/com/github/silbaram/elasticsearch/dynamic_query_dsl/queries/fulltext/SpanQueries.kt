@@ -6,7 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.SpanNearQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanTermQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanFieldMaskingQuery
-import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiTermQuery
 import co.elastic.clients.util.ObjectBuilder
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
 
@@ -118,7 +118,7 @@ fun spanMultiQuery(
     }
     if (!isMultiTerm) return null
 
-    val builder = SpanMultiQuery.Builder()
+    val builder = SpanMultiTermQuery.Builder()
         .match(m)
 
     boost?.let { builder.boost(it) }
