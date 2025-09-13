@@ -2,10 +2,13 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanContainingQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanWithinQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanOrQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanNearQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanTermQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanFieldMaskingQuery
+import co.elastic.clients.elasticsearch._types.query_dsl.SpanNotQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiTermQuery
 import co.elastic.clients.util.ObjectBuilder
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
@@ -147,6 +150,78 @@ fun spanContainingQuery(
         .little(littleSpan)
         .big(bigSpan)
 
+    boost?.let { builder.boost(it) }
+    _name?.let { builder.queryName(it) }
+
+    return builder.build()._toQuery()
+}
+
+/**
+ * Build a span_within top-level Query from two Query inputs.
+ * The inputs must be variants of span queries.
+ * Returns null when either input is null or not a valid span query.
+ */
+fun spanWithinQuery(
+    little: Query?,
+    big: Query?,
+    boost: Float? = null,
+    _name: String? = null
+): Query? {
+    val littleSpan = little?.toSpanQuery()
+    val bigSpan = big?.toSpanQuery()
+
+    if (littleSpan == null || bigSpan == null) return null
+
+    val builder = SpanWithinQuery.Builder()
+        .little(littleSpan)
+        .big(bigSpan)
+
+    boost?.let { builder.boost(it) }
+    _name?.let { builder.queryName(it) }
+
+    return builder.build()._toQuery()
+}
+
+/**
+ * Build a span_or as Query
+ */
+fun spanOrQuery(
+    clauses: List<Query?>?,
+    boost: Float? = null,
+    _name: String? = null
+): Query? {
+    val validClauses = clauses?.mapNotNull { it?.toSpanQuery() }.orEmpty()
+    if (validClauses.isEmpty()) return null
+
+    val builder = SpanOrQuery.Builder()
+        .clauses(validClauses)
+
+    boost?.let { builder.boost(it) }
+    _name?.let { builder.queryName(it) }
+
+    return builder.build()._toQuery()
+}
+
+/**
+ * Build a span_not as Query
+ */
+fun spanNotQuery(
+    include: Query?,
+    exclude: Query?,
+    pre: Int? = null,
+    post: Int? = null,
+    boost: Float? = null,
+    _name: String? = null
+): Query? {
+    val inc = include?.toSpanQuery() ?: return null
+    val exc = exclude?.toSpanQuery() ?: return null
+
+    val builder = SpanNotQuery.Builder()
+        .include(inc)
+        .exclude(exc)
+
+    pre?.takeIf { it >= 0 }?.let { builder.pre(it) }
+    post?.takeIf { it >= 0 }?.let { builder.post(it) }
     boost?.let { builder.boost(it) }
     _name?.let { builder.queryName(it) }
 
@@ -364,5 +439,182 @@ fun Query.Builder.spanNearQuery(fn: SpanNearQueryDsl.() -> Unit): ObjectBuilder<
         dsl.boost?.let { snq.boost(it) }
         dsl._name?.let { snq.queryName(it) }
         snq
+    }
+}
+
+/**
+ * Span Or Query DSL 클래스
+ * query { spanOrQuery { ... } } 형태로 사용 가능
+ */
+class SpanOrQueryDsl {
+    private val clauseBuilders = mutableListOf<Query?>()
+    var boost: Float? = null
+    var _name: String? = null
+
+    val clauses = ClausesArrayHelper(clauseBuilders)
+
+    fun clause(query: Query?) {
+        query?.let { clauseBuilders.add(it) }
+    }
+
+    internal fun getClauses(): List<Query?> = clauseBuilders.toList()
+}
+
+/**
+ * Query.Builder를 위한 spanOrQuery DSL 확장 함수
+ */
+fun Query.Builder.spanOrQuery(fn: SpanOrQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanOrQueryDsl().apply(fn)
+    val clauses = dsl.getClauses()
+    if (clauses.isEmpty()) return this
+
+    val valid = clauses.mapNotNull { it?.toSpanQuery() }
+    if (valid.isEmpty()) return this
+
+    return this.spanOr { soq ->
+        soq.clauses(valid)
+        dsl.boost?.let { soq.boost(it) }
+        dsl._name?.let { soq.queryName(it) }
+        soq
+    }
+}
+
+/**
+ * Span Within Query DSL 클래스
+ * query { spanWithinQuery { ... } } 형태로 사용 가능
+ */
+class SpanWithinQueryDsl {
+    internal val littleBuilders = SubQueryBuilders()
+    internal val bigBuilders = SubQueryBuilders()
+    var boost: Float? = null
+    var _name: String? = null
+
+    fun little(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) {
+            sub.addQuery(result)
+        }
+        littleBuilders.addAll(sub)
+    }
+
+    fun big(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) {
+            sub.addQuery(result)
+        }
+        bigBuilders.addAll(sub)
+    }
+}
+
+/**
+ * Query.Builder를 위한 spanWithinQuery DSL 확장 함수
+ */
+fun Query.Builder.spanWithinQuery(fn: SpanWithinQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanWithinQueryDsl().apply(fn)
+
+    val little = when (dsl.littleBuilders.size()) {
+        0 -> null
+        1 -> {
+            var result: Query? = null
+            dsl.littleBuilders.forEach { result = it }
+            result
+        }
+        else -> null
+    }
+    val big = when (dsl.bigBuilders.size()) {
+        0 -> null
+        1 -> {
+            var result: Query? = null
+            dsl.bigBuilders.forEach { result = it }
+            result
+        }
+        else -> null
+    }
+
+    val littleSpan = little?.toSpanQuery()
+    val bigSpan = big?.toSpanQuery()
+    if (littleSpan == null || bigSpan == null) return this
+
+    return this.spanWithin { swq ->
+        swq.little(littleSpan)
+        swq.big(bigSpan)
+        dsl.boost?.let { swq.boost(it) }
+        dsl._name?.let { swq.queryName(it) }
+        swq
+    }
+}
+
+/**
+ * Span Not Query DSL 클래스
+ * query { spanNotQuery { ... } } 형태로 사용 가능
+ */
+class SpanNotQueryDsl {
+    internal val includeBuilders = SubQueryBuilders()
+    internal val excludeBuilders = SubQueryBuilders()
+    var pre: Int? = null
+    var post: Int? = null
+    var boost: Float? = null
+    var _name: String? = null
+
+    fun include(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) {
+            sub.addQuery(result)
+        }
+        includeBuilders.addAll(sub)
+    }
+
+    fun exclude(fn: SubQueryBuilders.() -> Any?) {
+        val sub = SubQueryBuilders()
+        val result = sub.fn()
+        if (sub.size() == 0 && result is Query) {
+            sub.addQuery(result)
+        }
+        excludeBuilders.addAll(sub)
+    }
+}
+
+/**
+ * Query.Builder를 위한 spanNotQuery DSL 확장 함수
+ * query { spanNotQuery { ... } } 형태로 사용 가능
+ */
+fun Query.Builder.spanNotQuery(fn: SpanNotQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanNotQueryDsl().apply(fn)
+
+    val includeQuery = when (dsl.includeBuilders.size()) {
+        0 -> null
+        1 -> {
+            var result: Query? = null
+            dsl.includeBuilders.forEach { result = it }
+            result
+        }
+        else -> null // 단일만 허용
+    }
+
+    val excludeQuery = when (dsl.excludeBuilders.size()) {
+        0 -> null
+        1 -> {
+            var result: Query? = null
+            dsl.excludeBuilders.forEach { result = it }
+            result
+        }
+        else -> null // 단일만 허용
+    }
+
+    val inc = includeQuery?.toSpanQuery()
+    val exc = excludeQuery?.toSpanQuery()
+    if (inc == null || exc == null) return this // no-op
+
+    return this.spanNot { sn ->
+        sn.include(inc)
+        sn.exclude(exc)
+        dsl.pre?.takeIf { it >= 0 }?.let { sn.pre(it) }
+        dsl.post?.takeIf { it >= 0 }?.let { sn.post(it) }
+        dsl.boost?.let { sn.boost(it) }
+        dsl._name?.let { sn.queryName(it) }
+        sn
     }
 }

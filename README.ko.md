@@ -272,6 +272,88 @@ val complexQuery = query {
 - [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
 - [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
 
+#### 스팬 Or 쿼리 (Span Or Query)
+`span_or` 쿼리는 하나 이상의 스팬 절 중 임의의 하나라도 매칭되면 참으로 평가합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val orQuery = spanOrQuery(
+    clauses = listOf(
+        spanTermQuery("title", "kotlin"),
+        spanTermQuery("title", "dsl"),
+        spanNearQuery(
+            clauses = listOf(
+                spanTermQuery("title", "structured"),
+                spanTermQuery("title", "concurrency")
+            ),
+            slop = 1
+        )
+    ),
+    _name = "span_or_example"
+)
+
+// 블록 DSL
+val orDsl = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        _name = "span_or_dsl"
+    }
+}
+```
+
+메모: 비‑스팬 쿼리는 자동 제외됩니다. 유효 절이 없으면 DSL은 no‑op로 동작합니다.
+
+테스트: [SpanOrQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanOrQueryTest.kt)
+
+#### 스팬 Within 쿼리 (Span Within Query)
+`span_within` 쿼리는 작은 스팬(little)이 큰 스팬(big)의 범위 안에 완전히 포함될 때 매칭됩니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val within = spanWithinQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "within_green"
+)
+
+// 블록 DSL
+val withinDsl = query {
+    spanWithinQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1
+            )
+        }
+        _name = "within_dsl"
+    }
+}
+```
+
+메모: `little`/`big`는 모두 스팬 쿼리여야 하며, 누락/비‑스팬 입력 시 DSL은 no‑op로 동작합니다.
+
+테스트: [SpanWithinQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanWithinQueryTest.kt)
+
 - Combined fields
 ```kotlin
 import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
@@ -396,6 +478,36 @@ Simple query string
 - 배열 스타일: `clauses[spanTermQuery("field", "value"), ...]`
 - 개별 추가: `clause(spanTermQuery("field", "value"))`
 - 두 패턴 모두 비-스팬 쿼리는 자동 필터링
+
+스팬 Or 쿼리 (span_or)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `clauses` | 배열/리스트 | 스팬 쿼리만 허용, 비-스팬은 자동 제외 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Within 쿼리 (span_within)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `little` | SpanQuery | 필수. 작은 스팬(완전히 포함되어야 함) |
+| `big` | SpanQuery | 필수. 큰 스팬(포함 영역) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Not 쿼리 (span_not)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `include` | SpanQuery | 필수. 포함 대상 스팬 쿼리 |
+| `exclude` | SpanQuery | 필수. 제외 대상 스팬 쿼리 |
+| `pre` | Int | 0 이상. 앞쪽 인접 허용 거리 |
+| `post` | Int | 0 이상. 뒤쪽 인접 허용 거리 |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+테스트: [SpanNotQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNotQueryTest.kt)
 
 ## 기여하기
 

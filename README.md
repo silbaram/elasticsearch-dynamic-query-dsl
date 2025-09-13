@@ -286,6 +286,88 @@ See tests:
 - [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
 - [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
 
+#### Span Or Query
+The `span_or` query matches if any of the provided span clauses match.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val orQuery = spanOrQuery(
+    clauses = listOf(
+        spanTermQuery("title", "kotlin"),
+        spanTermQuery("title", "dsl"),
+        spanNearQuery(
+            clauses = listOf(
+                spanTermQuery("title", "structured"),
+                spanTermQuery("title", "concurrency")
+            ),
+            slop = 1
+        )
+    ),
+    _name = "span_or_example"
+)
+
+// DSL-style
+val orDsl = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        _name = "span_or_dsl"
+    }
+}
+```
+
+Note: Non-span queries are filtered automatically. If no valid clauses remain, the DSL behaves as a no-op.
+
+See tests: [SpanOrQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanOrQueryTest.kt)
+
+#### Span Within Query
+The `span_within` query matches when the little span is entirely contained within the big span.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// Function-style
+val within = spanWithinQuery(
+    little = spanTermQuery("body", "green"),
+    big = spanNearQuery(
+        clauses = listOf(
+            spanTermQuery("body", "green"),
+            spanTermQuery("body", "apple")
+        ),
+        slop = 2,
+        inOrder = true
+    ),
+    _name = "within_green"
+)
+
+// DSL-style
+val withinDsl = query {
+    spanWithinQuery {
+        little { spanTermQuery("body", "green") }
+        big {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 1
+            )
+        }
+        _name = "within_dsl"
+    }
+}
+```
+
+Note: Both `little` and `big` must be valid span queries; if either is missing or non-span, the DSL behaves as a no-op.
+
+See tests: [SpanWithinQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanWithinQueryTest.kt)
+
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
 
@@ -397,6 +479,36 @@ Span Near Query (span_near)
 - Array-style: `clauses[spanTermQuery("field", "value"), ...]`
 - Individual: `clause(spanTermQuery("field", "value"))`
 - Both patterns automatically filter non-span queries
+
+Span Or Query (span_or)
+
+| Option | Type | Notes |
+|---|---|---|
+| `clauses` | Array/List | Span-only; non-span inputs are filtered |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span Within Query (span_within)
+
+| Option | Type | Notes |
+|---|---|---|
+| `little` | SpanQuery | Required. The inner (contained) span |
+| `big` | SpanQuery | Required. The outer (containing) span |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+Span Not Query (span_not)
+
+| Option | Type | Notes |
+|---|---|---|
+| `include` | SpanQuery | Required. The included span query |
+| `exclude` | SpanQuery | Required. The excluded span query |
+| `pre` | Int | >= 0. Max tokens allowed before include |
+| `post` | Int | >= 0. Max tokens allowed after include |
+| `boost` | Float | Query boost factor |
+| `_name` | String | Query name for debugging |
+
+See tests: [SpanNotQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNotQueryTest.kt)
 
 ## Contributing
 
