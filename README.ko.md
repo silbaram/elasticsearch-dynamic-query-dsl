@@ -186,6 +186,34 @@ val q = query {
 
 **동적 제외**: 잘못된 입력(null 쿼리, 빈 필드)에 대해 `null`을 반환하여 최종 DSL 출력에서 자동으로 필터링됩니다.
 
+#### 스팬 Term 쿼리 (Span Term Query)
+`span_term` 쿼리는 단일 용어의 위치 정보를 이용해 스팬 컨테이너와 조합 가능한 기본 스팬 절을 생성합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 함수형 사용법
+val termQ = spanTermQuery(
+    field = "title",
+    value = "kotlin",
+    boost = 1.2f,
+    _name = "term_kotlin"
+)
+
+// 블록 DSL
+val termDsl = query {
+    spanTermQuery {
+        field = "title"
+        value = "kotlin"
+        boost = 1.2f
+        _name = "term_kotlin"
+    }
+}
+```
+
+메모: `field` 또는 `value`가 비어있으면 생략(no-op)됩니다.
+
 #### 배열 스타일 DSL을 지원하는 스팬 Near 쿼리
 `span_near` 쿼리는 지정된 거리 내에서 스팬을 찾습니다. 이 구현은 전통적인 절 추가 방식과 배열 스타일 구문을 모두 지원합니다.
 
@@ -271,6 +299,73 @@ val complexQuery = query {
 테스트: 
 - [SpanFieldMaskingQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingQueryTest.kt)
 - [SpanFieldMaskingParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanFieldMaskingParityTest.kt)
+
+#### 고급 조합 예제
+스팬 쿼리는 서로 자유롭게 중첩/조합할 수 있습니다. 아래는 자주 쓰는 패턴입니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// 1) span_near + span_or 중첩
+val nearOr = query {
+    spanNearQuery {
+        clauses[
+            spanOrQuery(clauses = listOf(
+                spanTermQuery("title", "elasticsearch"),
+                spanTermQuery("title", "kotlin")
+            )),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 3
+        inOrder = false
+    }
+}
+
+// 2) span_not(pre/post)으로 근접 배제
+val notClose = query {
+    spanNotQuery {
+        include {
+            spanNearQuery(
+                clauses = listOf(
+                    spanTermQuery("body", "green"),
+                    spanTermQuery("body", "apple")
+                ),
+                slop = 2
+            )
+        }
+        exclude { spanTermQuery("body", "rotten") }
+        pre = 0
+        post = 1
+        _name = "exclude_rotten"
+    }
+}
+
+// 3) span_field_masking으로 다른 분석 필드 조합
+val masked = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("text", "quick"),
+            spanFieldMaskingQuery(
+                query = spanTermQuery("text.stems", "fox"),
+                field = "text"
+            )
+        ]
+        slop = 4
+    }
+}
+
+// 4) span_multi(range/prefix 등 멀티텀을 스팬으로 래핑)
+val withRange = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanMultiQuery(match = rangeQuery("publish_date", gte = "2024-01-01"))
+        ]
+        slop = 5
+    }
+}
+```
 
 #### 스팬 Or 쿼리 (Span Or Query)
 `span_or` 쿼리는 하나 이상의 스팬 절 중 임의의 하나라도 매칭되면 참으로 평가합니다.
@@ -506,6 +601,44 @@ Simple query string
 | `post` | Int | 0 이상. 뒤쪽 인접 허용 거리 |
 | `boost` | Float | 쿼리 부스트 팩터 |
 | `_name` | String | 디버깅용 쿼리 이름 |
+
+스팬 Term 쿼리 (span_term)
+
+| 옵션 | 타입 | 비고 |
+|---|---|---|
+| `field` | String | 필수. 대상 필드 |
+| `value` | String | 필수. 검색어(공백/널 불가) |
+| `boost` | Float | 쿼리 부스트 팩터 |
+| `_name` | String | 디버깅용 쿼리 이름 |
+
+**조합 예시**
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.*
+
+// span_term + span_near 조합
+val near = query {
+    spanNearQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "dsl")
+        ]
+        slop = 2
+        inOrder = true
+    }
+}
+
+// span_term + span_or 조합
+val orQ = query {
+    spanOrQuery {
+        clauses[
+            spanTermQuery("title", "kotlin"),
+            spanTermQuery("title", "coroutines")
+        ]
+    }
+}
+```
 
 테스트: [SpanNotQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SpanNotQueryTest.kt)
 

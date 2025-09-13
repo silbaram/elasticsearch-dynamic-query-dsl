@@ -56,6 +56,38 @@ fun spanTermQuery(
 }
 
 /**
+ * Span Term Query DSL 클래스
+ * query { spanTermQuery { ... } } 형태로 사용 가능
+ */
+class SpanTermQueryDsl {
+    var field: String? = null
+    var value: String? = null
+    var boost: Float? = null
+    var _name: String? = null
+}
+
+/**
+ * Query.Builder를 위한 spanTermQuery DSL 확장 함수
+ */
+fun Query.Builder.spanTermQuery(fn: SpanTermQueryDsl.() -> Unit): ObjectBuilder<Query> {
+    val dsl = SpanTermQueryDsl().apply(fn)
+    val field = dsl.field?.takeIf { it.isNotBlank() }
+    val value = dsl.value?.takeIf { it.isNotBlank() }
+
+    return if (field != null && value != null) {
+        this.spanTerm { st ->
+            st.field(field)
+            st.value(value)
+            dsl.boost?.let { st.boost(it) }
+            dsl._name?.let { st.queryName(it) }
+            st
+        }
+    } else {
+        this // no-op when invalid inputs
+    }
+}
+
+/**
  * Build a span_near as Query
  */
 fun spanNearQuery(
