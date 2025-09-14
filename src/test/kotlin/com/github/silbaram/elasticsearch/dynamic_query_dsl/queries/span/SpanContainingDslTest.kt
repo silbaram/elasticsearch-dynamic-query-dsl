@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
@@ -29,4 +29,3 @@ class SpanContainingDslTest : FunSpec({
         q.spanContaining().big().isSpanNear shouldBe true
     }
 })
-

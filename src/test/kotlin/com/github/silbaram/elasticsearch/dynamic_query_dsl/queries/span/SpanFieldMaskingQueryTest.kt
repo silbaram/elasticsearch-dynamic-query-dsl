@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.matchAllQuery
@@ -168,4 +168,3 @@ class SpanFieldMaskingQueryTest : FunSpec({
         sfm.query().isSpanTerm shouldBe true
     }
 })
-

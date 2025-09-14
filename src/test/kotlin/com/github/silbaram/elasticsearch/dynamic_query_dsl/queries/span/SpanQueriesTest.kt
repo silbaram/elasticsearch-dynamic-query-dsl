@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
@@ -93,4 +93,3 @@ class SpanQueriesTest : FunSpec({
         bool.must()[1].spanContaining().queryName() shouldBe "my_span_containing"
     }
 })
-
