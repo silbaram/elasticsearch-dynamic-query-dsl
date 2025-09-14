@@ -473,6 +473,48 @@ combinedFields(
 - Kibana 유사: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
 - Decay: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
 
+## Distance Feature
+`distance_feature` 쿼리는 날짜/위치 기준점에 가까울수록 점수를 높여줍니다(필터링 X, 점수만 영향). 일반적으로 `bool` 조합 내에서 사용합니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized.*
+
+// DSL (date origin)
+val byRecency = query {
+  distanceFeatureQuery {
+    field = "production_date"
+    origin = "now"
+    pivot = "7d"
+    boost = 1.2f
+    _name = "date-recency-boost"
+  }
+}
+
+// DSL (geo origin)
+val byProximity = query {
+  distanceFeatureQuery {
+    field = "location"
+    origin(52.376, 4.894) // 위도, 경도
+    pivot = "2km"
+    _name = "geo-proximity"
+  }
+}
+```
+
+옵션
+- field: date 또는 geo_point 필드
+- origin: 날짜 문자열(예: `"now"`, `"2024-01-01"`) 또는 `origin(lat, lon)`으로 좌표 지정
+- pivot: date 필드는 기간(예: `"7d"`), geo 필드는 거리(예: `"2km"`)
+- boost: 선택 점수 가중치
+- _name: 선택 쿼리 이름
+
+메모
+- null/blank 입력은 생략되며, 유효하지 않은 입력은 no-op/null 처리됩니다.
+- 점수에만 영향하므로 필터링은 다른 쿼리와 조합해서 사용하세요.
+
+테스트: [DistanceFeatureQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/specialized/DistanceFeatureQueryTest.kt)
+
 ## 프로젝트 구조
 - `src/main/kotlin`: DSL 및 쿼리 빌더
 - `src/test/kotlin`: Kotest 스펙(JUnit 5)

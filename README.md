@@ -667,6 +667,48 @@ val orQ = query {
 ## Contributing
 
 Contributions are welcome. Please read the contributor guide in [AGENTS.md](AGENTS.md) for project structure, coding style, testing, and PR conventions.
+
+### Distance Feature Query
+The `distance_feature` query boosts documents based on proximity to a date or geo origin. It affects score only and is commonly combined inside `bool` queries.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized.*
+
+// DSL-style (date origin)
+val byRecency = query {
+  distanceFeatureQuery {
+    field = "production_date"
+    origin = "now"
+    pivot = "7d"
+    boost = 1.2f
+    _name = "date-recency-boost"
+  }
+}
+
+// DSL-style (geo origin)
+val byProximity = query {
+  distanceFeatureQuery {
+    field = "location"
+    origin(52.376, 4.894) // lat, lon
+    pivot = "2km"
+    _name = "geo-proximity"
+  }
+}
+```
+
+Options
+- field: date or geo_point field
+- origin: date string (e.g., `"now"`, `"2024-01-01"`) or geo coordinates via `origin(lat, lon)`
+- pivot: time (e.g., `"7d"`) for date fields, distance (e.g., `"2km"`) for geo fields
+- boost: optional score factor
+- _name: optional query name
+
+Notes
+- Null/blank inputs are omitted; invalid inputs result in no-op/null
+- Scoring only; combine with other queries for filtering
+
+See tests: [DistanceFeatureQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/specialized/DistanceFeatureQueryTest.kt)
 #### Span Containing Query
 The `span_containing` query matches when the big span fully contains the little span.
 
