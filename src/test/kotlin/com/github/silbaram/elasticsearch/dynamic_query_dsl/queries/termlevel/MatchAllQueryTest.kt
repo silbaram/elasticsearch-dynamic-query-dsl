@@ -12,7 +12,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchAllQuery()
+                    query { matchAllDsl() }
                 }
             }
         }
@@ -24,7 +24,7 @@ class MatchAllQueryTest: FunSpec ({
     }
 
     test("match_all 쿼리를 단독으로 생성할 수 있어야함") {
-        val matchQuery = matchAllQuery()
+        val matchQuery = query { matchAllDsl() }
         
         matchQuery.isMatchAll shouldBe true
     }
@@ -33,7 +33,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchAllQuery(boost = 2.0F)
+                    query { matchAllDsl { boost = 2.0F } }
                 }
             }
         }
@@ -50,7 +50,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchAllQuery(_name = "match_all_named")
+                    query { matchAllDsl { _name = "match_all_named" } }
                 }
             }
         }
@@ -67,7 +67,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchAllQuery(boost = 1.5F, _name = "boosted_match_all")
+                    query { matchAllDsl { boost = 1.5F; _name = "boosted_match_all" } }
                 }
             }
         }
@@ -86,8 +86,8 @@ class MatchAllQueryTest: FunSpec ({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchAllQuery(boost = 1.2F),
-                        termQuery(field = "category", value = "tech")
+                        query { matchAllDsl { boost = 1.2F } },
+                        query { termQuery { field = "category"; value = "tech" } }
                     ]
                 }
             }
@@ -102,13 +102,13 @@ class MatchAllQueryTest: FunSpec ({
     }
 
     test("match_all 쿼리 JSON 직렬화가 올바르게 되어야함") {
-        val query = matchAllQuery()
+        val query = query { matchAllDsl() }
         
         // 기본 match_all 쿼리는 빈 객체를 가져야 함
         query.isMatchAll shouldBe true
         
         // boost가 있는 경우도 테스트
-        val queryWithBoost = matchAllQuery(boost = 1.5F, _name = "test_match_all")
+        val queryWithBoost = query { matchAllDsl { boost = 1.5F; _name = "test_match_all" } }
         queryWithBoost.isMatchAll shouldBe true
         queryWithBoost.matchAll().boost() shouldBe 1.5F
         queryWithBoost.matchAll().queryName() shouldBe "test_match_all"

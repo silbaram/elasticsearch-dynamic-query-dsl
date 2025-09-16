@@ -34,30 +34,3 @@ fun Query.Builder.matchPhrase(
         b
     }
 }
-
-fun matchPhraseQuery(
-    field: String,
-    query: String?,
-    analyzer: String? = null,
-    slop: Int? = null,
-    zeroTermsQuery: ZeroTermsQuery? = null,
-    boost: Float? = null,
-    _name: String? = null
-): Query? {
-    return if (query.isNullOrEmpty()) {
-        null
-    } else {
-        val builder = MatchPhraseQuery.Builder()
-            .field(field)
-            .query(query)
-
-        analyzer?.let { builder.analyzer(it) }
-        slop?.let { builder.slop(it) }
-        zeroTermsQuery?.let { builder.zeroTermsQuery(it) }
-        boost?.let { builder.boost(it) }
-        _name?.let { builder.queryName(it) }
-
-        builder.build()._toQuery()
-    }
-}
-

@@ -1,4 +1,5 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.matchQuery
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
@@ -9,8 +10,8 @@ class SpanNearQueryTest : FunSpec({
     test("span_near: inOrder 미설정 시 기본 false") {
         val q = query {
             spanNearQuery {
-                clause(spanTermQuery("title", "kotlin"))
-                clause(spanTermQuery("title", "dsl"))
+                clause(query { spanTermQuery { field = "title"; value = "kotlin" } })
+                clause(query { spanTermQuery { field = "title"; value = "dsl" } })
                 slop = 2
                 // inOrder 미설정
             }
@@ -42,9 +43,9 @@ class SpanNearQueryTest : FunSpec({
             spanNearQuery {
                 slop = 1
                 clauses[
-                    spanTermQuery("title", "kotlin"),
+                    query { spanTermQuery { field = "title"; value = "kotlin" } },
                     // 비-span 쿼리 (matchQuery)는 자동 필터링되어 제외됨
-                    matchQuery("title", "dsl")
+                    com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query { matchQuery { field = "title"; query = "dsl" } }
                 ]
             }
         }
@@ -59,7 +60,7 @@ class SpanNearQueryTest : FunSpec({
         val q = query {
             spanNearQuery {
                 slop = 0
-                clause(spanTermQuery("title", "single"))
+                clause(query { spanTermQuery { field = "title"; value = "single" } })
             }
         }
 
@@ -71,19 +72,21 @@ class SpanNearQueryTest : FunSpec({
     }
 
     test("span_near: 중첩 span_near 허용") {
-        val inner = spanNearQuery(
-            clauses = listOf(
-                spanTermQuery("title", "structured"),
-                spanTermQuery("title", "concurrency")
-            ),
-            slop = 2
-        )
+        val inner = query {
+            spanNearQuery {
+                slop = 2
+                clauses[
+                    query { spanTermQuery { field = "title"; value = "structured" } },
+                    query { spanTermQuery { field = "title"; value = "concurrency" } }
+                ]
+            }
+        }
 
         val q = query {
             spanNearQuery {
                 slop = 5
                 clauses[
-                    spanTermQuery("title", "kotlin"),
+                    query { spanTermQuery { field = "title"; value = "kotlin" } },
                     inner
                 ]
             }

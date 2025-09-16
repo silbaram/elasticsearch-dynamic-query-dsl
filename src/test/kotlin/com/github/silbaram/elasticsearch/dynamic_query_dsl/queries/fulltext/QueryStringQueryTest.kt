@@ -3,6 +3,7 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -36,9 +37,9 @@ class QueryStringQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        queryStringQuery("kotlin* AND \"structured query\"", listOf("title", "body")),
-                        queryStringQuery(null),
-                        queryStringQuery("")
+                        { queryString(query = "kotlin* AND \"structured query\"", fields = listOf("title", "body")) },
+                        { queryString(query = null) },
+                        { queryString(query = "") }
                     ]
                 }
             }

@@ -1,7 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
 
 import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
-import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.util.ObjectBuilder
 
@@ -30,29 +29,5 @@ fun Query.Builder.combinedFields(
         boost?.let { b.boost(it) }
         _name?.let { b.queryName(it) }
         b
-    }
-}
-
-fun combinedFieldsQuery(
-    query: String?,
-    fields: List<String>,
-    operator: CombinedFieldsOperator? = null,
-    minimumShouldMatch: String? = null,
-    autoGenerateSynonymsPhraseQuery: Boolean? = null,
-    boost: Float? = null,
-    _name: String? = null
-): Query? {
-    return if (query.isNullOrEmpty() || fields.isEmpty()) {
-        null
-    } else {
-        val b = CombinedFieldsQuery.Builder()
-            .query(query)
-            .fields(fields)
-        operator?.let { b.operator(it) }
-        minimumShouldMatch?.let { b.minimumShouldMatch(it) }
-        autoGenerateSynonymsPhraseQuery?.let { b.autoGenerateSynonymsPhraseQuery(it) }
-        boost?.let { b.boost(it) }
-        _name?.let { b.queryName(it) }
-        b.build()._toQuery()
     }
 }

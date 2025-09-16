@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.rangeQuery
@@ -9,19 +9,16 @@ import io.kotest.matchers.shouldNotBe
 class SpanMultiQueryTest : FunSpec({
 
     test("span_multi: range 쿼리를 match로 래핑") {
-        val match = rangeQuery(
-            field = "publish_date",
-            gte = "2023-01-01"
-        )
-
-        val q = spanMultiQuery(
-            match = match,
-            boost = 1.1f,
-            _name = "range-as-span"
-        )
+        val q = query {
+            spanMultiQuery {
+                match { rangeQuery { field = "publish_date"; gte = "2023-01-01" } }
+                boost = 1.1f
+                _name = "range-as-span"
+            }
+        }
 
         q shouldNotBe null
-        q!!.isSpanMulti shouldBe true
+        q.isSpanMulti shouldBe true
 
         val sm = q.spanMulti()
         sm.boost() shouldBe 1.1f
@@ -35,10 +32,8 @@ class SpanMultiQueryTest : FunSpec({
         val near = query {
             spanNearQuery {
                 clauses[
-                    spanTermQuery("title", "elasticsearch"),
-                    spanMultiQuery(
-                        match = rangeQuery("publish_date", gte = "2023-01-01")
-                    )
+                    { spanTermQuery { field = "title"; value = "elasticsearch" } },
+                    { spanMultiQuery { match { rangeQuery { field = "publish_date"; gte = "2023-01-01" } } } }
                 ]
                 slop = 3
                 inOrder = true
@@ -57,7 +52,7 @@ class SpanMultiQueryTest : FunSpec({
         // 정상 DSL
         val q = query {
             spanMultiQuery {
-                match { rangeQuery("publish_date", gte = "2023-01-01") }
+                match { rangeQuery { field = "publish_date"; gte = "2023-01-01" } }
                 boost = 2.0f
                 _name = "dsl-range-span"
             }
@@ -81,7 +76,7 @@ class SpanMultiQueryTest : FunSpec({
         // 멀티텀이 아닌 match 사용 → no-op (fallback 사용)
         val q3 = query {
             spanMultiQuery {
-                match { spanTermQuery("title", "x") }
+                match { query { spanTermQuery { field = "title"; value = "x" } } }
             }
             matchAll { it } // fallback
         }
@@ -89,11 +84,10 @@ class SpanMultiQueryTest : FunSpec({
     }
 
     test("spanMultiQuery(match = null) 또는 비-멀티텀은 null 반환") {
-        val nullMatch = spanMultiQuery(match = null)
+        val nullMatch = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { spanMultiQuery { /* no match */ } }
         nullMatch shouldBe null
 
-        val nonMulti = spanMultiQuery(match = spanTermQuery("f", "v"))
+        val nonMulti = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { spanMultiQuery { match { query { spanTermQuery { field = "f"; value = "v" } } } } }
         nonMulti shouldBe null
     }
 })
-

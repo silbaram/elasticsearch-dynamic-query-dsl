@@ -2,8 +2,8 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
 
 import co.elastic.clients.elasticsearch._types.query_dsl.CombinedFieldsOperator
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -30,10 +30,10 @@ class CombinedFieldsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        combinedFieldsQuery("kotlin coroutine", listOf("title", "desc")),
-                        combinedFieldsQuery(null, listOf("title")),
-                        combinedFieldsQuery("", listOf("title")),
-                        combinedFieldsQuery("text", emptyList())
+                        { combinedFields(query = "kotlin coroutine", fields = listOf("title", "desc")) },
+                        { combinedFields(query = null, fields = listOf("title")) },
+                        { combinedFields(query = "", fields = listOf("title")) },
+                        { combinedFields(query = "text", fields = emptyList()) }
                     ]
                 }
             }
@@ -50,7 +50,7 @@ class CombinedFieldsQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    combinedFieldsQuery(
+                    combinedFields(
                         query = "john smith",
                         fields = listOf("first_name", "last_name"),
                         operator = CombinedFieldsOperator.And,

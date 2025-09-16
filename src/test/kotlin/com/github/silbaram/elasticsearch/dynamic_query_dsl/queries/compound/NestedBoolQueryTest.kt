@@ -2,7 +2,7 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
@@ -17,8 +17,8 @@ class NestedBoolQueryTest : FunSpec({
                     boolQuery {
                         shouldQuery {
                             queries[
-                                termQuery(field = "tags", value = "kotlin"),
-                                termQuery(field = "tags", value = "dsl")
+                                { termQuery { field = "tags"; value = "kotlin" } },
+                                { termQuery { field = "tags"; value = "dsl" } }
                             ]
                         }
                     }
@@ -41,7 +41,7 @@ class NestedBoolQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     boolQuery {
-                        mustQuery { termQuery(field = "status", value = "active") }
+                        mustQuery { termQuery { field = "status"; value = "active" } }
                     }
                 }
             }
@@ -62,8 +62,8 @@ class NestedBoolQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        boolQuery { shouldQuery { termQuery("field1", "A") } },
-                        boolQuery { mustQuery { termQuery("field2", "B") } }
+                        boolQuery { shouldQuery { termQuery { field = "field1"; value = "A" } } },
+                        boolQuery { mustQuery { termQuery { field = "field2"; value = "B" } } }
                     ]
                 }
             }

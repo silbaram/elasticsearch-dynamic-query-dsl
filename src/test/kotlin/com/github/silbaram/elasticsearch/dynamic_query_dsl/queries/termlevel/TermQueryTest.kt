@@ -5,7 +5,8 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustNotQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -17,14 +18,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = "1111"
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = "2222"
-                        )
+                        { termQuery { field = "a"; value = "1111" } },
+                        { termQuery { field = "b"; value = "2222" } }
                     ]
                 }
             }
@@ -43,18 +38,9 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = null
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "c",
-                            value = "3333"
-                        )
+                        { termQuery { field = "a"; value = null } },
+                        { termQuery { field = "b"; value = "" } },
+                        { termQuery { field = "c"; value = "3333" } }
                     ]
                 }
             }
@@ -73,14 +59,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = null
-                        )
+                        { termQuery { field = "a"; value = "" } },
+                        { termQuery { field = "b"; value = null } }
                     ]
                 }
             }
@@ -96,14 +76,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = "1111"
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = "2222"
-                        )
+                        { termQuery { field = "a"; value = "1111" } },
+                        { termQuery { field = "b"; value = "2222" } }
                     ]
                 }
             }
@@ -121,18 +95,9 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = null
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "c",
-                            value = "3333"
-                        )
+                        { termQuery { field = "a"; value = null } },
+                        { termQuery { field = "b"; value = "" } },
+                        { termQuery { field = "c"; value = "3333" } }
                     ]
                 }
             }
@@ -151,14 +116,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = null
-                        )
+                        { termQuery { field = "a"; value = "" } },
+                        { termQuery { field = "b"; value = null } }
                     ]
                 }
             }
@@ -174,14 +133,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = "1111"
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = "2222"
-                        )
+                        query { termQuery { field = "a"; value = "1111" } },
+                        query { termQuery { field = "b"; value = "2222" } }
                     ]
                 }
             }
@@ -199,18 +152,9 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = null
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "c",
-                            value = "3333"
-                        )
+                        queryOrNull { termQuery { field = "a"; value = null } },
+                        queryOrNull { termQuery { field = "b"; value = "" } },
+                        query { termQuery { field = "c"; value = "3333" } }
                     ]
                 }
             }
@@ -229,14 +173,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = null
-                        )
+                        queryOrNull { termQuery { field = "a"; value = "" } },
+                        queryOrNull { termQuery { field = "b"; value = null } }
                     ]
                 }
             }
@@ -252,14 +190,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = "1111"
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = "2222"
-                        )
+                        query { termQuery { field = "a"; value = "1111" } },
+                        query { termQuery { field = "b"; value = "2222" } }
                     ]
                 }
             }
@@ -277,18 +209,9 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = null
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "c",
-                            value = "3333"
-                        )
+                        queryOrNull { termQuery { field = "a"; value = null } },
+                        queryOrNull { termQuery { field = "b"; value = "" } },
+                        query { termQuery { field = "c"; value = "3333" } }
                     ]
                 }
             }
@@ -307,14 +230,8 @@ class TermQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termQuery(
-                            field = "a",
-                            value = ""
-                        ),
-                        termQuery(
-                            field = "b",
-                            value = null
-                        )
+                        queryOrNull { termQuery { field = "a"; value = "" } },
+                        queryOrNull { termQuery { field = "b"; value = null } }
                     ]
                 }
             }
@@ -329,11 +246,7 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    termQuery(
-                        field = "a",
-                        value = "1111",
-                        boost = 2.0F
-                    )
+                    query { termQuery { field = "a"; value = "1111"; boost = 2.0F } }
                 }
             }
         }
@@ -349,11 +262,7 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    termQuery(
-                        field = "a",
-                        value = "1111",
-                        _name = "named"
-                    )
+                    query { termQuery { field = "a"; value = "1111"; _name = "named" } }
                 }
             }
         }

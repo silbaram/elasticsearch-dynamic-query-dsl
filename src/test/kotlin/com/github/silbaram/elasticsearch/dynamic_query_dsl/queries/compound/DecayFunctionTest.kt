@@ -1,7 +1,7 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -10,7 +10,7 @@ class DecayFunctionTest : FunSpec({
     test("gauss decay 함수가 field에 매핑되어야 한다") {
         val query = query {
             functionScoreQuery {
-                query { termQuery("status", "active") }
+                query { termQuery { field = "status"; value = "active" } }
                 function {
                     gaussDecayQuery(
                         field = "date",
@@ -32,7 +32,7 @@ class DecayFunctionTest : FunSpec({
     test("exp/linear decay 함수도 동일하게 동작해야 한다") {
         val query = query {
             functionScoreQuery {
-                query { termQuery("status", "active") }
+                query { termQuery { field = "status"; value = "active" } }
                 function { expDecayQuery(field = "date", origin = "now", scale = "14d") }
                 function { linearDecayQuery(field = "distance", origin = "0km", scale = "10km") }
             }

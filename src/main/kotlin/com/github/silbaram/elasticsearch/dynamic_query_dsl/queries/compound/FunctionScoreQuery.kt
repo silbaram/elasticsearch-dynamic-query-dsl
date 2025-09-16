@@ -8,6 +8,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifie
 import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorScoreFunction
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptScoreFunction
 import co.elastic.clients.elasticsearch._types.query_dsl.RandomScoreFunction
+import co.elastic.clients.elasticsearch._types.query_dsl.DecayFunction
+import co.elastic.clients.elasticsearch._types.query_dsl.DecayPlacement
  
 import co.elastic.clients.elasticsearch._types.Script
 import co.elastic.clients.json.JsonData
@@ -79,6 +81,8 @@ class FunctionScoreBuilder {
     private var fieldValueFactor: (() -> co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorScoreFunction)? = null
     private var scriptScore: (() -> co.elastic.clients.elasticsearch._types.query_dsl.ScriptScoreFunction)? = null
     private var randomScore: (() -> co.elastic.clients.elasticsearch._types.query_dsl.RandomScoreFunction)? = null
+    private var decayKind: String? = null // one of: gauss|exp|linear
+    private var decaySupplier: (() -> co.elastic.clients.elasticsearch._types.query_dsl.DecayFunction)? = null
     
     
     fun filter(query: Query) {
@@ -147,6 +151,9 @@ class FunctionScoreBuilder {
         offset: String? = null,
         decay: Double? = null
     ) {
+        if (field.isBlank()) return
+        this.decayKind = "gauss"
+        this.decaySupplier = { buildDecayFunction(field, origin, scale, offset, decay) }
         if (this.weight == null) this.weight(1.0)
     }
 
@@ -157,6 +164,9 @@ class FunctionScoreBuilder {
         offset: String? = null,
         decay: Double? = null
     ) {
+        if (field.isBlank()) return
+        this.decayKind = "exp"
+        this.decaySupplier = { buildDecayFunction(field, origin, scale, offset, decay) }
         if (this.weight == null) this.weight(1.0)
     }
 
@@ -167,12 +177,37 @@ class FunctionScoreBuilder {
         offset: String? = null,
         decay: Double? = null
     ) {
+        if (field.isBlank()) return
+        this.decayKind = "linear"
+        this.decaySupplier = { buildDecayFunction(field, origin, scale, offset, decay) }
         if (this.weight == null) this.weight(1.0)
+    }
+    
+    private fun buildDecayFunction(
+        field: String,
+        origin: String?,
+        scale: String?,
+        offset: String?,
+        decay: Double?
+    ): DecayFunction {
+        return DecayFunction.of { d ->
+            d.field(field)
+                .placement(
+                    DecayPlacement.of { p ->
+                        origin?.let { p.origin(JsonData.of(it)) }
+                        scale?.let { p.scale(JsonData.of(it)) }
+                        offset?.let { p.offset(JsonData.of(it)) }
+                        decay?.let { p.decay(it) }
+                        p
+                    }
+                )
+            d
+        }
     }
     
     fun build(): co.elastic.clients.elasticsearch._types.query_dsl.FunctionScore? {
         // 어떤 스코어링 함수도 설정되지 않았으면 null 반환
-        if (weight == null && fieldValueFactor == null && scriptScore == null && randomScore == null) {
+        if (weight == null && fieldValueFactor == null && scriptScore == null && randomScore == null && decaySupplier == null) {
             return null
         }
         
@@ -182,8 +217,15 @@ class FunctionScoreBuilder {
             fieldValueFactor?.invoke()?.let { f.fieldValueFactor(it) }
             scriptScore?.invoke()?.let { f.scriptScore(it) }
             randomScore?.invoke()?.let { f.randomScore(it) }
-            
-            // decay 함수들은 별도 매핑이 필요하며 클라이언트 버전에 따라 지원 차이가 있어 추후 확장 예정
+            // decay 함수 매핑
+            decaySupplier?.invoke()?.let { decay ->
+                when (decayKind) {
+                    "gauss" -> f.gauss(decay)
+                    "exp" -> f.exp(decay)
+                    "linear" -> f.linear(decay)
+                    else -> {}
+                }
+            }
             
             f
         }
@@ -353,7 +395,8 @@ fun FunctionScoreBuilder.weightQuery(weight: Double) {
 }
 
 // 별칭: Kibana 명명과 동일한 함수명 제공
-fun FunctionScoreBuilder.weight(weight: Double) = weightQuery(weight)
+// 기존 확장 함수는 빌더의 멤버와 시그니처가 충돌하여 섀도잉 경고를 유발함.
+// 별칭 호출이 필요한 경우에는 weightQuery(...)를 사용하세요.
 
 // --- Decay Functions DSL ---
 // TODO: Decay 함수들은 추후 구현

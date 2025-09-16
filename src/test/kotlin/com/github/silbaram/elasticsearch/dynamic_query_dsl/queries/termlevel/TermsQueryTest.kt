@@ -5,8 +5,9 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.filterQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustNotQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termsQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -18,20 +19,14 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = listOf("3333", "4444")
-                        )
+                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
                     ]
                 }
             }
         }
         val mustQuery = query.bool().must()
-
+        println("query: $query")
         query.isBool shouldBe true
         mustQuery.size shouldBe 2
         mustQuery.filter { it.isTerms }.find { it.terms().field() == "a" }!!.terms().terms().value().map { it._get() } shouldContainExactlyInAnyOrder  listOf("1111", "2222")
@@ -43,22 +38,10 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        ),
-                        termsQuery(
-                            field = "c",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "d",
-                            values = listOf(null, "3333")
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } },
+                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
                     ]
                 }
             }
@@ -78,14 +61,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } }
                     ]
                 }
             }
@@ -102,14 +79,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 filterQuery{
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = listOf("3333", "4444")
-                        )
+                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
                     ]
                 }
             }
@@ -127,22 +98,10 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        ),
-                        termsQuery(
-                            field = "c",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "d",
-                            values = listOf(null, "3333")
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } },
+                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
                     ]
                 }
             }
@@ -162,14 +121,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } }
                     ]
                 }
             }
@@ -186,14 +139,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = listOf("3333", "4444")
-                        )
+                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
                     ]
                 }
             }
@@ -211,22 +158,10 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        ),
-                        termsQuery(
-                            field = "c",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "d",
-                            values = listOf(null, "3333")
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } },
+                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
+                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
                     ]
                 }
             }
@@ -246,14 +181,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        )
+                        { termsQuery { field = "a"; values = null } },
+                        { termsQuery { field = "b"; values = emptyList() } }
                     ]
                 }
             }
@@ -269,14 +198,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = listOf("3333", "4444")
-                        )
+                        query { termsQuery { field = "a"; values = listOf("1111", "2222") } },
+                        query { termsQuery { field = "b"; values = listOf("3333", "4444") } }
                     ]
                 }
             }
@@ -294,22 +217,10 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        ),
-                        termsQuery(
-                            field = "c",
-                            values = listOf("1111", "2222")
-                        ),
-                        termsQuery(
-                            field = "d",
-                            values = listOf(null, "3333")
-                        )
+                        queryOrNull { termsQuery { field = "a"; values = null } },
+                        queryOrNull { termsQuery { field = "b"; values = emptyList() } },
+                        query { termsQuery { field = "c"; values = listOf("1111", "2222") } },
+                        query { termsQuery { field = "d"; values = listOf(null, "3333") } }
                     ]
                 }
             }
@@ -329,14 +240,8 @@ class TermsQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        termsQuery(
-                            field = "a",
-                            values = null
-                        ),
-                        termsQuery(
-                            field = "b",
-                            values = emptyList()
-                        )
+                        queryOrNull { termsQuery { field = "a"; values = null } },
+                        queryOrNull { termsQuery { field = "b"; values = emptyList() } }
                     ]
                 }
             }
@@ -351,11 +256,7 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222"),
-                        boost = 2.5F
-                    )
+                    query { termsQuery { field = "a"; values = listOf("1111", "2222"); boost = 2.5F } }
                 }
             }
         }
@@ -371,11 +272,7 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    termsQuery(
-                        field = "a",
-                        values = listOf("1111", "2222"),
-                        _name = "named"
-                    )
+                    query { termsQuery { field = "a"; values = listOf("1111", "2222"); _name = "named" } }
                 }
             }
         }

@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.ZeroTermsQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -32,10 +33,10 @@ class MultiMatchPhraseQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        multiMatchPhraseQuery("kotlin coroutine", listOf("title", "desc")),
-                        multiMatchPhraseQuery(null, listOf("title")),
-                        multiMatchPhraseQuery("", listOf("title")),
-                        multiMatchPhraseQuery("text", emptyList())
+                        { multiMatchPhrase(query = "kotlin coroutine", fields = listOf("title", "desc")) },
+                        { multiMatchPhrase(query = null, fields = listOf("title")) },
+                        { multiMatchPhrase(query = "", fields = listOf("title")) },
+                        { multiMatchPhrase(query = "text", fields = emptyList()) }
                     ]
                 }
             }
@@ -53,7 +54,7 @@ class MultiMatchPhraseQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    multiMatchPhraseQuery(
+                    multiMatchPhrase(
                         query = "quick brown fox",
                         fields = listOf("title^2", "body"),
                         analyzer = "standard",

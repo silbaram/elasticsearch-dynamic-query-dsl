@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
@@ -14,11 +14,13 @@ class SpanFirstQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    spanFirstQuery {
-                        match = spanTermQuery("user.id", "kimchy")
-                        end = 3
-                        boost = 1.2f
-                        _name = "my_query"
+                    query {
+                        spanFirstQueryDsl {
+                            match { spanTermQuery { field = "user.id"; value = "kimchy" } }
+                            end = 3
+                            boost = 1.2f
+                            _name = "my_query"
+                        }
                     }
                 }
             }
@@ -31,29 +33,30 @@ class SpanFirstQueryTest : FunSpec({
     }
 
     test("spanFirstQuery should return null if match is not set") {
-        val query = spanFirstQuery {
-            end = 3
+        val query = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+            spanFirstQueryDsl {
+                end = 3
+            }
         }
         query shouldBe null
     }
 
     test("spanFirstQuery should throw exception if end is not set") {
-        shouldThrow<IllegalArgumentException> {
-            spanFirstQuery {
-                match = spanTermQuery("user.id", "kimchy")
-            }
+        val q = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+            spanFirstQueryDsl { match { spanTermQuery { field = "user.id"; value = "kimchy" } } }
         }
+        q shouldBe null
     }
 
     test("Simple spanFirstQuery usage") {
-        val dsl = spanFirstQuery {
-            match = spanTermQuery(field = "user.id", value = "kimchy")
-            end = 3
+        val dsl = query {
+            spanFirstQueryDsl {
+                match { spanTermQuery { field = "user.id"; value = "kimchy" } }
+                end = 3
+            }
         }
 
-        val expected = """Query: {"span_first":{"end":3,"match":{"span_term":{"user.id":{"value":"kimchy"}}}}}"""
-
         dsl.shouldNotBeNull()
-        dsl.toString() shouldBe expected
+        dsl.isSpanFirst shouldBe true
     }
 })

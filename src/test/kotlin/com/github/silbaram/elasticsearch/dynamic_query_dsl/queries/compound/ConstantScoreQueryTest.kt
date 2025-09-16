@@ -6,8 +6,9 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.integrations.constantScoreQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.constantScoreQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -19,7 +20,7 @@ class ConstantScoreQueryTest : FunSpec({
         val query = query {
             constantScoreQuery {
                 filterQuery {
-                    termQuery(field = "brand", value = "Samsung")
+                    termQuery { field = "brand"; value = "Samsung" }
                 }
                 boost = 10.0f
                 _name = "named"
@@ -39,17 +40,17 @@ class ConstantScoreQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     constantScoreQuery {
-                        filterQuery { termQuery(field = "brand", value = "Samsung") }
+                        filterQuery { termQuery { field = "brand"; value = "Samsung" } }
                     }
                 }
                 filterQuery {
                     constantScoreQuery {
-                        filterQuery { termQuery(field = "category", value = "Electronics") }
+                        filterQuery { termQuery { field = "category"; value = "Electronics" } }
                     }
                 }
                 mustNotQuery {
                     constantScoreQuery {
-                        filterQuery { termQuery(field = "status", value = "inactive") }
+                        filterQuery { termQuery { field = "status"; value = "inactive" } }
                     }
                 }
             }
@@ -68,7 +69,7 @@ class ConstantScoreQueryTest : FunSpec({
             query {
                 constantScoreQuery {
                     filterQuery {
-                        termQuery(field = "brand", value = null)
+                        termQuery { field = "brand"; value = null }
                     }
                 }
             }
@@ -81,7 +82,7 @@ class ConstantScoreQueryTest : FunSpec({
                 mustQuery {
                     constantScoreQuery {
                         filterQuery {
-                            termQuery(field = "brand", value = null)
+                            termQuery { field = "brand"; value = null }
                         }
                     }
                 }
@@ -98,8 +99,8 @@ class ConstantScoreQueryTest : FunSpec({
                     constantScoreQuery {
                         filterQuery {
                             queries[
-                                termQuery(field = "brand", value = "Samsung"),
-                                termQuery(field = "category", value = "Electronics")
+                                { termQuery { field = "brand"; value = "Samsung" } },
+                                { termQuery { field = "category"; value = "Electronics" } }
                             ]
                         }
                     }
@@ -120,12 +121,12 @@ class ConstantScoreQueryTest : FunSpec({
                 filterQuery {
                     boolQuery {
                         mustQuery {
-                            termQuery("field1", "value1")
+                                termQuery { field = "field1"; value = "value1" }
                         }
                         shouldQuery {
                             queries[
-                                termQuery("field2", "value2"),
-                                termQuery("field3", "value3")
+                                { termQuery { field = "field2"; value = "value2" } },
+                                { termQuery { field = "field3"; value = "value3" } }
                             ]
                         }.minimumShouldMatch("1")
                     }
@@ -152,12 +153,12 @@ class ConstantScoreQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    termQuery("content", "search")
+                    termQuery { field = "content"; value = "search" }
                 }
                 shouldQuery {
                     constantScoreQuery {
                         filterQuery {
-                            termQuery("featured", "text")
+                            termQuery { field = "featured"; value = "text" }
                         }
                         boost = 1.5f
                     }

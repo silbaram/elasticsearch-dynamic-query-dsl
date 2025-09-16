@@ -1,4 +1,4 @@
-package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext
+package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanContainingQuery
@@ -13,6 +13,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.SpanFirstQuery as EsSpa
 import co.elastic.clients.elasticsearch._types.query_dsl.SpanMultiTermQuery
 import co.elastic.clients.util.ObjectBuilder
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 
 /**
  * Converts a generic Query object to a specific SpanQuery object, if it is a span query variant.
@@ -38,6 +39,16 @@ private fun Query.toSpanQuery(): SpanQuery? {
 /**
  * Build a span_term as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanTermQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanTermQuery { /* field=..., value=... */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanTermQuery"
+        ]
+    )
+)
 fun spanTermQuery(
     field: String,
     value: String?,
@@ -91,6 +102,16 @@ fun Query.Builder.spanTermQuery(fn: SpanTermQueryDsl.() -> Unit): ObjectBuilder<
 /**
  * Build a span_near as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanNearQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanNearQuery { /* slop=..., clauses[...] */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanNearQuery"
+        ]
+    )
+)
 fun spanNearQuery(
     clauses: List<Query?>?,
     slop: Int,
@@ -115,6 +136,16 @@ fun spanNearQuery(
 /**
  * Build a span_field_masking as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanFieldMaskingQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanFieldMaskingQuery { /* query{...}; field=... */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanFieldMaskingQuery"
+        ]
+    )
+)
 fun spanFieldMaskingQuery(
     query: Query?,
     field: String?,
@@ -137,6 +168,16 @@ fun spanFieldMaskingQuery(
 /**
  * Build a span_multi as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanMultiQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanMultiQuery { /* match{...} */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanMultiQuery"
+        ]
+    )
+)
 fun spanMultiQuery(
     match: Query?,
     boost: Float? = null,
@@ -168,6 +209,16 @@ fun spanMultiQuery(
  * The inputs must be variants of span queries.
  * Returns null when either input is null or not a valid span query.
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanContainingQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanContainingQuery { /* little{...}; big{...} */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanContainingQuery"
+        ]
+    )
+)
 fun spanContainingQuery(
     little: Query?,
     big: Query?,
@@ -194,6 +245,16 @@ fun spanContainingQuery(
  * The inputs must be variants of span queries.
  * Returns null when either input is null or not a valid span query.
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanWithinQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanWithinQuery { /* little{...}; big{...} */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanWithinQuery"
+        ]
+    )
+)
 fun spanWithinQuery(
     little: Query?,
     big: Query?,
@@ -218,6 +279,16 @@ fun spanWithinQuery(
 /**
  * Build a span_or as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanOrQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanOrQuery { /* clauses[...] */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanOrQuery"
+        ]
+    )
+)
 fun spanOrQuery(
     clauses: List<Query?>?,
     boost: Float? = null,
@@ -335,6 +406,16 @@ fun Query.Builder.spanFirstQueryDsl(fn: SpanFirstQueryDsl.() -> Unit): ObjectBui
 /**
  * Build a span_not as Query
  */
+@Deprecated(
+    message = "함수형 빌더는 deprecated입니다. DSL을 사용하세요: query { spanNotQuery { ... } }",
+    replaceWith = ReplaceWith(
+        expression = "query { spanNotQuery { /* include{...}; exclude{...} */ } }",
+        imports = [
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query",
+            "com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.spanNotQuery"
+        ]
+    )
+)
 fun spanNotQuery(
     include: Query?,
     exclude: Query?,
@@ -391,12 +472,18 @@ class SpanFieldMaskingQueryDsl {
             else -> return null // span_field_masking은 단일 쿼리만 지원
         }
 
-        return spanFieldMaskingQuery(
-            query = spanQuery,
-            field = field,
-            boost = boost,
-            _name = _name
-        )
+        // Deprecated 함수 호출 대신 직접 빌더 사용
+        val span = spanQuery?.toSpanQuery() ?: return null
+        val targetField = field?.takeIf { it.isNotBlank() } ?: return null
+
+        val builder = SpanFieldMaskingQuery.Builder()
+            .query(span)
+            .field(targetField)
+
+        boost?.let { builder.boost(it) }
+        _name?.let { builder.queryName(it) }
+
+        return builder.build()._toQuery()
     }
 }
 
@@ -466,11 +553,25 @@ class SpanMultiQueryDsl {
             else -> return null // span_multi는 단일 match만 지원
         }
 
-        return spanMultiQuery(
-            match = match,
-            boost = boost,
-            _name = _name
-        )
+        // Deprecated 함수 호출 대신 직접 빌더 사용 (멀티텀만 허용)
+        val m = match ?: return null
+        val isMultiTerm = when (m._kind()) {
+            Query.Kind.Prefix,
+            Query.Kind.Wildcard,
+            Query.Kind.Regexp,
+            Query.Kind.Fuzzy,
+            Query.Kind.Range -> true
+            else -> false
+        }
+        if (!isMultiTerm) return null
+
+        val builder = SpanMultiTermQuery.Builder()
+            .match(m)
+
+        boost?.let { builder.boost(it) }
+        _name?.let { builder.queryName(it) }
+
+        return builder.build()._toQuery()
     }
 }
 
@@ -518,6 +619,12 @@ class ClausesArrayHelper(private val clauseBuilders: MutableList<Query?>) {
     operator fun get(vararg queries: Query?): Unit {
         clauseBuilders.clear()
         queries.filterNotNull().forEach { clauseBuilders.add(it) }
+    }
+
+    // Support builder lambdas inside clauses[ { ... }, { ... } ]
+    operator fun get(vararg builders: Query.Builder.() -> Unit) {
+        clauseBuilders.clear()
+        builders.forEach { b -> clauseBuilders.add(queryOrNull(b)) }
     }
 }
 

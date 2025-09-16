@@ -43,39 +43,3 @@ fun Query.Builder.matchBoolPrefix(
         b
     }
 }
-
-fun matchBoolPrefixQuery(
-    field: String,
-    query: String?,
-    analyzer: String? = null,
-    operator: Operator? = null,
-    minimumShouldMatch: String? = null,
-    fuzziness: String? = null,
-    prefixLength: Int? = null,
-    maxExpansions: Int? = null,
-    fuzzyTranspositions: Boolean? = null,
-    fuzzyRewrite: String? = null,
-    boost: Float? = null,
-    _name: String? = null
-): Query? {
-    return if (query.isNullOrEmpty()) {
-        null
-    } else {
-        val builder = MatchBoolPrefixQuery.Builder()
-            .field(field)
-            .query(query)
-
-        analyzer?.let { builder.analyzer(it) }
-        operator?.let { builder.operator(it) }
-        minimumShouldMatch?.let { builder.minimumShouldMatch(it) }
-        fuzziness?.let { builder.fuzziness(it) }
-        prefixLength?.let { builder.prefixLength(it) }
-        maxExpansions?.let { builder.maxExpansions(it) }
-        fuzzyTranspositions?.let { builder.fuzzyTranspositions(it) }
-        fuzzyRewrite?.let { builder.fuzzyRewrite(it) }
-        boost?.let { builder.boost(it) }
-        _name?.let { builder.queryName(it) }
-
-        builder.build()._toQuery()
-    }
-}

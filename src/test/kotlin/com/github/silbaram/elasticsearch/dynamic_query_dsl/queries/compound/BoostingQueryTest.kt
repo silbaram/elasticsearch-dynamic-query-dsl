@@ -1,6 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound
 
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boostingQuery
 import io.kotest.core.spec.style.FunSpec
@@ -12,21 +12,15 @@ class BoostingQueryTest : FunSpec({
         val boostingQuery = query {
             boostingQuery {
                 positive {
-                    termQuery(
-                        field = "field1",
-                        value = "value1"
-                    )
+                    termQuery { field = "field1"; value = "value1" }
                 }
                 negative {
-                    termQuery(
-                        field = "field2",
-                        value = "value2"
-                    )
+                    termQuery { field = "field2"; value = "value2" }
                 }
                 negativeBoost = 0.2
             }
         }
-
+        println("boostingQuery = $boostingQuery")
         boostingQuery.isBoosting shouldBe true
         boostingQuery.boosting().positive().isTerm shouldBe true
         boostingQuery.boosting().positive().term().field() shouldBe "field1"
@@ -43,24 +37,11 @@ class BoostingQueryTest : FunSpec({
         val boostingQuery = query {
             boostingQuery {
                 positive {
-                    queries[
-                        termQuery(
-                            field = "field1",
-                            value = "value1"
-                        ),
-                        termQuery(
-                            field = "field1-2",
-                            value = "value1-2"
-                        )
-                    ]
+                    termQuery { field = "field1"; value = "value1" }
+                    termQuery { field = "field1-2"; value = "value1-2" }
                 }
                 negative {
-                    queries[
-                        termQuery(
-                            field = "field2",
-                            value = "value2"
-                        )
-                    ]
+                    termQuery { field = "field2"; value = "value2" }
                 }
                 negativeBoost = 0.2
             }
