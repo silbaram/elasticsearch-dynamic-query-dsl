@@ -34,30 +34,3 @@ fun Query.Builder.matchPhrasePrefix(
         b
     }
 }
-
-fun matchPhrasePrefixQuery(
-    field: String,
-    query: String?,
-    analyzer: String? = null,
-    slop: Int? = null,
-    zeroTermsQuery: ZeroTermsQuery? = null,
-    maxExpansions: Int? = null,
-    boost: Float? = null,
-    _name: String? = null
-): Query? {
-    return if (query.isNullOrEmpty()) {
-        null
-    } else {
-        val b = MatchPhrasePrefixQuery.Builder()
-            .field(field)
-            .query(query)
-        analyzer?.let { b.analyzer(it) }
-        slop?.let { b.slop(it) }
-        zeroTermsQuery?.let { b.zeroTermsQuery(it) }
-        maxExpansions?.let { b.maxExpansions(it) }
-        boost?.let { b.boost(it) }
-        _name?.let { b.queryName(it) }
-        b.build()._toQuery()
-    }
-}
-

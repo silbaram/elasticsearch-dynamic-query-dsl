@@ -7,6 +7,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -17,9 +18,9 @@ class MatchPhraseQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchPhraseQuery("message", "this is a test"),
-                        matchPhraseQuery("skip_null", null),
-                        matchPhraseQuery("skip_blank", "")
+                        query { matchPhrase(field = "message", query = "this is a test") },
+                        queryOrNull { matchPhrase(field = "skip_null", query = null) },
+                        queryOrNull { matchPhrase(field = "skip_blank", query = "") }
                     ]
                 }
             }
@@ -36,15 +37,9 @@ class MatchPhraseQueryTest : FunSpec({
     test("filter/mustNot/should 에서도 match_phrase 쿼리 동작") {
         val query = query {
             boolQuery {
-                filterQuery {
-                    queries[ matchPhraseQuery("f", "alpha beta") ]
-                }
-                mustNotQuery {
-                    queries[ matchPhraseQuery("mn", "gamma delta") ]
-                }
-                shouldQuery {
-                    queries[ matchPhraseQuery("s", "quick brown fox") ]
-                }
+                filterQuery { queries[ { matchPhrase(field = "f", query = "alpha beta") } ] }
+                mustNotQuery { queries[ { matchPhrase(field = "mn", query = "gamma delta") } ] }
+                shouldQuery { queries[ { matchPhrase(field = "s", query = "quick brown fox") } ] }
             }
         }
 
@@ -62,7 +57,8 @@ class MatchPhraseQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchPhraseQuery(
+                    query {
+                        matchPhrase(
                         field = "title",
                         query = "quick brown fox",
                         analyzer = "standard",
@@ -70,7 +66,8 @@ class MatchPhraseQueryTest : FunSpec({
                         zeroTermsQuery = ZeroTermsQuery.All,
                         boost = 1.5F,
                         _name = "phrase_query"
-                    )
+                        )
+                    }
                 }
             }
         }

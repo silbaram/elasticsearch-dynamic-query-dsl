@@ -1,7 +1,6 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.matchAllQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -12,9 +11,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
         val q =
             query {
                 spanFieldMaskingQuery {
-                    query {
-                        spanTermQuery("text.stems", "fox")
-                    }
+                    query { spanTermQuery { field = "text.stems"; value = "fox" } }
                     field = "text"
                     boost = 2.0f
                     _name = "mask-fox"
@@ -39,9 +36,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
         val nullInnerResult =
             query {
                 spanFieldMaskingQuery {
-                    query {
-                        spanTermQuery("text.stems", null)
-                    }
+                    query { spanTermQuery { field = "text.stems"; value = null } }
                     field = "text"
                 }
                 matchAll { it } // fallback
@@ -52,9 +47,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
         val blankFieldResult =
             query {
                 spanFieldMaskingQuery {
-                    query {
-                        spanTermQuery("text.stems", "fox")
-                    }
+                    query { spanTermQuery { field = "text.stems"; value = "fox" } }
                     field = " " // blank field
                 }
                 matchAll { it } // fallback
@@ -79,11 +72,8 @@ class SpanFieldMaskingQueryTest : FunSpec({
                 spanNearQuery {
                     // Array-style DSL - clauses[query1, query2, ...] 형태로 사용
                     clauses[
-                        spanTermQuery("text", "quick"),
-                        spanFieldMaskingQuery(
-                            query = spanTermQuery("text.stems", "fox"),
-                            field = "text"
-                        )
+                        query { spanTermQuery { field = "text"; value = "quick" } },
+                        query { spanFieldMaskingQuery { query { spanTermQuery { field = "text.stems"; value = "fox" } }; field = "text" } }
                     ]
                     slop = 5
                     inOrder = false
@@ -106,7 +96,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
     test("query { spanFieldMaskingQuery { ... } }: DSL 형태로 사용") {
         val q = query {
             spanFieldMaskingQuery {
-                query { spanTermQuery("text.stems", "fox") }
+                query { spanTermQuery { field = "text.stems"; value = "fox" } }
                 field = "text"
                 boost = 2.0f
                 _name = "mask-query"
@@ -139,7 +129,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
         // DSL에서 null field 시 no-op 되는지 확인
         val q2 = query {
             spanFieldMaskingQuery {
-                query { spanTermQuery("text.stems", "fox") }
+                query { spanTermQuery { field = "text.stems"; value = "fox" } }
                 field = null // null field
             }
             matchAll { it } // fallback으로 추가
@@ -153,9 +143,7 @@ class SpanFieldMaskingQueryTest : FunSpec({
         val spanMaskingQuery =
             query {
                 spanFieldMaskingQuery {
-                    query {
-                        spanTermQuery("text.stems", "fox")
-                    }
+                    query { spanTermQuery { field = "text.stems"; value = "fox" } }
                     field = "text"
                 }
             }

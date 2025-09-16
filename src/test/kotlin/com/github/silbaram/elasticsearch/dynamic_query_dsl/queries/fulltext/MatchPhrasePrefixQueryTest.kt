@@ -28,10 +28,10 @@ class MatchPhrasePrefixQueryTest : FunSpec({
     test("must/filter/mustNot/should에서 생성/생략 동작") {
         val query = query {
             boolQuery {
-                mustQuery { queries[ matchPhrasePrefixQuery("a", "quick bro") ] }
-                filterQuery { queries[ matchPhrasePrefixQuery("b", "fox ju") ] }
-                mustNotQuery { queries[ matchPhrasePrefixQuery("c", "over th") ] }
-                shouldQuery { queries[ matchPhrasePrefixQuery("d", "lazy do") ] }
+                mustQuery { queries[ { matchPhrasePrefix(field = "a", query = "quick bro") } ] }
+                filterQuery { queries[ { matchPhrasePrefix(field = "b", query = "fox ju") } ] }
+                mustNotQuery { queries[ { matchPhrasePrefix(field = "c", query = "over th") } ] }
+                shouldQuery { queries[ { matchPhrasePrefix(field = "d", query = "lazy do") } ] }
             }
         }
 
@@ -45,7 +45,7 @@ class MatchPhrasePrefixQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchPhrasePrefixQuery(
+                    matchPhrasePrefix(
                         field = "title",
                         query = "kotlin cor",
                         slop = 2,
@@ -57,7 +57,7 @@ class MatchPhrasePrefixQueryTest : FunSpec({
                 }
             }
         }
-
+        println("query = $query")
         val mpp = query.bool().must().first().matchPhrasePrefix()
         mpp.field() shouldBe "title"
         mpp.query() shouldBe "kotlin cor"

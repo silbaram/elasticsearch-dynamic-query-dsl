@@ -30,8 +30,8 @@ class MatchBoolPrefixQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchBoolPrefixQuery(field = "title", query = "quick brow"),
-                        matchBoolPrefixQuery(field = "desc", query = "kotlin dsl")
+                        { matchBoolPrefix(field = "title", query = "quick brow") },
+                        { matchBoolPrefix(field = "desc", query = "kotlin dsl") }
                     ]
                 }
             }
@@ -49,9 +49,9 @@ class MatchBoolPrefixQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchBoolPrefixQuery(field = "a", query = null),
-                        matchBoolPrefixQuery(field = "b", query = ""),
-                        matchBoolPrefixQuery(field = "c", query = "hello w")
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchBoolPrefix(field = "a", query = null) },
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchBoolPrefix(field = "b", query = "") },
+                        query { matchBoolPrefix(field = "c", query = "hello w") }
                     ]
                 }
             }
@@ -67,21 +67,9 @@ class MatchBoolPrefixQueryTest : FunSpec({
     test("filter/mustNot/should 절에서도 동일하게 동작해야함") {
         val query = query {
             boolQuery {
-                filterQuery {
-                    queries[
-                        matchBoolPrefixQuery(field = "a", query = "abc d")
-                    ]
-                }
-                mustNotQuery {
-                    queries[
-                        matchBoolPrefixQuery(field = "b", query = "efg h")
-                    ]
-                }
-                shouldQuery {
-                    queries[
-                        matchBoolPrefixQuery(field = "c", query = "ijk l")
-                    ]
-                }
+                filterQuery { queries[ { matchBoolPrefix(field = "a", query = "abc d") } ] }
+                mustNotQuery { queries[ { matchBoolPrefix(field = "b", query = "efg h") } ] }
+                shouldQuery { queries[ { matchBoolPrefix(field = "c", query = "ijk l") } ] }
             }
         }
 
@@ -102,20 +90,22 @@ class MatchBoolPrefixQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    matchBoolPrefixQuery(
-                        field = "title",
-                        query = "quick brown f",
-                        operator = Operator.And,
-                        minimumShouldMatch = "2",
-                        analyzer = "standard",
-                        fuzziness = "AUTO",
-                        prefixLength = 1,
-                        maxExpansions = 50,
-                        fuzzyTranspositions = true,
-                        fuzzyRewrite = "constant_score",
-                        boost = 1.5F,
-                        _name = "named"
-                    )
+                    query {
+                        matchBoolPrefix(
+                            field = "title",
+                            query = "quick brown f",
+                            operator = Operator.And,
+                            minimumShouldMatch = "2",
+                            analyzer = "standard",
+                            fuzziness = "AUTO",
+                            prefixLength = 1,
+                            maxExpansions = 50,
+                            fuzzyTranspositions = true,
+                            fuzzyRewrite = "constant_score",
+                            boost = 1.5F,
+                            _name = "named"
+                        )
+                    }
                 }
             }
         }

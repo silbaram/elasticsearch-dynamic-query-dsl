@@ -2,9 +2,9 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.existsQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -14,9 +14,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    existsQuery(
-                        field = "a"
-                    )
+                    query { existsQuery { field = "a" } }
                 }
             }
         }
@@ -32,13 +30,8 @@ class ExistsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        existsQuery(
-                            field = null
-                        ),
-                        termQuery(
-                            field = "a",
-                            value = "1111"
-                        )
+                        { existsQuery { field = null } },
+                        { termQuery { field = "a"; value = "1111" } }
                     ]
                 }
             }
@@ -55,10 +48,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    existsQuery(
-                        field = "a",
-                        boost = 2.0F
-                    )
+                    query { existsQuery { field = "a"; boost = 2.0F } }
                 }
             }
         }
@@ -74,10 +64,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    existsQuery(
-                        field = "a",
-                        _name = "named"
-                    )
+                    query { existsQuery { field = "a"; _name = "named" } }
                 }
             }
         }

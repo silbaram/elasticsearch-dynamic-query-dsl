@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.ZeroTermsQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -36,10 +37,10 @@ class MultiMatchQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        multiMatchQuery("kotlin coroutine", listOf("title", "desc")),
-                        multiMatchQuery(null, listOf("title")),
-                        multiMatchQuery("", listOf("title")),
-                        multiMatchQuery("text", emptyList())
+                        { multiMatch(query = "kotlin coroutine", fields = listOf("title", "desc")) },
+                        { multiMatch(query = null, fields = listOf("title")) },
+                        { multiMatch(query = "", fields = listOf("title")) },
+                        { multiMatch(query = "text", fields = emptyList()) }
                     ]
                 }
             }
@@ -56,7 +57,7 @@ class MultiMatchQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    multiMatchQuery(
+                    multiMatch(
                         query = "john smith",
                         fields = listOf("first_name", "last_name"),
                         type = TextQueryType.CrossFields,

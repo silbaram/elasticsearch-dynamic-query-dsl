@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringFlag
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -52,9 +53,9 @@ class SimpleQueryStringQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        simpleQueryStringQuery("kotlin* AND tags:(dsl | search)", listOf("title", "tags")),
-                        simpleQueryStringQuery(null),
-                        simpleQueryStringQuery("")
+                        { simpleQueryString(query = "kotlin* AND tags:(dsl | search)", fields = listOf("title", "tags")) },
+                        { simpleQueryString(query = null) },
+                        { simpleQueryString(query = "") }
                     ]
                 }
             }

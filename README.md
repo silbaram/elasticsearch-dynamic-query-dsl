@@ -29,10 +29,9 @@ val q: Query = query {
   boolQuery {
     mustQuery {
       queries[
-        matchPhraseQuery("message", "this is a test"),
-        matchPhrasePrefixQuery("path", "/api/ad"),
-        multiMatchPhraseQuery("quick brown fox", listOf("title^2", "body")),
-        combinedFields(query = "john smith", fields = listOf("first_name", "last_name"))
+        { matchPhrase(field = "message", query = "this is a test") },
+        { matchPhrasePrefix(field = "path", query = "/api/ad") },
+        { combinedFields(query = "john smith", fields = listOf("first_name", "last_name")) }
       ]
     }
   }
@@ -46,18 +45,23 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 
 val q = query {
   boolQuery {
-    mustQuery { termQuery("user.id", "silbaram") }
-    filterQuery { rangeQuery("age", gte = 20, lt = 30) }
-    shouldQuery { queries[ termQuery("tags", "kotlin"), termQuery("tags", "elasticsearch") ] }
-    mustNotQuery { existsQuery("deleted_at") }
+    mustQuery { termQuery { field = "user.id"; value = "silbaram" } }
+    filterQuery { rangeQuery { field = "age"; gte = 20; lt = 30 } }
+    shouldQuery {
+      queries[
+        { termQuery { field = "tags"; value = "kotlin" } },
+        { termQuery { field = "tags"; value = "elasticsearch" } }
+      ]
+    }
+    mustNotQuery { existsQuery { field = "deleted_at" } }
   }
 }
 ```
 
 - Full‑text (one‑liners)
 ```kotlin
-matchPhraseQuery("title", "exact order", slop = 1)
-matchBoolPrefixQuery(field = "title", query = "quick bro")
+query { matchPhrase(field = "title", query = "exact order", slop = 1) }
+query { matchBoolPrefix(field = "title", query = "quick bro") }
 multiMatchPhraseQuery("kotlin coroutine", listOf("title^2", "description"))
 queryStringQuery("kotlin* AND \"structured query\"", listOf("title","body"))
 simpleQueryStringQuery("kotlin +coroutine | \"structured query\"", listOf("title","body"))
@@ -175,17 +179,13 @@ See tests: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/e
 ### Span Queries
 Elasticsearch span queries enable position-aware text matching. This library provides DSL support for span queries with both function-style and DSL-style syntax.
 
+Note: Function-style span builders are deprecated. Prefer DSL usage like `query { spanNearQuery { ... } }`.
+
 #### Span Field Masking Query
 The `span_field_masking` query allows span queries from different fields to be combined in span-near or span-or queries by "masking" the search field.
 
 ```kotlin
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
-
-// Function-style usage
-val maskingQuery = spanFieldMaskingQuery(
-    query = spanTermQuery("text.stems", "fox"),
-    field = "text"
-)
 
 // DSL-style usage
 val q = query {
@@ -207,15 +207,6 @@ The `span_term` query builds a basic span clause for a single term, suitable for
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
 
-// Function-style
-val termQ = spanTermQuery(
-    field = "title",
-    value = "kotlin",
-    boost = 1.2f,
-    _name = "term_kotlin"
-)
-
-// DSL-style
 val termDsl = query {
     spanTermQuery {
         field = "title"
@@ -238,11 +229,8 @@ The `span_near` query finds spans within a specified distance. This implementati
 val nearQuery = query {
     spanNearQuery {
         clauses[
-            spanTermQuery("text", "quick"),
-            spanFieldMaskingQuery(
-                query = spanTermQuery("text.stems", "fox"),
-                field = "text"
-            )
+            query { spanTermQuery { field = "text"; value = "quick" } },
+            query { spanFieldMaskingQuery { query { spanTermQuery("text.stems", "fox") }; field = "text" } }
         ]
         slop = 5
         inOrder = false
@@ -252,11 +240,8 @@ val nearQuery = query {
 // Alternative: Individual clause addition
 val nearQuery2 = query {
     spanNearQuery {
-        clause(spanTermQuery("text", "quick"))
-        clause(spanFieldMaskingQuery(
-            query = spanTermQuery("text.stems", "fox"),
-            field = "text"
-        ))
+        clause(query { spanTermQuery { field = "text"; value = "quick" } })
+        clause(query { spanFieldMaskingQuery { query { spanTermQuery("text.stems", "fox") }; field = "text" } })
         slop = 5
         inOrder = false
     }
@@ -306,7 +291,7 @@ val complexQuery = query {
             }
         }
         shouldQuery {
-            matchQuery("title", "tutorial")
+            query { matchQuery { field = "title"; query = "tutorial" } }
         }
     }
 }
@@ -328,11 +313,15 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
 val nearOr = query {
     spanNearQuery {
         clauses[
-            spanOrQuery(clauses = listOf(
-                spanTermQuery("title", "elasticsearch"),
-                spanTermQuery("title", "kotlin")
-            )),
-            spanTermQuery("title", "dsl")
+            {
+                spanOrQuery {
+                    clauses[
+                        { spanTermQuery { field = "title"; value = "elasticsearch" } },
+                        { spanTermQuery { field = "title"; value = "kotlin" } }
+                    ]
+                }
+            },
+            { spanTermQuery { field = "title"; value = "dsl" } }
         ]
         slop = 3
         inOrder = false
@@ -343,15 +332,15 @@ val nearOr = query {
 val notClose = query {
     spanNotQuery {
         include {
-            spanNearQuery(
-                clauses = listOf(
-                    spanTermQuery("body", "green"),
-                    spanTermQuery("body", "apple")
-                ),
+            spanNearQuery {
+                clauses[
+                    { spanTermQuery { field = "body"; value = "green" } },
+                    { spanTermQuery { field = "body"; value = "apple" } }
+                ]
                 slop = 2
-            )
+            }
         }
-        exclude { spanTermQuery("body", "rotten") }
+        exclude { spanTermQuery { field = "body"; value = "rotten" } }
         pre = 0
         post = 1
         _name = "exclude_rotten"
@@ -362,11 +351,8 @@ val notClose = query {
 val masked = query {
     spanNearQuery {
         clauses[
-            spanTermQuery("text", "quick"),
-            spanFieldMaskingQuery(
-                query = spanTermQuery("text.stems", "fox"),
-                field = "text"
-            )
+            { spanTermQuery { field = "text"; value = "quick" } },
+            { spanFieldMaskingQuery { query { spanTermQuery("text.stems", "fox") }; field = "text" } }
         ]
         slop = 4
     }
@@ -376,8 +362,8 @@ val masked = query {
 val withRange = query {
     spanNearQuery {
         clauses[
-            spanTermQuery("title", "kotlin"),
-            spanMultiQuery(match = rangeQuery("publish_date", gte = "2024-01-01"))
+            query { spanTermQuery { field = "title"; value = "kotlin" } },
+            query { spanMultiQuery { match { query { rangeQuery { field = "publish_date"; gte = "2024-01-01" } } } } }
         ]
         slop = 5
     }
@@ -391,28 +377,11 @@ The `span_or` query matches if any of the provided span clauses match.
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
 
-// Function-style
-val orQuery = spanOrQuery(
-    clauses = listOf(
-        spanTermQuery("title", "kotlin"),
-        spanTermQuery("title", "dsl"),
-        spanNearQuery(
-            clauses = listOf(
-                spanTermQuery("title", "structured"),
-                spanTermQuery("title", "concurrency")
-            ),
-            slop = 1
-        )
-    ),
-    _name = "span_or_example"
-)
-
-// DSL-style
 val orDsl = query {
     spanOrQuery {
         clauses[
-            spanTermQuery("title", "kotlin"),
-            spanTermQuery("title", "dsl")
+            query { spanTermQuery { field = "title"; value = "kotlin" } },
+            query { spanTermQuery { field = "title"; value = "dsl" } }
         ]
         _name = "span_or_dsl"
     }
@@ -469,9 +438,38 @@ See tests: [SpanWithinQueryTest.kt](src/test/kotlin/com/github/silbaram/elastics
 ## Function Score
 Compose per‑function filters, field value factor, weight, random, and decay.
 
+Example: decay functions
+```kotlin
+val q = query {
+  functionScoreQuery {
+    // base query
+    query { termQuery { field = "status"; value = "active" } }
+
+    // gauss decay on date field
+    function {
+      gaussDecayQuery(
+        field = "date",
+        origin = "now",
+        scale = "7d",
+        offset = "1d",
+        decay = 0.5
+      )
+    }
+
+    // linear decay on distance field
+    function { linearDecayQuery(field = "distance", origin = "0km", scale = "10km") }
+
+    // combine with weight / random
+    function { weight(0.5); randomScore(seed = "seed-1", field = "user_id") }
+
+    scoreMode("sum"); boostMode("multiply")
+  }
+}
+```
+
 See tests:
 - Core: [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
-- Kibana‑like: [FunctionScoreKibanaParityTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreKibanaParityTest.kt)
+- Kibana‑like: merged into [FunctionScoreTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/FunctionScoreTest.kt)
 - Decay: [DecayFunctionTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/compound/DecayFunctionTest.kt)
 
 ## Project Structure
@@ -645,8 +643,8 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
 val near = query {
     spanNearQuery {
         clauses[
-            spanTermQuery("title", "kotlin"),
-            spanTermQuery("title", "dsl")
+            query { spanTermQuery { field = "title"; value = "kotlin" } },
+            query { spanTermQuery { field = "title"; value = "dsl" } }
         ]
         slop = 2
         inOrder = true
@@ -657,8 +655,8 @@ val near = query {
 val orQ = query {
     spanOrQuery {
         clauses[
-            spanTermQuery("title", "kotlin"),
-            spanTermQuery("title", "coroutines")
+            query { spanTermQuery { field = "title"; value = "kotlin" } },
+            query { spanTermQuery { field = "title"; value = "coroutines" } }
         ]
     }
 }
@@ -716,34 +714,14 @@ The `span_containing` query matches when the big span fully contains the little 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span.*
 
-// Function-style
-val containing = spanContainingQuery(
-    little = spanTermQuery("body", "green"),
-    big = spanNearQuery(
-        clauses = listOf(
-            spanTermQuery("body", "green"),
-            spanTermQuery("body", "apple")
-        ),
-        slop = 2,
-        inOrder = true
-    ),
-    _name = "containing_green"
-)
-
 // DSL-style
 val containingDsl = query {
     spanContainingQuery {
-        little { spanTermQuery("body", "green") }
-        big {
-            spanNearQuery(
-                clauses = listOf(
-                    spanTermQuery("body", "green"),
-                    spanTermQuery("body", "apple")
-                ),
-                slop = 1,
-                inOrder = true
-            )
-        }
+        little { query { spanTermQuery { field = "body"; value = "green" } } }
+        big { query { spanNearQuery { clauses[
+            query { spanTermQuery { field = "body"; value = "green" } },
+            query { spanTermQuery { field = "body"; value = "apple" } }
+        ]; slop = 1; inOrder = true } } }
         _name = "containing_dsl"
     }
 }
@@ -757,18 +735,10 @@ See tests:
 The `span_first` query matches when the span occurs before a specified position (`end`) in the field.
 
 ```kotlin
-// Function-style
-val first = spanFirstQuery {
-    match = spanTermQuery("user.id", "kimchy")
-    end = 3
-    boost = 1.2f
-    _name = "first_query"
-}
-
-// DSL-style extension
+// DSL-style
 val firstDsl = query {
     spanFirstQueryDsl {
-        match { spanTermQuery("user.id", "kimchy") }
+        match { query { spanTermQuery { field = "user.id"; value = "kimchy" } } }
         end = 3
         boost = 1.2f
         _name = "first_dsl"
@@ -810,3 +780,21 @@ val smDsl = query {
 Note: Only multi-term queries are allowed for `match` (prefix|wildcard|regexp|fuzzy|range). Others are ignored (no-op).
 
 See tests: [SpanMultiQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/span/SpanMultiQueryTest.kt)
+### Array DSL (queries[ ... ])
+Use array-style builders inside clause blocks to add multiple queries without wrapping with `query { ... }`.
+
+```kotlin
+boolQuery {
+  mustQuery {
+    queries[
+      { termQuery { field = "tags"; value = "kotlin" } },
+      { combinedFields(query = "john smith", fields = listOf("first_name","last_name")) },
+      { rangeQuery { field = "age"; gte = 20; lt = 30 } }
+    ]
+  }
+}
+```
+
+Notes:
+- Accepts both builder lambdas and prebuilt `Query?` objects; invalid inputs are omitted.
+- Prefer builder lambdas for clarity and consistent omission semantics.

@@ -8,6 +8,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.fulltext.matchQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -19,14 +20,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = "1111"
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = "2222"
-                        )
+                        { matchQuery { field = "a"; query = "1111" } },
+                        { matchQuery { field = "b"; query = "2222" } }
                     ]
                 }
             }
@@ -45,18 +40,9 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = null
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "c",
-                            query = "3333"
-                        )
+                        { matchQuery { field = "a"; query = null } },
+                        { matchQuery { field = "b"; query = "" } },
+                        { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
             }
@@ -76,14 +62,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = null
-                        )
+                        { matchQuery { field = "a"; query = "" } },
+                        { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }
@@ -100,14 +80,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = "1111"
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = "2222"
-                        )
+                        { matchQuery { field = "a"; query = "1111" } },
+                        { matchQuery { field = "b"; query = "2222" } }
                     ]
                 }
             }
@@ -126,18 +100,9 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = null
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "c",
-                            query = "3333"
-                        )
+                        { matchQuery { field = "a"; query = null } },
+                        { matchQuery { field = "b"; query = "" } },
+                        { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
             }
@@ -157,14 +122,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 filterQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = null
-                        )
+                        { matchQuery { field = "a"; query = "" } },
+                        { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }
@@ -182,14 +141,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = "1111"
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = "2222"
-                        )
+                        query { matchQuery { field = "a"; query = "1111" } },
+                        query { matchQuery { field = "b"; query = "2222" } }
                     ]
                 }
             }
@@ -208,18 +161,9 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = null
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "c",
-                            query = "3333"
-                        )
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = null } },
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = "" } },
+                        query { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
             }
@@ -239,14 +183,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = null
-                        )
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = "" } },
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }
@@ -262,14 +200,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = "1111"
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = "2222"
-                        )
+                        query { matchQuery { field = "a"; query = "1111" } },
+                        query { matchQuery { field = "b"; query = "2222" } }
                     ]
                 }
             }
@@ -288,18 +220,9 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = null
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "c",
-                            query = "3333"
-                        )
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = null } },
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = "" } },
+                        query { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
             }
@@ -319,14 +242,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        matchQuery(
-                            field = "a",
-                            query = ""
-                        ),
-                        matchQuery(
-                            field = "b",
-                            query = null
-                        )
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = "" } },
+                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }
@@ -341,13 +258,7 @@ class MatchQueryTest : FunSpec({
     test("match 쿼리에 boost 설정시 적용이 되어야함") {
         val query = query {
             boolQuery {
-                mustQuery {
-                    matchQuery(
-                        field = "a",
-                        query = "1111",
-                        boost = 2.0F
-                    )
-                }
+                mustQuery { matchQuery { field = "a"; query = "1111"; boost = 2.0F } }
             }
         }
 
@@ -362,13 +273,7 @@ class MatchQueryTest : FunSpec({
     test("match 쿼리에 _name이 설정되면 match.queryName에 반영되어야함") {
         val query = query {
             boolQuery {
-                mustQuery {
-                    matchQuery(
-                        field = "a",
-                        query = "1111",
-                        _name = "named"
-                    )
-                }
+                mustQuery { matchQuery { field = "a"; query = "1111"; _name = "named" } }
             }
         }
 
@@ -386,15 +291,7 @@ class MatchQueryTest : FunSpec({
     test("match 쿼리에서 operator, minimum_should_match, analyzer 설정이 적용되어야함") {
         val query = query {
             boolQuery {
-                mustQuery {
-                    matchQuery(
-                        field = "title",
-                        query = "quick brown fox",
-                        operator = Operator.And,
-                        minimumShouldMatch = "2",
-                        analyzer = "standard"
-                    )
-                }
+                mustQuery { matchQuery { field = "title"; query = "quick brown fox"; operator = Operator.And; minimumShouldMatch = "2"; analyzer = "standard" } }
             }
         }
 
@@ -407,15 +304,7 @@ class MatchQueryTest : FunSpec({
     test("match 쿼리에서 zero_terms_query, lenient, auto_generate_synonyms_phrase_query 설정이 적용되어야함") {
         val query = query {
             boolQuery {
-                mustQuery {
-                    matchQuery(
-                        field = "content",
-                        query = "the",
-                        zeroTermsQuery = ZeroTermsQuery.All,
-                        lenient = true,
-                        autoGenerateSynonymsPhraseQuery = true
-                    )
-                }
+                mustQuery { matchQuery { field = "content"; query = "the"; zeroTermsQuery = ZeroTermsQuery.All; lenient = true; autoGenerateSynonymsPhraseQuery = true } }
             }
         }
 
@@ -428,17 +317,7 @@ class MatchQueryTest : FunSpec({
     test("match 쿼리에서 fuzziness 관련 옵션 설정이 적용되어야함") {
         val query = query {
             boolQuery {
-                mustQuery {
-                    matchQuery(
-                        field = "name",
-                        query = "jon",
-                        fuzziness = "AUTO",
-                        prefixLength = 1,
-                        maxExpansions = 50,
-                        fuzzyTranspositions = true,
-                        fuzzyRewrite = "constant_score"
-                    )
-                }
+                mustQuery { matchQuery { field = "name"; query = "jon"; fuzziness = "AUTO"; prefixLength = 1; maxExpansions = 50; fuzzyTranspositions = true; fuzzyRewrite = "constant_score" } }
             }
         }
 

@@ -2,7 +2,7 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.rangeQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.assertions.print.print
 import io.kotest.core.spec.style.FunSpec
@@ -15,24 +15,10 @@ class RangeQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        rangeQuery(
-                            field = "a",
-                            from = "1234"
-                        ),
-                        rangeQuery(
-                            field = "a",
-                            to = "5678"
-                        ),
-                        rangeQuery(
-                            field = "b",
-                            gt = 123,
-                            lt = 567
-                        ),
-                        rangeQuery(
-                            field = "c",
-                            gte = 456,
-                            lte = 789
-                        )
+                        { rangeQuery { field = "a"; from = "1234" } },
+                        { rangeQuery { field = "a"; to = "5678" } },
+                        { rangeQuery { field = "b"; gt = 123; lt = 567 } },
+                        { rangeQuery { field = "c"; gte = 456; lte = 789 } }
                     ]
                 }
             }
@@ -59,12 +45,7 @@ class RangeQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    rangeQuery(
-                        field = "d",
-                        gte = 10,
-                        lte = 20,
-                        boost = 3.0F
-                    )
+                    query { rangeQuery { field = "d"; gte = 10; lte = 20; boost = 3.0F } }
                 }
             }
         }
@@ -79,12 +60,7 @@ class RangeQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    rangeQuery(
-                        field = "d",
-                        gte = 10,
-                        lte = 20,
-                        _name = "named"
-                    )
+                    query { rangeQuery { field = "d"; gte = 10; lte = 20; _name = "named" } }
                 }
             }
         }

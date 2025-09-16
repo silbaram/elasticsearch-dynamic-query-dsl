@@ -8,16 +8,16 @@ class SpanContainingDslTest : FunSpec({
     test("span_containing: 블록 DSL 동작 및 속성 확인") {
         val q = query {
             spanContainingQuery {
-                little { spanTermQuery("body", "green") }
+                little { spanTermQuery { field = "body"; value = "green" } }
                 big {
-                    spanNearQuery(
-                        clauses = listOf(
-                            spanTermQuery("body", "green"),
-                            spanTermQuery("body", "apple")
-                        ),
-                        slop = 1,
+                    spanNearQuery {
+                        clauses[
+                            { spanTermQuery { field = "body"; value = "green" } },
+                            { spanTermQuery { field = "body"; value = "apple" } }
+                        ]
+                        slop = 1
                         inOrder = true
-                    )
+                    }
                 }
                 _name = "containing_dsl"
             }

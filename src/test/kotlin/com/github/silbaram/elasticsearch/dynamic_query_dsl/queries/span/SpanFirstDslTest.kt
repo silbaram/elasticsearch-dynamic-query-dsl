@@ -8,7 +8,7 @@ class SpanFirstDslTest : FunSpec({
     test("span_first: 블록 DSL 동작 및 속성 확인") {
         val q = query {
             spanFirstQueryDsl {
-                match { spanTermQuery("user.id", "kimchy") }
+                match { query { spanTermQuery { field = "user.id"; value = "kimchy" } } }
                 end = 3
                 boost = 1.2f
                 _name = "first_dsl"

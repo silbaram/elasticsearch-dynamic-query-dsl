@@ -34,28 +34,3 @@ fun Query.Builder.multiMatchPhrase(
         b
     }
 }
-
-fun multiMatchPhraseQuery(
-    query: String?,
-    fields: List<String>,
-    analyzer: String? = null,
-    slop: Int? = null,
-    zeroTermsQuery: ZeroTermsQuery? = null,
-    boost: Float? = null,
-    _name: String? = null
-): Query? {
-    return if (query.isNullOrEmpty() || fields.isEmpty()) {
-        null
-    } else {
-        val b = MultiMatchQuery.Builder()
-            .query(query)
-            .fields(fields)
-            .type(TextQueryType.Phrase)
-        analyzer?.let { b.analyzer(it) }
-        slop?.let { b.slop(it) }
-        zeroTermsQuery?.let { b.zeroTermsQuery(it) }
-        boost?.let { b.boost(it) }
-        _name?.let { b.queryName(it) }
-        b.build()._toQuery()
-    }
-}
