@@ -181,6 +181,64 @@ JSON
 
 테스트: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
 
+### More Like This
+유사 문서를 찾기 위한 쿼리입니다. 하나 이상의 `like` 항목(텍스트 또는 문서)이 필요하며, `unlike`로 제외 항목을 줄 수 있습니다. `like`가 비어있으면 쿼리는 생략됩니다.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+
+// 텍스트 기반
+val q1 = query {
+  mlt {
+    like { text("kotlin coroutine", "typed dsl") }
+    fields("title", "body")
+    analyzer = "standard"
+    minTermFreq = 1
+    maxQueryTerms = 25
+    minimumShouldMatch = "30%"
+    stopWords("a","the")
+    boost = 1.1f
+    _name = "mlt_text"
+  }
+}
+
+// 문서 기반 like/unlike 혼합 (index, id)
+val q2 = query {
+  mlt {
+    like { doc("articles", "1"); doc("articles", "2") }
+    unlike { text("legacy") }
+    fields("title")
+  }
+}
+
+// Bool 내부에서 사용 + 생략 동작
+val q3 = query {
+  boolQuery {
+    mustQuery {
+      // 생성됨
+      moreLikeThis { like { doc("articles", "1") }; fields("title") }
+      // 생략됨: like이 비어있음
+      moreLikeThis { /* no like */ }
+    }
+  }
+}
+```
+
+간단 JSON
+```json
+{ "query": { "more_like_this": {
+  "fields": ["title","body"],
+  "like": ["kotlin coroutine", "typed dsl"],
+  "min_term_freq": 1,
+  "max_query_terms": 25,
+  "minimum_should_match": "30%",
+  "stop_words": ["a","the"],
+  "boost": 1.1
+} } }
+```
+
+테스트: [MoreLikeThisQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/MoreLikeThisQueryTest.kt)
+
 ### 스팬 쿼리 (Span Queries)
 Elasticsearch 스팬 쿼리는 위치 기반 텍스트 매칭을 가능하게 합니다. 이 라이브러리는 함수형과 DSL 형태 모두를 지원하는 스팬 쿼리 DSL을 제공합니다.
 

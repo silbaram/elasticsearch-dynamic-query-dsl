@@ -161,8 +161,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = null } },
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = "" } },
+                        queryOrNull { matchQuery { field = "a"; query = null } },
+                        queryOrNull { matchQuery { field = "b"; query = "" } },
                         query { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
@@ -183,8 +183,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 mustNotQuery {
                     queries[
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = "" } },
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = null } }
+                        queryOrNull { matchQuery { field = "a"; query = "" } },
+                        queryOrNull { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }
@@ -220,8 +220,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = null } },
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = "" } },
+                        queryOrNull { matchQuery { field = "a"; query = null } },
+                        queryOrNull { matchQuery { field = "b"; query = "" } },
                         query { matchQuery { field = "c"; query = "3333" } }
                     ]
                 }
@@ -242,8 +242,8 @@ class MatchQueryTest : FunSpec({
             boolQuery {
                 shouldQuery {
                     queries[
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "a"; query = "" } },
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchQuery { field = "b"; query = null } }
+                        queryOrNull { matchQuery { field = "a"; query = "" } },
+                        queryOrNull { matchQuery { field = "b"; query = null } }
                     ]
                 }
             }

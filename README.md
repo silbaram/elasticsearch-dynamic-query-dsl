@@ -176,6 +176,62 @@ JSON
 
 See tests: [SimpleQueryStringQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/SimpleQueryStringQueryTest.kt)
 
+### More Like This
+Find documents similar to given texts and/or documents. Requires at least one `like` item. Inputs that are null/blank are omitted; an empty `like` set results in omission.
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+
+// Text-based
+val q1 = query {
+  mlt {
+    like { text("kotlin coroutine", "typed dsl") }
+    fields("title", "body")
+    analyzer = "standard"
+    minTermFreq = 1
+    maxQueryTerms = 25
+    minimumShouldMatch = "30%"
+    stopWords("a", "the")
+    boost = 1.1f
+    _name = "mlt_text"
+  }
+}
+
+// Mixed like/unlike (documents and texts)
+val q2 = query {
+  mlt {
+    like { doc("articles", "1"); doc("articles", "2") }
+    unlike { text("legacy") }
+    fields("title")
+  }
+}
+
+// In bool with omission behavior
+val q3 = query {
+  boolQuery {
+    mustQuery {
+      moreLikeThis { like { doc("articles", "1") }; fields("title") }
+      moreLikeThis { /* no like → omitted */ }
+    }
+  }
+}
+```
+
+JSON
+```json
+{ "query": { "more_like_this": {
+  "fields": ["title","body"],
+  "like": ["kotlin coroutine", "typed dsl"],
+  "min_term_freq": 1,
+  "max_query_terms": 25,
+  "minimum_should_match": "30%",
+  "stop_words": ["a","the"],
+  "boost": 1.1
+} } }
+```
+
+See tests: [MoreLikeThisQueryTest.kt](src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/fulltext/MoreLikeThisQueryTest.kt)
+
 ### Span Queries
 Elasticsearch span queries enable position-aware text matching. This library provides DSL support for span queries with both function-style and DSL-style syntax.
 

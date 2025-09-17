@@ -3,6 +3,7 @@ package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -33,7 +34,7 @@ class SpanFirstQueryTest : FunSpec({
     }
 
     test("spanFirstQuery should return null if match is not set") {
-        val query = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val query = queryOrNull {
             spanFirstQueryDsl {
                 end = 3
             }
@@ -42,7 +43,7 @@ class SpanFirstQueryTest : FunSpec({
     }
 
     test("spanFirstQuery should throw exception if end is not set") {
-        val q = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val q = queryOrNull {
             spanFirstQueryDsl { match { spanTermQuery { field = "user.id"; value = "kimchy" } } }
         }
         q shouldBe null

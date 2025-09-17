@@ -1,6 +1,7 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.span
 
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.rangeQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -84,10 +85,10 @@ class SpanMultiQueryTest : FunSpec({
     }
 
     test("spanMultiQuery(match = null) 또는 비-멀티텀은 null 반환") {
-        val nullMatch = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { spanMultiQuery { /* no match */ } }
+        val nullMatch = queryOrNull { spanMultiQuery { /* no match */ } }
         nullMatch shouldBe null
 
-        val nonMulti = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { spanMultiQuery { match { query { spanTermQuery { field = "f"; value = "v" } } } } }
+        val nonMulti = queryOrNull { spanMultiQuery { match { query { spanTermQuery { field = "f"; value = "v" } } } } }
         nonMulti shouldBe null
     }
 })

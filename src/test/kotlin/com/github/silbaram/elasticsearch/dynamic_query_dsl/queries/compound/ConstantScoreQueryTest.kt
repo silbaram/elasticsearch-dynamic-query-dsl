@@ -10,7 +10,6 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -65,15 +64,14 @@ class ConstantScoreQueryTest : FunSpec({
     }
 
     test("필터가 비어있을 때 최상위 constant_score는 건너뛰어야 한다") {
-        shouldThrow<Exception> {
-            query {
-                constantScoreQuery {
-                    filterQuery {
-                        termQuery { field = "brand"; value = null }
-                    }
+        val q = queryOrNull {
+            constantScoreQuery {
+                filterQuery {
+                    termQuery { field = "brand"; value = null }
                 }
             }
         }
+        q shouldBe null
     }
 
     test("bool 절 내부의 constant_score는 필터가 비어있을 때 건너뛰어야 한다") {

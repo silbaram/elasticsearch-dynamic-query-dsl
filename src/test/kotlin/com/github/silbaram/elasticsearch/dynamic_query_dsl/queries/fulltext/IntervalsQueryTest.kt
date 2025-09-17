@@ -5,6 +5,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import io.kotest.core.spec.style.FunSpec
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
@@ -58,13 +59,13 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("필수 파라미터가 null이거나 빈 값이면 null을 반환해야 함") {
-        val query1 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals(" ") { anyOf { match("test") } } }
+        val query1 = queryOrNull { intervals(" ") { anyOf { match("test") } } }
         query1 shouldBe null
         
-        val query2 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("content") { match("") } }
+        val query2 = queryOrNull { intervals("content") { match("") } }
         query2 shouldBe null
         
-        val query3 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("") { anyOf { prefix("p") } } }
+        val query3 = queryOrNull { intervals("") { anyOf { prefix("p") } } }
         query3 shouldBe null
     }
     
@@ -124,7 +125,7 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("field가 빈 문자열일 때 null 반환") {
-        val query = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals(" ") { anyOf { match("test") } } }
+        val query = queryOrNull { intervals(" ") { anyOf { match("test") } } }
         query shouldBe null
     }
     
@@ -199,7 +200,7 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("복합 DSL - 빈 규칙일 때 null 반환") {
-        val query = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("content") { /* empty */ } }
+        val query = queryOrNull { intervals("content") { /* empty */ } }
         query shouldBe null
     }
     

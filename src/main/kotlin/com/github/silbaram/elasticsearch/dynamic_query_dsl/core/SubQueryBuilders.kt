@@ -318,4 +318,13 @@ class SubQueryBuilders {
             }
         )
     }
+
+    // more_like_this helper
+    fun moreLikeThis(fn: MoreLikeThisDsl.() -> Unit) {
+        addQuery(
+            queryOrNull {
+                this.mlt(fn)
+            }
+        )
+    }
 }
