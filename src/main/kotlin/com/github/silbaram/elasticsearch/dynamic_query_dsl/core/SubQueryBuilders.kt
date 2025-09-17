@@ -10,6 +10,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.ZeroTermsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType
 import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringFlag
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized.*
 
 /**
  * 여러 clause 확장함수에서 재사용하는 Query 수집기.
@@ -326,5 +327,10 @@ class SubQueryBuilders {
                 this.mlt(fn)
             }
         )
+    }
+
+    // percolate helper
+    fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.percolateQuery(fn) })
     }
 }
