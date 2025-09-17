@@ -110,9 +110,9 @@ class ConstantScoreQueryTest : FunSpec({
 
         val csFilter = query.bool().filter().first().constantScore().filter()
         csFilter.isBool shouldBe true
-        csFilter.bool().must().size shouldBe 2
-        csFilter.bool().must().any { it.term().field() == "brand" } shouldBe true
-        csFilter.bool().must().any { it.term().field() == "category" } shouldBe true
+        csFilter.bool().filter().size shouldBe 2
+        csFilter.bool().filter().any { it.term().field() == "brand" } shouldBe true
+        csFilter.bool().filter().any { it.term().field() == "category" } shouldBe true
     }
 
     test("constant_score 필터는 복잡한 bool 쿼리를 포함할 수 있다") {

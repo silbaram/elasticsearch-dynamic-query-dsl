@@ -27,7 +27,8 @@ class ConstantScoreQueryDsl {
             }
             else -> Query.of { q ->
                 q.bool { b ->
-                    filterQueries.forEach { b.must(it) }
+                    // 여러 필터는 의도에 맞게 filter 절로 묶는다
+                    filterQueries.forEach { b.filter(it) }
                     b
                 }
             }

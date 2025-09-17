@@ -154,9 +154,21 @@ fun Query.Builder.intervals(field: String, boost: Float? = null, _name: String? 
                 dsl.intervals.forEach { anyOf.intervals(it) }
                 anyOf
             }
-            dsl.intervals.size == 1 -> iv.anyOf { anyOf ->
-                anyOf.intervals(dsl.intervals.first())
-                anyOf
+            dsl.intervals.size == 1 -> {
+                // 단일 규칙은 any_of 래핑 없이 직접 매핑한다
+                val single = dsl.intervals.first()
+                var applied = false
+                // 가능한 variant들을 직접 설정 (클라이언트의 variant getter를 사용)
+                // match/prefix/wildcard/fuzzy 중 하나만 설정되어 있음
+                single.match()?.let { m -> iv.match(m); applied = true }
+                single.prefix()?.let { p -> iv.prefix(p); applied = true }
+                single.wildcard()?.let { w -> iv.wildcard(w); applied = true }
+                single.fuzzy()?.let { f -> iv.fuzzy(f); applied = true }
+                if (!applied) {
+                    // 혹시 위 매핑이 불가능한 클라이언트 버전이면 any_of로 폴백
+                    iv.anyOf { any -> any.intervals(single); any }
+                }
+                iv
             }
         }
         boost?.let { iv.boost(it) }
@@ -164,4 +176,3 @@ fun Query.Builder.intervals(field: String, boost: Float? = null, _name: String? 
         iv
     }
 }
-

@@ -12,18 +12,17 @@ class IntervalsQueryTest : FunSpec({
     
     test("기본 intervals match query가 생성되어야 함") {
         val query = query {
-            intervals("content") { anyOf { match("quick brown fox") } }
+            intervals("content") { match("quick brown fox") }
         }
 
         query shouldNotBe null
         query.isIntervals shouldBe true
-        // Note: With the new structure, we're using anyOf wrapper, so the actual structure is different
-        // We can verify that the query was created successfully
+        // 단일 규칙은 any_of 래핑 없이 직렬화
     }
     
     test("intervals match query에 maxGaps과 ordered 옵션이 적용되어야 함") {
         val query = query {
-            intervals("content") { anyOf { match("quick brown", maxGaps = 2, ordered = true) } }
+            intervals("content") { match("quick brown", maxGaps = 2, ordered = true) }
         }
         
         // The query should be created successfully
@@ -32,7 +31,7 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("intervals prefix query가 생성되어야 함") {
-        val query = query { intervals("content") { anyOf { prefix("qu") } } }
+        val query = query { intervals("content") { prefix("qu") } }
         
         query.isIntervals shouldBe true
         // With anyOf wrapper structure, direct access to prefix is not straightforward
@@ -40,19 +39,19 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("intervals wildcard query가 생성되어야 함") {
-        val query = query { intervals("content") { anyOf { wildcard("bro*") } } }
+        val query = query { intervals("content") { wildcard("bro*") } }
         
         query.isIntervals shouldBe true
     }
     
     test("intervals fuzzy query가 생성되어야 함") {
-        val query = query { intervals("content") { anyOf { fuzzy("fox", fuzziness = "1", prefixLength = 0, transpositions = true) } } }
+        val query = query { intervals("content") { fuzzy("fox", fuzziness = "1", prefixLength = 0, transpositions = true) } }
         
         query.isIntervals shouldBe true
     }
     
     test("boost와 _name 파라미터가 적용되어야 함") {
-        val query = query { intervals("content", boost = 2.5f, _name = "test_intervals_query") { anyOf { match("test query") } } }
+        val query = query { intervals("content", boost = 2.5f, _name = "test_intervals_query") { match("test query") } }
         
         query.isIntervals shouldBe true
         // With the new structure, boost and _name are applied to the intervals query level
@@ -62,7 +61,7 @@ class IntervalsQueryTest : FunSpec({
         val query1 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals(" ") { anyOf { match("test") } } }
         query1 shouldBe null
         
-        val query2 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("content") { anyOf { match("") } } }
+        val query2 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("content") { match("") } }
         query2 shouldBe null
         
         val query3 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { intervals("") { anyOf { prefix("p") } } }
@@ -72,7 +71,7 @@ class IntervalsQueryTest : FunSpec({
     test("bool 쿼리에서 사용할 수 있어야 함") {
         val query = query {
             boolQuery {
-                mustQuery { intervals("content") { anyOf { match("quick brown fox") } } }
+                mustQuery { intervals("content") { match("quick brown fox") } }
             }
         }
         
@@ -87,8 +86,8 @@ class IntervalsQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        { intervals("content") { anyOf { match("quick brown") } } },
-                        { intervals("title") { anyOf { prefix("fox") } } }
+                        { intervals("content") { match("quick brown") } },
+                        { intervals("title") { prefix("fox") } }
                     ]
                 }
             }
@@ -101,10 +100,10 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("각 query 타입이 올바르게 생성되어야 함") {
-        val matchQuery = query { intervals("content") { anyOf { match("test") } } }
-        val prefixQuery = query { intervals("content") { anyOf { prefix("test") } } }
-        val wildcardQuery = query { intervals("content") { anyOf { wildcard("test*") } } }
-        val fuzzyQuery = query { intervals("content") { anyOf { fuzzy("test") } } }
+        val matchQuery = query { intervals("content") { match("test") } }
+        val prefixQuery = query { intervals("content") { prefix("test") } }
+        val wildcardQuery = query { intervals("content") { wildcard("test*") } }
+        val fuzzyQuery = query { intervals("content") { fuzzy("test") } }
         
         matchQuery.isIntervals shouldBe true
         prefixQuery.isIntervals shouldBe true
@@ -113,13 +112,13 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("모든 파라미터가 적용된 intervals match query") {
-        val query = query { intervals("content", boost = 1.5f, _name = "test_match_query") { anyOf { match("test query", maxGaps = 2, ordered = true, analyzer = "standard", useField = "content.analyzed") } } }
+        val query = query { intervals("content", boost = 1.5f, _name = "test_match_query") { match("test query", maxGaps = 2, ordered = true, analyzer = "standard", useField = "content.analyzed") } }
         
         query.isIntervals shouldBe true
     }
     
     test("모든 파라미터가 적용된 intervals fuzzy query") {
-        val query = query { intervals("content", boost = 2.0f, _name = "test_fuzzy_query") { anyOf { fuzzy("test", prefixLength = 2, transpositions = false, fuzziness = "AUTO", analyzer = "standard", useField = "content.analyzed") } } }
+        val query = query { intervals("content", boost = 2.0f, _name = "test_fuzzy_query") { fuzzy("test", prefixLength = 2, transpositions = false, fuzziness = "AUTO", analyzer = "standard", useField = "content.analyzed") } }
         
         query.isIntervals shouldBe true
     }
@@ -175,8 +174,8 @@ class IntervalsQueryTest : FunSpec({
     }
     
     test("복합 DSL - 단일 규칙이 동작해야 함") {
-        val query1 = query { intervals("content") { anyOf { match("single match") } } }
-        val query2 = query { intervals("content") { anyOf { prefix("test") } } }
+        val query1 = query { intervals("content") { match("single match") } }
+        val query2 = query { intervals("content") { prefix("test") } }
         
         query1 shouldNotBe null
         query1.isIntervals shouldBe true
