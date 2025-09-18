@@ -338,4 +338,9 @@ class SubQueryBuilders {
     fun knnQuery(fn: KnnQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.knnQuery(fn) })
     }
+
+    // rank_feature helper
+    fun rankFeatureQuery(fn: RankFeatureQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.rankFeatureQuery(fn) })
+    }
 }
