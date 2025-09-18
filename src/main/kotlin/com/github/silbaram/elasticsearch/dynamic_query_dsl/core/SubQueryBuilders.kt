@@ -333,4 +333,9 @@ class SubQueryBuilders {
     fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.percolateQuery(fn) })
     }
+
+    // knn helper
+    fun knnQuery(fn: KnnQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.knnQuery(fn) })
+    }
 }
