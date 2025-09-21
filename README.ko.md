@@ -7,7 +7,7 @@
 ## 핵심 특징
 - **코틀린 친화적 API**: JSON 문자열 대신 빌더 패턴으로 쿼리를 작성합니다.
 - **안전한 생략 처리**: 불필요하거나 잘못된 입력을 자동으로 걸러냅니다.
-- **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule 등 다양한 Elasticsearch DSL을 커버합니다.
+- **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
 - **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다.
 - **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
 
@@ -119,6 +119,21 @@ query {
             }
         }
         matchCriteria(mapOf("channel" to "web"))
+    }
+}
+
+// Weighted tokens 쿼리: 필드에 대해 가중 토큰을 제공
+query {
+    weightedTokensQuery {
+        field = "title.embedding"
+        tokens(
+            "kotlin" to 1.0,
+            "dsl" to 0.7
+        )
+        pruningConfig {
+            tokensFreqRatioThreshold = 3
+            tokensWeightThreshold = 0.2f
+        }
     }
 }
 ```

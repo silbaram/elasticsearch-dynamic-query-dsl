@@ -7,7 +7,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 ## Highlights
 - **Fluent Kotlin API** – Prefer Kotlin builders over brittle JSON strings.
 - **Safe omission** – Invalid or empty values get dropped automatically.
-- **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, rank_feature, distance_feature).
+- **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
 - **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
@@ -123,6 +123,21 @@ query {
             }
         }
         matchCriteria(mapOf("channel" to "web"))
+    }
+}
+
+// Weighted tokens query describing weighted semantic tokens for a field
+query {
+    weightedTokensQuery {
+        field = "title.embedding"
+        tokens(
+            "kotlin" to 1.0,
+            "dsl" to 0.7
+        )
+        pruningConfig {
+            tokensFreqRatioThreshold = 3
+            tokensWeightThreshold = 0.2f
+        }
     }
 }
 ```

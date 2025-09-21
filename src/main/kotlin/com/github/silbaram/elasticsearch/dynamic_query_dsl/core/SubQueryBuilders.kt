@@ -354,6 +354,11 @@ class SubQueryBuilders {
         addQuery(queryOrNull { this.ruleQueryDsl(fn) })
     }
 
+    // weighted_tokens helper
+    fun weightedTokensQuery(fn: WeightedTokensQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.weightedTokensQuery(fn) })
+    }
+
     // percolate helper
     fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.percolateQuery(fn) })
