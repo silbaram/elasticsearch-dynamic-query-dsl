@@ -4,6 +4,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
@@ -50,7 +51,7 @@ class SpanQueriesTest : FunSpec({
 
     test("span_containing: null 입력 시 쿼리 생략") {
         // 1. 내부 쿼리가 null을 반환하는 경우
-        val q1 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val q1 = queryOrNull {
             spanContainingQuery {
                 little { /* none */ }
                 big { spanNearQuery { clauses[ { spanTermQuery { field = "body"; value = "x" } } ]; slop = 0 } }
@@ -59,7 +60,7 @@ class SpanQueriesTest : FunSpec({
         q1 shouldBe null
 
         // 2. 인자 자체가 null인 경우
-        val q2 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val q2 = queryOrNull {
             spanContainingQuery {
                 little { spanTermQuery { field = "body"; value = "apple" } }
                 big { /* none */ }
@@ -70,18 +71,18 @@ class SpanQueriesTest : FunSpec({
 
     test("span_near: 잘못된 파라미터(빈 clauses, 음수 slop) 생략") {
         // clauses가 비어있거나 null만 포함
-        val invalid1 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val invalid1 = queryOrNull {
             spanNearQuery { slop = 1 }
         }
         invalid1 shouldBe null
 
-        val invalid2 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val invalid2 = queryOrNull {
             spanNearQuery { slop = 1; clauses[ null, null ] }
         }
         invalid2 shouldBe null
 
         // slop이 음수
-        val invalid3 = com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull {
+        val invalid3 = queryOrNull {
             spanNearQuery { slop = -1; clauses[ { spanTermQuery { field = "f"; value = "v" } } ] }
         }
         invalid3 shouldBe null

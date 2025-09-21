@@ -8,6 +8,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
 import io.kotest.core.spec.style.FunSpec
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
 import io.kotest.matchers.shouldBe
 
 class MatchBoolPrefixQueryTest : FunSpec({
@@ -49,8 +50,8 @@ class MatchBoolPrefixQueryTest : FunSpec({
             boolQuery {
                 mustQuery {
                     queries[
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchBoolPrefix(field = "a", query = null) },
-                        com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull { matchBoolPrefix(field = "b", query = "") },
+                        queryOrNull { matchBoolPrefix(field = "a", query = null) },
+                        queryOrNull { matchBoolPrefix(field = "b", query = "") },
                         query { matchBoolPrefix(field = "c", query = "hello w") }
                     ]
                 }

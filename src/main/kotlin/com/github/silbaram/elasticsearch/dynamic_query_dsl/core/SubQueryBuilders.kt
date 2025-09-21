@@ -10,6 +10,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.ZeroTermsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType
 import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringFlag
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized.*
 
 /**
  * 여러 clause 확장함수에서 재사용하는 Query 수집기.
@@ -317,5 +318,59 @@ class SubQueryBuilders {
                 )
             }
         )
+    }
+
+    // more_like_this helper
+    fun moreLikeThis(fn: MoreLikeThisDsl.() -> Unit) {
+        addQuery(
+            queryOrNull {
+                this.mlt(fn)
+            }
+        )
+    }
+
+    // script helper
+    fun scriptQuery(fn: ScriptQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.scriptQuery(fn) })
+    }
+
+    // script_score helper
+    fun scriptScoreQuery(fn: ScriptScoreQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.scriptScoreQuery(fn) })
+    }
+
+    // wrapper helper
+    fun wrapperQuery(fn: WrapperQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.wrapperQuery(fn) })
+    }
+
+    // pinned helper
+    fun pinnedQuery(fn: PinnedQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.pinnedQuery(fn) })
+    }
+
+    // rule helper
+    fun ruleQuery(fn: RuleQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.ruleQueryDsl(fn) })
+    }
+
+    // weighted_tokens helper
+    fun weightedTokensQuery(fn: WeightedTokensQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.weightedTokensQuery(fn) })
+    }
+
+    // percolate helper
+    fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.percolateQuery(fn) })
+    }
+
+    // knn helper
+    fun knnQuery(fn: KnnQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.knnQuery(fn) })
+    }
+
+    // rank_feature helper
+    fun rankFeatureQuery(fn: RankFeatureQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.rankFeatureQuery(fn) })
     }
 }
