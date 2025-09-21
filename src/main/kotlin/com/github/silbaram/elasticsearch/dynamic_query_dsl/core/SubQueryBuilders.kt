@@ -344,6 +344,11 @@ class SubQueryBuilders {
         addQuery(queryOrNull { this.wrapperQuery(fn) })
     }
 
+    // pinned helper
+    fun pinnedQuery(fn: PinnedQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.pinnedQuery(fn) })
+    }
+
     // percolate helper
     fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.percolateQuery(fn) })
