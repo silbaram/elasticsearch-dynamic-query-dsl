@@ -7,7 +7,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 ## Highlights
 - **Fluent Kotlin API** – Prefer Kotlin builders over brittle JSON strings.
 - **Safe omission** – Invalid or empty values get dropped automatically.
-- **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rank_feature, distance_feature).
+- **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, rank_feature, distance_feature).
 - **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
@@ -111,9 +111,23 @@ query {
         }
     }
 }
+
+// Rule query ties rulesets to an organic fallback with match criteria
+query {
+    ruleQueryDsl {
+        rulesetIds("featured")
+        organic {
+            matchQuery {
+                field = "status"
+                query = "active"
+            }
+        }
+        matchCriteria(mapOf("channel" to "web"))
+    }
+}
 ```
 
-Other specialized builders include `knnQuery`, `percolateQuery`, `rankFeatureQuery`, `distanceFeatureQuery`, and span integrations. Each has focused specs in `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/specialized`.
+Other specialized builders include `knnQuery`, `percolateQuery`, `rankFeatureQuery`, and `distanceFeatureQuery`, plus span integrations. Each has focused specs in `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/specialized`.
 
 ## Testing & Quality
 - Run targeted suites via Gradle’s `--tests` flag when iterating.
