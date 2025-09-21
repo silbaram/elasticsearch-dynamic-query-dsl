@@ -5,13 +5,11 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import co.elastic.clients.json.JsonData
 import co.elastic.clients.util.ObjectBuilder
 
-/** DSL helper for building script queries */
-class ScriptQueryDsl {
+/** 공통 스크립트 빌드 옵션을 제공하는 베이스 DSL */
+open class ScriptOptionsDsl {
     var source: String? = null
     var lang: String? = null
     var id: String? = null
-    var boost: Float? = null
-    var _name: String? = null
     var providedScript: Script? = null
 
     private val paramsBacking = linkedMapOf<String, Any?>()
@@ -105,6 +103,12 @@ class ScriptQueryDsl {
         }
         return converted.takeIf { it.isNotEmpty() }
     }
+}
+
+/** DSL helper for building script queries */
+class ScriptQueryDsl : ScriptOptionsDsl() {
+    var boost: Float? = null
+    var _name: String? = null
 }
 
 fun Query.Builder.scriptQuery(fn: ScriptQueryDsl.() -> Unit): ObjectBuilder<Query> {

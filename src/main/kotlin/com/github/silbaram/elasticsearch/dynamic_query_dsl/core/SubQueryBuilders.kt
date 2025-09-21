@@ -334,6 +334,11 @@ class SubQueryBuilders {
         addQuery(queryOrNull { this.scriptQuery(fn) })
     }
 
+    // script_score helper
+    fun scriptScoreQuery(fn: ScriptScoreQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.scriptScoreQuery(fn) })
+    }
+
     // percolate helper
     fun percolateQuery(fn: PercolateQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.percolateQuery(fn) })
