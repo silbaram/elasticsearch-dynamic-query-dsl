@@ -11,6 +11,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType
 import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringFlag
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.joining.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.*
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.geo.*
 
 /**
  * 여러 clause 확장함수에서 재사용하는 Query 수집기.
@@ -77,6 +80,70 @@ class SubQueryBuilders {
 
     fun existsQuery(fn: ExistsQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.existsQuery(fn) })
+    }
+
+    fun prefixQuery(fn: PrefixQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.prefixQuery(fn) })
+    }
+
+    fun wildcardQuery(fn: WildcardQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.wildcardQuery(fn) })
+    }
+
+    fun regexpQuery(fn: RegexpQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.regexpQuery(fn) })
+    }
+
+    fun fuzzyQuery(fn: FuzzyQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.fuzzyQuery(fn) })
+    }
+
+    fun idsQuery(fn: IdsQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.idsQuery(fn) })
+    }
+
+    fun termsSetQuery(fn: TermsSetQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.termsSetQuery(fn) })
+    }
+
+    fun nestedQuery(fn: NestedQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.nestedQuery(fn) })
+    }
+
+    fun hasChildQuery(fn: HasChildQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.hasChildQuery(fn) })
+    }
+
+    fun hasParentQuery(fn: HasParentQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.hasParentQuery(fn) })
+    }
+
+    fun parentIdQuery(fn: ParentIdQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.parentIdQuery(fn) })
+    }
+
+    fun geoDistanceQuery(fn: GeoDistanceQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.geoDistanceQuery(fn) })
+    }
+
+    fun geoBoundingBoxQuery(fn: GeoBoundingBoxQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.geoBoundingBoxQuery(fn) })
+    }
+
+    fun geoShapeQuery(fn: GeoShapeQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.geoShapeQuery(fn) })
+    }
+
+    fun shapeQuery(fn: ShapeQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.shapeQuery(fn) })
+    }
+
+    fun disMaxQuery(fn: DisMaxQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.disMaxQuery(fn) })
+    }
+
+    fun matchNone(fn: MatchNoneDsl.() -> Unit = {}) {
+        addQuery(queryOrNull { this.matchNoneQuery(fn) })
     }
 
     fun matchAll(fn: MatchAllDsl.() -> Unit = {}) {
