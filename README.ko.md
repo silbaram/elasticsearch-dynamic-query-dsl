@@ -8,6 +8,7 @@
 - **코틀린 친화적 API**: JSON 문자열 대신 빌더 패턴으로 쿼리를 작성합니다.
 - **안전한 생략 처리**: 불필요하거나 잘못된 입력을 자동으로 걸러냅니다.
 - **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
+- **Aggregation DSL**: terms/date histogram/composite/random sampler/time series 등 다양한 버킷 집계와 boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg 등 메트릭 집계를 동일한 생략 규칙으로 구성합니다.
 - **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다.
 - **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
 
@@ -139,6 +140,46 @@ query {
 ```
 
 그 외 `knnQuery`, `percolateQuery`, `rankFeatureQuery`, `distanceFeatureQuery`, `ruleQuery` 등도 지원하며, 관련 예제는 `src/test/kotlin/.../queries/specialized`에서 확인할 수 있습니다.
+
+## Aggregations DSL
+
+`aggregations { ... }` 블록을 사용하면 검색 요청에 전달할 집계 맵을 Kotlin DSL로 작성할 수 있습니다. 서버 옵션을 그대로 노출하면서도 빈 값은 자동으로 생략되고, 메타데이터와 서브 집계도 간단히 추가할 수 있습니다.
+
+```kotlin
+import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.aggregations.*
+
+val aggs = aggregations {
+    terms("top_tags") {
+        field = "tags.keyword"
+        size = 5
+        orderByCount()
+    }
+    dateHistogram("posts_per_day") {
+        field("published_at")
+        calendarInterval(CalendarInterval.Day)
+        aggregations {
+            avg("avg_score") { field = "score" }
+        }
+    }
+    randomSampler("sample_bucket", probability = 0.1, seed = 42L)
+    timeSeries("daily_series", size = 30, keyed = true)
+    percentiles("score_percentiles") {
+        field = "score"
+        percents(25.0, 50.0, 90.0)
+    }
+    matrixStats("price_quantity") {
+        field("price")
+        field("quantity")
+    }
+    tTest("variant_test") {
+        populationA { field = "metric_a" }
+        populationB { field = "metric_b" }
+    }
+}
+```
+
+버킷 빌더는 adjacency matrix, composite, geo grid, range, sampler 등을 폭넓게 지원합니다. 메트릭 헬퍼 역시 `avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg` 등 전체 Elasticsearch 집계를 동일한 생략 규칙으로 제공합니다. 전체 예제는 `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/BucketAggregationsTest.kt`와 `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/MetricsAggregationsTest.kt`를 참고하세요.
 
 ## 테스트 & 품질 관리
 - 필요 시 `./gradlew test --tests "패키지.클래스"`로 특정 스펙만 실행하세요.

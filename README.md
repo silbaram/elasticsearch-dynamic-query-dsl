@@ -8,6 +8,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Fluent Kotlin API** – Prefer Kotlin builders over brittle JSON strings.
 - **Safe omission** – Invalid or empty values get dropped automatically.
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
+- **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
 - **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
@@ -143,6 +144,46 @@ query {
 ```
 
 Other specialized builders include `knnQuery`, `percolateQuery`, `rankFeatureQuery`, and `distanceFeatureQuery`, plus span integrations. Each has focused specs in `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/queries/specialized`.
+
+## Aggregations DSL
+
+Use `aggregations { ... }` to build the aggregation map expected by Elasticsearch search requests. Builders mirror server-side options, skip blank values, and let you attach metadata or nested aggregations.
+
+```kotlin
+import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.aggregations.*
+
+val aggs = aggregations {
+    terms("top_tags") {
+        field = "tags.keyword"
+        size = 5
+        orderByCount()
+    }
+    dateHistogram("posts_per_day") {
+        field("published_at")
+        calendarInterval(CalendarInterval.Day)
+        aggregations {
+            avg("avg_score") { field = "score" }
+        }
+    }
+    randomSampler("sample_bucket", probability = 0.1, seed = 42L)
+    timeSeries("daily_series", size = 30, keyed = true)
+    percentiles("score_percentiles") {
+        field = "score"
+        percents(25.0, 50.0, 90.0)
+    }
+    matrixStats("price_quantity") {
+        field("price")
+        field("quantity")
+    }
+    tTest("variant_test") {
+        populationA { field = "metric_a" }
+        populationB { field = "metric_b" }
+    }
+}
+```
+
+Bucket builders cover adjacency matrix, composite, geo grids, range variants, samplers, and more. Metric helpers span the full Elasticsearch surface (`avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg`, etc.) while keeping omission safeguards. See `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/BucketAggregationsTest.kt` and `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/MetricsAggregationsTest.kt` for end-to-end samples.
 
 ## Testing & Quality
 - Run targeted suites via Gradle’s `--tests` flag when iterating.
