@@ -1,0 +1,47 @@
+name: Publish Artifacts
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"] # 태그 푸시 시 Central 배포 트리거
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "배포 대상 선택"
+        required: true
+        default: "github"
+        type: choice
+        options:
+          - github
+          - central
+
+jobs:
+  publish-github:
+    if: github.event_name != 'workflow_dispatch' || inputs.target == 'github'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew publishMavenJavaPublicationToGitHubPackagesRepository
+        env:
+          GITHUB_ACTOR: ${{ secrets.PUBLISH_GITHUB_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
+
+  publish-central:
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.target == 'central')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew publishMavenJavaPublicationToCentralPortalRepository
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
