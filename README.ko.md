@@ -10,6 +10,7 @@
 - **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
 - **Aggregation DSL**: terms/date histogram/composite/random sampler/time series 등 다양한 버킷 집계와 boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg 등 메트릭 집계를 동일한 생략 규칙으로 구성합니다.
 - **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다.
+- **Elasticsearch 클라이언트 통합**: 비동기 지원, 검색, 인덱싱, 인덱스 관리 기능을 포함한 내장 클라이언트 래퍼를 제공합니다.
 - **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
 
 ## 요구 사항
@@ -17,6 +18,20 @@
 - Gradle Wrapper (저장소에 포함)
 
 ## 시작하기
+
+### 의존성 추가
+
+```kotlin
+dependencies {
+    implementation("io.github.silbaram:elasticsearch-dynamic-query-dsl:1.0.0-SNAPSHOT")
+    implementation("co.elastic.clients:elasticsearch-java:8.14.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // 비동기 지원시
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2") // JSON 처리
+}
+```
+
+### 빌드 & 테스트
+
 ```bash
 ./gradlew clean build        # 전체 빌드 및 테스트
 ./gradlew test               # 반복 개발 시 빠른 테스트
@@ -179,7 +194,71 @@ val aggs = aggregations {
 }
 ```
 
-버킷 빌더는 adjacency matrix, composite, geo grid, range, sampler 등을 폭넓게 지원합니다. 메트릭 헬퍼 역시 `avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg` 등 전체 Elasticsearch 집계를 동일한 생략 규칙으로 제공합니다. 전체 예제는 `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/BucketAggregationsTest.kt`와 `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/MetricsAggregationsTest.kt`를 참고하세요.
+버킷 빌더는 adjacency matrix, composite, geo grid, range, sampler 등을 폭넓게 지원합니다. 메트릭 헬퍼 역시 `avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg` 등 전체 Elasticsearch 집계를 동일한 생략 규칙으로 제공합니다.
+
+**예제 및 테스트**: 다음에서 포괄적인 예제를 확인하세요:
+- `ElasticsearchClientExamplesTest.kt` - 클라이언트 사용법 예제 및 패턴
+- `ElasticsearchClientTest.kt` - 실제 Elasticsearch와의 완전한 통합 테스트  
+- `BucketAggregationsTest.kt` 및 `MetricsAggregationsTest.kt` - 집계 예제
+
+## Elasticsearch 클라이언트 통합
+
+라이브러리에는 Elasticsearch 클러스터에 대해 쿼리를 쉽게 실행할 수 있는 포괄적인 클라이언트 래퍼가 포함되어 있습니다:
+
+### 클라이언트 빠른 시작
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.client.*
+
+// 클라이언트 생성
+val client = ElasticsearchClientWrapper.create() // 로컬 기본 설정
+// 또는
+val client = ElasticsearchClientWrapper.createFromEnvironment() // 환경변수에서
+
+data class Product(val id: String, val name: String, val category: String, val price: Double)
+
+// DSL을 사용한 검색
+val response = client.search<Product> {
+    indices("products")
+    query {
+        boolQuery {
+            mustQuery {
+                matchQuery {
+                    field = "name"
+                    query = "laptop"
+                }
+            }
+            mustQuery {
+                rangeQuery {
+                    field = "price"
+                    gte = 100.0
+                    lte = 2000.0
+                }
+            }
+        }
+    }
+    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Desc)
+    size(20)
+}
+
+println("${response.totalHits}개 제품을 찾았습니다")
+response.hits.forEach { hit ->
+    println("${hit.source?.name}: $${hit.source?.price}")
+}
+
+client.close()
+```
+
+### 주요 기능
+
+- **타입 안전한 검색**: 자동 JSON 매핑을 지원하는 제네릭 검색 메소드
+- **비동기 지원**: 코루틴 기반 비동기 작업  
+- **인덱스 관리**: 인덱스 생성, 삭제, 존재 확인
+- **대량 작업**: 효율적인 배치 인덱싱
+- **응답 헬퍼**: 페이징 정보, 히트 추출, 에러 처리
+- **설정**: 환경 기반 설정, SSL/인증 지원
+
+상세한 클라이언트 사용법은 [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md)를 참고하세요.
 
 ## 테스트 & 품질 관리
 - 필요 시 `./gradlew test --tests "패키지.클래스"`로 특정 스펙만 실행하세요.

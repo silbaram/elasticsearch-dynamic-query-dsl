@@ -10,6 +10,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
 - **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
 - **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
+- **Elasticsearch Client Integration** – Built-in client wrapper with async support, search, indexing, and index management capabilities.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
 ## Requirements
@@ -17,6 +18,20 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - Gradle Wrapper (provided)
 
 ## Getting Started
+
+### Dependencies
+
+```kotlin
+dependencies {
+    implementation("io.github.silbaram:elasticsearch-dynamic-query-dsl:1.0.0-SNAPSHOT")
+    implementation("co.elastic.clients:elasticsearch-java:8.14.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // For async support
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2") // For JSON processing
+}
+```
+
+### Build & Test
+
 ```bash
 ./gradlew clean build        # compile + full test suite
 ./gradlew test               # iterative feedback with Kotest/JUnit
@@ -183,7 +198,71 @@ val aggs = aggregations {
 }
 ```
 
-Bucket builders cover adjacency matrix, composite, geo grids, range variants, samplers, and more. Metric helpers span the full Elasticsearch surface (`avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg`, etc.) while keeping omission safeguards. See `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/BucketAggregationsTest.kt` and `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/MetricsAggregationsTest.kt` for end-to-end samples.
+Bucket builders cover adjacency matrix, composite, geo grids, range variants, samplers, and more. Metric helpers span the full Elasticsearch surface (`avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg`, etc.) while keeping omission safeguards. 
+
+**Examples and Tests**: See comprehensive examples in:
+- `ElasticsearchClientExamplesTest.kt` - Client usage examples and patterns
+- `ElasticsearchClientTest.kt` - Full integration tests with real Elasticsearch
+- `BucketAggregationsTest.kt` and `MetricsAggregationsTest.kt` - Aggregation examples
+
+## Elasticsearch Client Integration
+
+The library includes a comprehensive client wrapper that makes it easy to execute queries against Elasticsearch clusters:
+
+### Quick Start with Client
+
+```kotlin
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.client.*
+
+// Create client
+val client = ElasticsearchClientWrapper.create() // Local default
+// or
+val client = ElasticsearchClientWrapper.createFromEnvironment() // From env vars
+
+data class Product(val id: String, val name: String, val category: String, val price: Double)
+
+// Search with DSL
+val response = client.search<Product> {
+    indices("products")
+    query {
+        boolQuery {
+            mustQuery {
+                matchQuery {
+                    field = "name"
+                    query = "laptop"
+                }
+            }
+            mustQuery {
+                rangeQuery {
+                    field = "price"
+                    gte = 100.0
+                    lte = 2000.0
+                }
+            }
+        }
+    }
+    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Desc)
+    size(20)
+}
+
+println("Found ${response.totalHits} products")
+response.hits.forEach { hit ->
+    println("${hit.source?.name}: $${hit.source?.price}")
+}
+
+client.close()
+```
+
+### Key Features
+
+- **Type-safe search**: Generic search methods with automatic JSON mapping
+- **Async support**: Coroutine-based async operations  
+- **Index management**: Create, delete, check index existence
+- **Bulk operations**: Efficient batch indexing
+- **Response helpers**: Pagination info, hit extraction, error handling
+- **Configuration**: Environment-based config, SSL/auth support
+
+For detailed client usage, see [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md).
 
 ## Testing & Quality
 - Run targeted suites via Gradle’s `--tests` flag when iterating.
