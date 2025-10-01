@@ -14,12 +14,10 @@ class RangeQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { rangeQuery { field = "a"; from = "1234" } },
-                        { rangeQuery { field = "a"; to = "5678" } },
-                        { rangeQuery { field = "b"; gt = 123; lt = 567 } },
-                        { rangeQuery { field = "c"; gte = 456; lte = 789 } }
-                    ]
+                    rangeQuery { field = "a"; from = "1234" }
+                    rangeQuery { field = "a"; to = "5678" }
+                    rangeQuery { field = "b"; gt = 123; lt = 567 }
+                    rangeQuery { field = "c"; gte = 456; lte = 789 }
                 }
             }
         }
@@ -45,7 +43,7 @@ class RangeQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { rangeQuery { field = "d"; gte = 10; lte = 20; boost = 3.0F } }
+                    rangeQuery { field = "d"; gte = 10; lte = 20; boost = 3.0F }
                 }
             }
         }
@@ -60,7 +58,7 @@ class RangeQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { rangeQuery { field = "d"; gte = 10; lte = 20; _name = "named" } }
+                    rangeQuery { field = "d"; gte = 10; lte = 20; _name = "named" }
                 }
             }
         }

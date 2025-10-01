@@ -9,7 +9,7 @@
 - **안전한 생략 처리**: 불필요하거나 잘못된 입력을 자동으로 걸러냅니다.
 - **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
 - **Aggregation DSL**: terms/date histogram/composite/random sampler/time series 등 다양한 버킷 집계와 boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg 등 메트릭 집계를 동일한 생략 규칙으로 구성합니다.
-- **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다.
+- **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다. 이제 `queries[...]`나 `listOf` 없이도 동일 블록에서 순서대로 쿼리를 추가할 수 있습니다.
 - **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
 
 ## 요구 사항
@@ -25,25 +25,32 @@
 
 ### 최소 예제
 ```kotlin
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.*
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
-
 val q: Query = query {
     boolQuery {
-        mustQuery { termQuery { field = "user.id"; value = "silbaram" } }
+        mustQuery {
+            termQuery { field = "user.id"; value = "silbaram" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "tags"; value = "kotlin" }
+                    termQuery { field = "tags"; value = "dsl" }
+                }
+            }
+        }
         filterQuery { rangeQuery { field = "age"; gte = 20; lt = 35 } }
         shouldQuery {
-            queries[
-                { termQuery { field = "tags"; value = "kotlin" } },
-                { termQuery { field = "tags"; value = "search" } }
-            ]
+            termQuery { field = "tags"; value = "search" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "interests"; value = "es" }
+                    termQuery { field = "interests"; value = "dsl" }
+                }
+            }
         }
         mustNotQuery { existsQuery { field = "deleted_at" } }
     }
 }
+
+// 최신 DSL은 `queries[...]` 없이도 중첩 bool 절을 자연스럽게 연결합니다.
 ```
 
 ## DSL 개요

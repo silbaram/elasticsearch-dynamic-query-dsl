@@ -17,7 +17,8 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.geo.*
 
 /**
  * 여러 clause 확장함수에서 재사용하는 Query 수집기.
- * - 기존 `queries[...]` 구문을 지원
+ * - 순차적으로 DSL 함수를 호출해도 자동으로 수집합니다.
+ * - 기존 `queries[...]` 구문도 하위 호환용으로 유지합니다.
  * - 단일 쿼리 추가용 addQuery / unaryPlus 지원
  */
 class SubQueryBuilders {
@@ -29,7 +30,11 @@ class SubQueryBuilders {
 
     // queries[ q1, q2 ] 를 처리
     operator fun get(vararg queries: Query?) {
-        this.collectedQueries.addAll(queries.filterNotNull())
+        queries.filterNotNull().forEach { query ->
+            if (!collectedQueries.contains(query)) {
+                collectedQueries.add(query)
+            }
+        }
     }
 
     // queries[ { builder... }, { builder... } ] 형태 지원
@@ -47,13 +52,17 @@ class SubQueryBuilders {
      * @param fn 중첩될 bool 쿼리를 설정하는 람다입니다.
      * @return 생성된 bool 쿼리를 담은 Query 객체를 반환합니다.
      */
-    fun boolQuery(fn: BoolQuery.Builder.() -> Unit): Query {
-        return Query.of { q ->
+    fun boolQuery(collect: Boolean = true, fn: BoolQuery.Builder.() -> Unit): Query {
+        val query = Query.of { q ->
             q.bool { b ->
                 b.fn()
                 b
             }
         }
+        if (collect) {
+            addQuery(query)
+        }
+        return query
     }
 
     // + 쿼리 문법을 선호한다면 아래를 사용:
@@ -72,6 +81,10 @@ class SubQueryBuilders {
     // --- Inline helpers to avoid explicit `query { ... }` inside clause blocks ---
     fun termQuery(fn: TermQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.termQuery(fn) })
+    }
+
+    fun termsQuery(fn: TermsQueryDsl.() -> Unit) {
+        addQuery(queryOrNull { this.termsQuery(fn) })
     }
 
     fun rangeQuery(fn: RangeQueryDsl.() -> Unit) {
@@ -152,6 +165,64 @@ class SubQueryBuilders {
 
     fun matchQuery(fn: MatchQueryDsl.() -> Unit) {
         addQuery(queryOrNull { this.matchQuery(fn) })
+    }
+
+    fun matchPhrase(
+        field: String,
+        query: String?,
+        analyzer: String? = null,
+        slop: Int? = null,
+        zeroTermsQuery: ZeroTermsQuery? = null,
+        boost: Float? = null,
+        _name: String? = null
+    ) {
+        addQuery(
+            queryOrNull {
+                this.matchPhrase(
+                    field = field,
+                    query = query,
+                    analyzer = analyzer,
+                    slop = slop,
+                    zeroTermsQuery = zeroTermsQuery,
+                    boost = boost,
+                    _name = _name
+                )
+            }
+        )
+    }
+
+    fun matchBoolPrefix(
+        field: String,
+        query: String?,
+        analyzer: String? = null,
+        operator: Operator? = null,
+        minimumShouldMatch: String? = null,
+        fuzziness: String? = null,
+        prefixLength: Int? = null,
+        maxExpansions: Int? = null,
+        fuzzyTranspositions: Boolean? = null,
+        fuzzyRewrite: String? = null,
+        boost: Float? = null,
+        _name: String? = null
+    ) {
+        addQuery(
+            queryOrNull {
+                this.matchBoolPrefix(
+                    field = field,
+                    query = query,
+                    analyzer = analyzer,
+                    operator = operator,
+                    minimumShouldMatch = minimumShouldMatch,
+                    fuzziness = fuzziness,
+                    prefixLength = prefixLength,
+                    maxExpansions = maxExpansions,
+                    fuzzyTranspositions = fuzzyTranspositions,
+                    fuzzyRewrite = fuzzyRewrite,
+                    boost = boost,
+                    _name = _name
+                )
+            }
+        )
     }
 
     fun spanTermQuery(fn: SpanTermQueryDsl.() -> Unit) {

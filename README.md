@@ -9,7 +9,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Safe omission** – Invalid or empty values get dropped automatically.
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
 - **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
-- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
+- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks. 서브 쿼리는 `queries[...]` 나 `listOf` 없이도 동일 블록 안에서 순차적으로 누적할 수 있습니다.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
 ## Requirements
@@ -35,18 +35,29 @@ val q: Query = query {
     boolQuery {
         mustQuery {
             termQuery { field = "user.id"; value = "silbaram" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "tags"; value = "kotlin" }
+                    termQuery { field = "tags"; value = "dsl" }
+                }
+            }
         }
         filterQuery {
             rangeQuery { field = "age"; gte = 20; lt = 35 }
         }
         shouldQuery {
-            queries[
-                { termQuery { field = "tags"; value = "kotlin" } },
-                { termQuery { field = "tags"; value = "search" } }
-            ]
+            termQuery { field = "tags"; value = "search" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "interests"; value = "es" }
+                    termQuery { field = "interests"; value = "dsl" }
+                }
+            }
         }
     }
 }
+
+// 위 예시는 중첩 bool 쿼리를 `queries[...]` 없이 바로 쌓는 최신 DSL 사용법을 보여줍니다.
 ```
 
 ## DSL Overview

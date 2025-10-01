@@ -12,9 +12,7 @@ class RegexpQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        { regexpQuery { field = "keyword"; value = "ba.*"; flags = "INTERSECTION"; maxDeterminizedStates = 10000 } }
-                    ]
+                    regexpQuery { field = "keyword"; value = "ba.*"; flags = "INTERSECTION"; maxDeterminizedStates = 10000 }
                 }
             }
         }
@@ -33,10 +31,8 @@ class RegexpQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        { regexpQuery { field = null; value = "ba.*" } },
-                        { regexpQuery { field = "keyword"; value = "" } }
-                    ]
+                    regexpQuery { field = null; value = "ba.*" }
+                    regexpQuery { field = "keyword"; value = "" }
                 }
             }
         }

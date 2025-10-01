@@ -12,9 +12,7 @@ class WildcardQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { wildcardQuery { field = "title"; value = "abc*"; caseInsensitive = true } }
-                    ]
+                    wildcardQuery { field = "title"; value = "abc*"; caseInsensitive = true }
                 }
             }
         }
@@ -32,10 +30,8 @@ class WildcardQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { wildcardQuery { field = ""; value = "abc*" } },
-                        { wildcardQuery { field = "title"; value = "" } }
-                    ]
+                    wildcardQuery { field = ""; value = "abc*" }
+                    wildcardQuery { field = "title"; value = "" }
                 }
             }
         }

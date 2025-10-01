@@ -15,23 +15,21 @@ class HasParentQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { hasParentQuery {
-                            parentType = "question"
-                            score = true
-                            ignoreUnmapped = false
-                            query {
-                                matchQuery {
-                                    field = "question.title"
-                                    query = "search"
-                                }
+                    hasParentQuery {
+                        parentType = "question"
+                        score = true
+                        ignoreUnmapped = false
+                        query {
+                            matchQuery {
+                                field = "question.title"
+                                query = "search"
                             }
-                            innerHits {
-                                name("questions")
-                                size(1)
-                            }
-                        } }
-                    ]
+                        }
+                        innerHits {
+                            name("questions")
+                            size(1)
+                        }
+                    }
                 }
             }
         }

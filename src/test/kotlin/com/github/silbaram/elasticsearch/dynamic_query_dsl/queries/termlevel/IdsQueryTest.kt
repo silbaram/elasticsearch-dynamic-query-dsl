@@ -12,9 +12,7 @@ class IdsQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { idsQuery { values = listOf("1", "2", "3"); boost = 1.5f; _name = "ids-filter" } }
-                    ]
+                    idsQuery { values = listOf("1", "2", "3"); boost = 1.5f; _name = "ids-filter" }
                 }
             }
         }
@@ -33,9 +31,7 @@ class IdsQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { idsQuery { values = emptyList() } }
-                    ]
+                    idsQuery { values = emptyList() }
                 }
             }
         }

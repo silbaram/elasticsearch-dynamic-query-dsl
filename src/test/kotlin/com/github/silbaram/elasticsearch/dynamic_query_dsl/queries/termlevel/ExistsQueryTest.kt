@@ -14,7 +14,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { existsQuery { field = "a" } }
+                    existsQuery { field = "a" }
                 }
             }
         }
@@ -29,10 +29,8 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { existsQuery { field = null } },
-                        { termQuery { field = "a"; value = "1111" } }
-                    ]
+                    existsQuery { field = null }
+                    termQuery { field = "a"; value = "1111" }
                 }
             }
         }
@@ -48,7 +46,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { existsQuery { field = "a"; boost = 2.0F } }
+                    existsQuery { field = "a"; boost = 2.0F }
                 }
             }
         }
@@ -64,7 +62,7 @@ class ExistsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { existsQuery { field = "a"; _name = "named" } }
+                    existsQuery { field = "a"; _name = "named" }
                 }
             }
         }

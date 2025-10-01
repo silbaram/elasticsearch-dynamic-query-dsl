@@ -36,11 +36,9 @@ class QueryStringQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { queryString(query = "kotlin* AND \"structured query\"", fields = listOf("title", "body")) },
-                        { queryString(query = null) },
-                        { queryString(query = "") }
-                    ]
+                    queryString(query = "kotlin* AND \"structured query\"", fields = listOf("title", "body"))
+                    queryString(query = null)
+                    queryString(query = "")
                 }
             }
         }

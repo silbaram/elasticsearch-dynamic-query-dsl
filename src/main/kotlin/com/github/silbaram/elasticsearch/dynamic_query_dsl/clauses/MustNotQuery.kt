@@ -6,7 +6,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.SubQueryBuilders
 
 /**
  * 람다를 사용하여 `mustNot` 절에 쿼리를 추가하는 통합 DSL 함수입니다.
- * 단일 쿼리 또는 `queries[...]`를 사용한 여러 쿼리를 모두 지원합니다.
+ * 단일 쿼리를 순차적으로 추가하거나, 호환성을 위해 `queries[...]` 블록을 사용할 수 있습니다.
  */
 fun BoolQuery.Builder.mustNotQuery(
     fn: SubQueryBuilders.() -> Any?
