@@ -18,7 +18,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.geo.*
 /**
  * 여러 clause 확장함수에서 재사용하는 Query 수집기.
  * - 순차적으로 DSL 함수를 호출해도 자동으로 수집합니다.
- * - 기존 `queries[...]` 구문도 하위 호환용으로 유지합니다.
+ * - 대괄호 기반 `queries[...]` 구문을 통해 여러 하위 쿼리를 한 번에 추가할 수 있습니다.
  * - 단일 쿼리 추가용 addQuery / unaryPlus 지원
  */
 class SubQueryBuilders {
@@ -28,7 +28,12 @@ class SubQueryBuilders {
     val queries: SubQueryBuilders
         get() = this
 
-    // queries[ q1, q2 ] 를 처리
+    // 개별 쿼리 추가 (람다 안에서 호출할 때 사용)
+    fun addQuery(query: Query?) {
+        query?.let { collectedQueries.add(it) }
+    }
+
+    // [ q1, q2 ] 형태로 전달된 Query 수집
     operator fun get(vararg queries: Query?) {
         queries.filterNotNull().forEach { query ->
             if (!collectedQueries.contains(query)) {
@@ -37,14 +42,9 @@ class SubQueryBuilders {
         }
     }
 
-    // queries[ { builder... }, { builder... } ] 형태 지원
+    // [ { builder... }, { builder... } ] 형태 지원
     operator fun get(vararg builders: Query.Builder.() -> Unit) {
-        builders.forEach { b -> addQuery(queryOrNull(b)) }
-    }
-
-    // 개별 쿼리 추가 (람다 안에서 호출할 때 사용)
-    fun addQuery(query: Query?) {
-        query?.let { collectedQueries.add(it) }
+        builders.forEach { builder -> addQuery(queryOrNull(builder)) }
     }
 
     /**
