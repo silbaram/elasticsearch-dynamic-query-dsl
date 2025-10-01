@@ -16,7 +16,9 @@ class KnnQueryDsl {
     fun filter(fn: SubQueryBuilders.() -> Any?) {
         val sub = SubQueryBuilders()
         val res = sub.fn()
-        if (res is Query) sub.addQuery(res)
+        if (sub.size() == 0 && res is Query) {
+            sub.addQuery(res)
+        }
         filterQueries.addAll(sub)
     }
 

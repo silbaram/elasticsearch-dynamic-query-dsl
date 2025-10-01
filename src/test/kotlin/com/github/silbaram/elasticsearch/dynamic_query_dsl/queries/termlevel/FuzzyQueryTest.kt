@@ -12,9 +12,7 @@ class FuzzyQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { fuzzyQuery { field = "name"; value = "kim"; fuzziness = "AUTO"; prefixLength = 1; maxExpansions = 20; transpositions = true } }
-                    ]
+                    fuzzyQuery { field = "name"; value = "kim"; fuzziness = "AUTO"; prefixLength = 1; maxExpansions = 20; transpositions = true }
                 }
             }
         }
@@ -35,9 +33,7 @@ class FuzzyQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { fuzzyQuery { field = "age"; value = 33; fuzziness = "1" } }
-                    ]
+                    fuzzyQuery { field = "age"; value = 33; fuzziness = "1" }
                 }
             }
         }
@@ -53,10 +49,8 @@ class FuzzyQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { fuzzyQuery { field = ""; value = "kim" } },
-                        { fuzzyQuery { field = "name"; value = null } }
-                    ]
+                    fuzzyQuery { field = ""; value = "kim" }
+                    fuzzyQuery { field = "name"; value = null }
                 }
             }
         }

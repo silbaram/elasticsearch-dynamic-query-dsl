@@ -96,10 +96,8 @@ class ConstantScoreQueryTest : FunSpec({
                 filterQuery {
                     constantScoreQuery {
                         filterQuery {
-                            queries[
-                                { termQuery { field = "brand"; value = "Samsung" } },
-                                { termQuery { field = "category"; value = "Electronics" } }
-                            ]
+                            termQuery { field = "brand"; value = "Samsung" }
+                            termQuery { field = "category"; value = "Electronics" }
                         }
                     }
                 }
@@ -119,13 +117,11 @@ class ConstantScoreQueryTest : FunSpec({
                 filterQuery {
                     boolQuery {
                         mustQuery {
-                                termQuery { field = "field1"; value = "value1" }
+                            termQuery { field = "field1"; value = "value1" }
                         }
                         shouldQuery {
-                            queries[
-                                { termQuery { field = "field2"; value = "value2" } },
-                                { termQuery { field = "field3"; value = "value3" } }
-                            ]
+                            termQuery { field = "field2"; value = "value2" }
+                            termQuery { field = "field3"; value = "value3" }
                         }.minimumShouldMatch("1")
                     }
                 }

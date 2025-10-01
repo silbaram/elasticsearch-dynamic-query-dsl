@@ -5,6 +5,8 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustNotQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.mustQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.shouldQuery
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.queryOrNull
+import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.termQuery
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -108,5 +110,51 @@ class BoolQueryTest : FunSpec({
         query.bool().should().size shouldBe 1
         query.bool().minimumShouldMatch() shouldBe "2"
         query.bool().boost() shouldBe 2.0F
+    }
+
+    test("mustQuery에서 queries 함수로 여러 쿼리를 등록할 수 있어야함") {
+        val query = query {
+            boolQuery {
+                mustQuery {
+                    queries[
+                        {
+                            termQuery {
+                                field = "field1"
+                                value = "value1"
+                            }
+                        },
+                        {
+                            termQuery {
+                                field = "field2"
+                                value = "value2"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        val mustQueries = query.bool().must()
+
+        mustQueries.size shouldBe 2
+        mustQueries.filter { it.isTerm }.map { it.term().field() } shouldBe listOf("field1", "field2")
+    }
+
+    test("mustQuery에서 Query 인스턴스를 queries 함수로 한번에 추가할 수 있어야함") {
+        val term1 = queryOrNull { termQuery { field = "field1"; value = "value1" } }
+        val term2 = queryOrNull { termQuery { field = "field2"; value = "value2" } }
+
+        val query = query {
+            boolQuery {
+                mustQuery {
+                    queries[term1, term2]
+                }
+            }
+        }
+
+        val mustQueries = query.bool().must()
+
+        mustQueries.size shouldBe 2
+        mustQueries.filter { it.isTerm }.map { it.term().field() } shouldBe listOf("field1", "field2")
     }
 })

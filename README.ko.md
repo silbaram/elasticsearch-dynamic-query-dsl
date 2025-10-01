@@ -9,7 +9,7 @@
 - **안전한 생략 처리**: 불필요하거나 잘못된 입력을 자동으로 걸러냅니다.
 - **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
 - **Aggregation DSL**: terms/date histogram/composite/random sampler/time series 등 다양한 버킷 집계와 boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg 등 메트릭 집계를 동일한 생략 규칙으로 구성합니다.
-- **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다.
+- **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다. 서브 쿼리는 순차 호출, `queries[...]` 대괄호, `+query` 중 원하는 방식으로 추가할 수 있습니다.
 - **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
 
 ## 요구 사항
@@ -25,25 +25,32 @@
 
 ### 최소 예제
 ```kotlin
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.compound.boolQuery
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.clauses.*
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.termlevel.*
-
 val q: Query = query {
     boolQuery {
-        mustQuery { termQuery { field = "user.id"; value = "silbaram" } }
+        mustQuery {
+            termQuery { field = "user.id"; value = "silbaram" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "tags"; value = "kotlin" }
+                    termQuery { field = "tags"; value = "dsl" }
+                }
+            }
+        }
         filterQuery { rangeQuery { field = "age"; gte = 20; lt = 35 } }
         shouldQuery {
-            queries[
-                { termQuery { field = "tags"; value = "kotlin" } },
-                { termQuery { field = "tags"; value = "search" } }
-            ]
+            termQuery { field = "tags"; value = "search" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "interests"; value = "es" }
+                    termQuery { field = "interests"; value = "dsl" }
+                }
+            }
         }
         mustNotQuery { existsQuery { field = "deleted_at" } }
     }
 }
+
+// 위 예시는 절 내부에서 순차적으로 헬퍼를 호출해 중첩 bool 쿼리를 구성하는 기본 패턴을 보여줍니다.
 ```
 
 ## DSL 개요
@@ -51,6 +58,26 @@ val q: Query = query {
 - 최상위는 `query { ... }` 또는 `queryOrNull { ... }` 를 사용합니다.
 - `mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery` 등 절 전용 헬퍼로 서브 쿼리를 누적합니다.
 - `SubQueryBuilders`는 `termQuery`, `rangeQuery`, `matchQuery`, `scriptQuery`, `scriptScoreQuery`, `wrapperQuery`, `pinnedQuery` 등 자주 쓰는 빌더를 바로 노출합니다.
+
+#### 여러 하위 쿼리 누적하기
+- **순차 호출**: 절 블록 안에서 헬퍼를 연속 호출하면 유효한 쿼리가 자동으로 수집됩니다.
+- **대괄호 배치**: `queries[...]`를 사용해 여러 빌더 또는 미리 만들어둔 `Query?` 인스턴스를 한 번에 추가합니다.
+- **단항 플러스**: `+queryOrNull { ... }` 혹은 `+사전_생성_쿼리` 형태로 표현식 기반 누적도 가능합니다.
+
+```kotlin
+mustQuery {
+    termQuery { field = "status"; value = "active" }
+
+    queries[
+        {
+            termQuery { field = "tier"; value = "gold" }
+        },
+        queryOrNull { termQuery { field = "region"; value = regionIfAny } }
+    ]
+
+    +queryOrNull { matchQuery { field = "description"; query = keyword } }
+}
+```
 
 ### 자주 쓰는 쿼리 빌더
 - **Term/Range**: `termQuery`, `termsQuery`, `rangeQuery`, `existsQuery`, `matchAllDsl`

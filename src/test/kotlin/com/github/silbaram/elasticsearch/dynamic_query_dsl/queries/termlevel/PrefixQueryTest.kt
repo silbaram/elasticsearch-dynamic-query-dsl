@@ -12,9 +12,7 @@ class PrefixQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { prefixQuery { field = "title"; value = "pre"; caseInsensitive = true; boost = 2.1f } }
-                    ]
+                    prefixQuery { field = "title"; value = "pre"; caseInsensitive = true; boost = 2.1f }
                 }
             }
         }
@@ -35,10 +33,8 @@ class PrefixQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { prefixQuery { field = ""; value = "pre" } },
-                        { prefixQuery { field = "title"; value = null } }
-                    ]
+                    prefixQuery { field = ""; value = "pre" }
+                    prefixQuery { field = "title"; value = null }
                 }
             }
         }

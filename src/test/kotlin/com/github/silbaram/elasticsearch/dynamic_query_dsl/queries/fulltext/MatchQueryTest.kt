@@ -19,10 +19,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = "1111" } },
-                        { matchQuery { field = "b"; query = "2222" } }
-                    ]
+                    matchQuery { field = "a"; query = "1111" }
+                    matchQuery { field = "b"; query = "2222" }
                 }
             }
         }
@@ -35,15 +33,31 @@ class MatchQueryTest : FunSpec({
         mustQuery.filter { it.isMatch }.find { it.match().field() == "b" }?.match()?.query()?.stringValue() shouldBe "2222"
     }
 
+    test("mustQuery DSL은 queries 블록 없이도 여러 match 쿼리를 추가할 수 있어야 함") {
+        val query = query {
+            boolQuery {
+                mustQuery {
+                    matchQuery { field = "title"; query = "kotlin" }
+                    matchQuery { field = "body"; query = "dsl" }
+                }
+            }
+        }
+
+        val mustQuery = query.bool().must()
+
+        query.isBool shouldBe true
+        mustQuery.size shouldBe 2
+        mustQuery.any { it.match().field() == "title" && it.match().query().stringValue() == "kotlin" } shouldBe true
+        mustQuery.any { it.match().field() == "body" && it.match().query().stringValue() == "dsl" } shouldBe true
+    }
+
     test("must 쿼리에서 matchQuery에 query 값이 비었거나 null면 제외가 되어야함") {
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = null } },
-                        { matchQuery { field = "b"; query = "" } },
-                        { matchQuery { field = "c"; query = "3333" } }
-                    ]
+                    matchQuery { field = "a"; query = null }
+                    matchQuery { field = "b"; query = "" }
+                    matchQuery { field = "c"; query = "3333" }
                 }
             }
         }
@@ -61,10 +75,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = "" } },
-                        { matchQuery { field = "b"; query = null } }
-                    ]
+                    matchQuery { field = "a"; query = "" }
+                    matchQuery { field = "b"; query = null }
                 }
             }
         }
@@ -79,10 +91,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = "1111" } },
-                        { matchQuery { field = "b"; query = "2222" } }
-                    ]
+                    matchQuery { field = "a"; query = "1111" }
+                    matchQuery { field = "b"; query = "2222" }
                 }
             }
         }
@@ -99,11 +109,9 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = null } },
-                        { matchQuery { field = "b"; query = "" } },
-                        { matchQuery { field = "c"; query = "3333" } }
-                    ]
+                    matchQuery { field = "a"; query = null }
+                    matchQuery { field = "b"; query = "" }
+                    matchQuery { field = "c"; query = "3333" }
                 }
             }
         }
@@ -121,10 +129,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { matchQuery { field = "a"; query = "" } },
-                        { matchQuery { field = "b"; query = null } }
-                    ]
+                    matchQuery { field = "a"; query = "" }
+                    matchQuery { field = "b"; query = null }
                 }
             }
         }
@@ -140,10 +146,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        query { matchQuery { field = "a"; query = "1111" } },
-                        query { matchQuery { field = "b"; query = "2222" } }
-                    ]
+                    matchQuery { field = "a"; query = "1111" }
+                    matchQuery { field = "b"; query = "2222" }
                 }
             }
         }
@@ -160,11 +164,9 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        queryOrNull { matchQuery { field = "a"; query = null } },
-                        queryOrNull { matchQuery { field = "b"; query = "" } },
-                        query { matchQuery { field = "c"; query = "3333" } }
-                    ]
+                    matchQuery { field = "a"; query = null }
+                    matchQuery { field = "b"; query = "" }
+                    matchQuery { field = "c"; query = "3333" }
                 }
             }
         }
@@ -182,10 +184,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        queryOrNull { matchQuery { field = "a"; query = "" } },
-                        queryOrNull { matchQuery { field = "b"; query = null } }
-                    ]
+                    matchQuery { field = "a"; query = "" }
+                    matchQuery { field = "b"; query = null }
                 }
             }
         }
@@ -199,10 +199,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        query { matchQuery { field = "a"; query = "1111" } },
-                        query { matchQuery { field = "b"; query = "2222" } }
-                    ]
+                    matchQuery { field = "a"; query = "1111" }
+                    matchQuery { field = "b"; query = "2222" }
                 }
             }
         }
@@ -219,11 +217,9 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { matchQuery { field = "a"; query = null } },
-                        queryOrNull { matchQuery { field = "b"; query = "" } },
-                        query { matchQuery { field = "c"; query = "3333" } }
-                    ]
+                    matchQuery { field = "a"; query = null }
+                    matchQuery { field = "b"; query = "" }
+                    matchQuery { field = "c"; query = "3333" }
                 }
             }
         }
@@ -241,10 +237,8 @@ class MatchQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { matchQuery { field = "a"; query = "" } },
-                        queryOrNull { matchQuery { field = "b"; query = null } }
-                    ]
+                    matchQuery { field = "a"; query = "" }
+                    matchQuery { field = "b"; query = null }
                 }
             }
         }

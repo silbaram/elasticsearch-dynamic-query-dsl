@@ -12,7 +12,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { matchAllDsl() }
+                    matchAll()
                 }
             }
         }
@@ -33,7 +33,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { matchAllDsl { boost = 2.0F } }
+                    matchAll { boost = 2.0F }
                 }
             }
         }
@@ -50,7 +50,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { matchAllDsl { _name = "match_all_named" } }
+                    matchAll { _name = "match_all_named" }
                 }
             }
         }
@@ -67,7 +67,7 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { matchAllDsl { boost = 1.5F; _name = "boosted_match_all" } }
+                    matchAll { boost = 1.5F; _name = "boosted_match_all" }
                 }
             }
         }
@@ -85,10 +85,8 @@ class MatchAllQueryTest: FunSpec ({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        query { matchAllDsl { boost = 1.2F } },
-                        query { termQuery { field = "category"; value = "tech" } }
-                    ]
+                    matchAll { boost = 1.2F }
+                    termQuery { field = "category"; value = "tech" }
                 }
             }
         }

@@ -9,7 +9,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Safe omission** – Invalid or empty values get dropped automatically.
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
 - **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
-- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
+- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks. Sub clauses can be added inline, batched with `queries[...]`, or fed prebuilt objects via `+query`.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
 ## Requirements
@@ -35,18 +35,29 @@ val q: Query = query {
     boolQuery {
         mustQuery {
             termQuery { field = "user.id"; value = "silbaram" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "tags"; value = "kotlin" }
+                    termQuery { field = "tags"; value = "dsl" }
+                }
+            }
         }
         filterQuery {
             rangeQuery { field = "age"; gte = 20; lt = 35 }
         }
         shouldQuery {
-            queries[
-                { termQuery { field = "tags"; value = "kotlin" } },
-                { termQuery { field = "tags"; value = "search" } }
-            ]
+            termQuery { field = "tags"; value = "search" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "interests"; value = "es" }
+                    termQuery { field = "interests"; value = "dsl" }
+                }
+            }
         }
     }
 }
+
+// 위 예시는 절 안에서 순차적으로 헬퍼를 호출해 중첩 bool 쿼리를 구성하는 기본 패턴을 보여줍니다.
 ```
 
 ## DSL Overview
@@ -54,6 +65,26 @@ val q: Query = query {
 - Build top-level queries with `query { ... }` or `queryOrNull { ... }` (omits invalid content).
 - Use clause helpers (`mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery`) to aggregate sub-queries.
 - `SubQueryBuilders` exposes inline helpers such as `termQuery`, `rangeQuery`, `matchQuery`, `scriptQuery`, `scriptScoreQuery`, `wrapperQuery`, `pinnedQuery`, etc.
+
+#### Collecting Multiple Sub-queries
+- **Sequential builders** – Just call helpers one after another; each valid `Query` is captured automatically.
+- **Bracket batching** – Use `queries[...]` to register several builders or pre-built `Query?` instances in one expression.
+- **Unary plus** – Apply `+queryOrNull { ... }` or `+prebuiltQuery` when you prefer expression-style accumulation.
+
+```kotlin
+mustQuery {
+    termQuery { field = "status"; value = "active" }
+
+    queries[
+        {
+            termQuery { field = "tier"; value = "gold" }
+        },
+        queryOrNull { termQuery { field = "region"; value = regionIfAny } }
+    ]
+
+    +queryOrNull { matchQuery { field = "description"; query = keyword } }
+}
+```
 
 ### Term & Full-text Helpers
 - `termQuery`, `termsQuery`, `rangeQuery`, `existsQuery`, `matchAllDsl`

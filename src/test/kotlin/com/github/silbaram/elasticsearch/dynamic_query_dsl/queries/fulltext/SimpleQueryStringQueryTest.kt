@@ -52,11 +52,9 @@ class SimpleQueryStringQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { simpleQueryString(query = "kotlin* AND tags:(dsl | search)", fields = listOf("title", "tags")) },
-                        { simpleQueryString(query = null) },
-                        { simpleQueryString(query = "") }
-                    ]
+                    simpleQueryString(query = "kotlin* AND tags:(dsl | search)", fields = listOf("title", "tags"))
+                    simpleQueryString(query = null)
+                    simpleQueryString(query = "")
                 }
             }
         }

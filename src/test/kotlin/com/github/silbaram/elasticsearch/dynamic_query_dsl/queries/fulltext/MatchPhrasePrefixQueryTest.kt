@@ -28,10 +28,10 @@ class MatchPhrasePrefixQueryTest : FunSpec({
     test("must/filter/mustNot/should에서 생성/생략 동작") {
         val query = query {
             boolQuery {
-                mustQuery { queries[ { matchPhrasePrefix(field = "a", query = "quick bro") } ] }
-                filterQuery { queries[ { matchPhrasePrefix(field = "b", query = "fox ju") } ] }
-                mustNotQuery { queries[ { matchPhrasePrefix(field = "c", query = "over th") } ] }
-                shouldQuery { queries[ { matchPhrasePrefix(field = "d", query = "lazy do") } ] }
+                mustQuery { matchPhrasePrefix(field = "a", query = "quick bro") }
+                filterQuery { matchPhrasePrefix(field = "b", query = "fox ju") }
+                mustNotQuery { matchPhrasePrefix(field = "c", query = "over th") }
+                shouldQuery { matchPhrasePrefix(field = "d", query = "lazy do") }
             }
         }
 

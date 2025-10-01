@@ -16,10 +16,8 @@ class NestedBoolQueryTest : FunSpec({
                 mustQuery {
                     boolQuery {
                         shouldQuery {
-                            queries[
-                                { termQuery { field = "tags"; value = "kotlin" } },
-                                { termQuery { field = "tags"; value = "dsl" } }
-                            ]
+                            termQuery { field = "tags"; value = "kotlin" }
+                            termQuery { field = "tags"; value = "dsl" }
                         }
                     }
                 }
@@ -61,10 +59,8 @@ class NestedBoolQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        boolQuery { shouldQuery { termQuery { field = "field1"; value = "A" } } },
-                        boolQuery { mustQuery { termQuery { field = "field2"; value = "B" } } }
-                    ]
+                    boolQuery { shouldQuery { termQuery { field = "field1"; value = "A" } } }
+                    boolQuery { mustQuery { termQuery { field = "field2"; value = "B" } } }
                 }
             }
         }

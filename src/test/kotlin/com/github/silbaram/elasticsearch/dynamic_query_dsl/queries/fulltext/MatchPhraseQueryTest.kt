@@ -17,11 +17,9 @@ class MatchPhraseQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        query { matchPhrase(field = "message", query = "this is a test") },
-                        queryOrNull { matchPhrase(field = "skip_null", query = null) },
-                        queryOrNull { matchPhrase(field = "skip_blank", query = "") }
-                    ]
+                    +query { matchPhrase(field = "message", query = "this is a test") }
+                    +queryOrNull { matchPhrase(field = "skip_null", query = null) }
+                    +queryOrNull { matchPhrase(field = "skip_blank", query = "") }
                 }
             }
         }
@@ -37,9 +35,9 @@ class MatchPhraseQueryTest : FunSpec({
     test("filter/mustNot/should 에서도 match_phrase 쿼리 동작") {
         val query = query {
             boolQuery {
-                filterQuery { queries[ { matchPhrase(field = "f", query = "alpha beta") } ] }
-                mustNotQuery { queries[ { matchPhrase(field = "mn", query = "gamma delta") } ] }
-                shouldQuery { queries[ { matchPhrase(field = "s", query = "quick brown fox") } ] }
+                filterQuery { +query { matchPhrase(field = "f", query = "alpha beta") } }
+                mustNotQuery { +query { matchPhrase(field = "mn", query = "gamma delta") } }
+                shouldQuery { +query { matchPhrase(field = "s", query = "quick brown fox") } }
             }
         }
 

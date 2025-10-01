@@ -14,15 +14,13 @@ class ParentIdQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { parentIdQuery {
-                            id = "parent-1"
-                            type = "reply"
-                            ignoreUnmapped = true
-                            boost = 0.8f
-                            _name = "parent-filter"
-                        } }
-                    ]
+                    parentIdQuery {
+                        id = "parent-1"
+                        type = "reply"
+                        ignoreUnmapped = true
+                        boost = 0.8f
+                        _name = "parent-filter"
+                    }
                 }
             }
         }

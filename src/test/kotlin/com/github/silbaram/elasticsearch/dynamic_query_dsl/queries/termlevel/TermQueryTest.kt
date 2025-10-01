@@ -17,10 +17,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termQuery { field = "a"; value = "1111" } },
-                        { termQuery { field = "b"; value = "2222" } }
-                    ]
+                    termQuery { field = "a"; value = "1111" }
+                    termQuery { field = "b"; value = "2222" }
                 }
             }
         }
@@ -37,11 +35,9 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termQuery { field = "a"; value = null } },
-                        { termQuery { field = "b"; value = "" } },
-                        { termQuery { field = "c"; value = "3333" } }
-                    ]
+                    termQuery { field = "a"; value = null }
+                    termQuery { field = "b"; value = "" }
+                    termQuery { field = "c"; value = "3333" }
                 }
             }
         }
@@ -58,10 +54,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termQuery { field = "a"; value = "" } },
-                        { termQuery { field = "b"; value = null } }
-                    ]
+                    termQuery { field = "a"; value = "" }
+                    termQuery { field = "b"; value = null }
                 }
             }
         }
@@ -75,10 +69,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termQuery { field = "a"; value = "1111" } },
-                        { termQuery { field = "b"; value = "2222" } }
-                    ]
+                    termQuery { field = "a"; value = "1111" }
+                    termQuery { field = "b"; value = "2222" }
                 }
             }
         }
@@ -94,11 +86,9 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termQuery { field = "a"; value = null } },
-                        { termQuery { field = "b"; value = "" } },
-                        { termQuery { field = "c"; value = "3333" } }
-                    ]
+                    termQuery { field = "a"; value = null }
+                    termQuery { field = "b"; value = "" }
+                    termQuery { field = "c"; value = "3333" }
                 }
             }
         }
@@ -115,10 +105,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termQuery { field = "a"; value = "" } },
-                        { termQuery { field = "b"; value = null } }
-                    ]
+                    termQuery { field = "a"; value = "" }
+                    termQuery { field = "b"; value = null }
                 }
             }
         }
@@ -132,10 +120,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        query { termQuery { field = "a"; value = "1111" } },
-                        query { termQuery { field = "b"; value = "2222" } }
-                    ]
+                    termQuery { field = "a"; value = "1111" }
+                    termQuery { field = "b"; value = "2222" }
                 }
             }
         }
@@ -151,11 +137,9 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        queryOrNull { termQuery { field = "a"; value = null } },
-                        queryOrNull { termQuery { field = "b"; value = "" } },
-                        query { termQuery { field = "c"; value = "3333" } }
-                    ]
+                    termQuery { field = "a"; value = null }
+                    termQuery { field = "b"; value = "" }
+                    termQuery { field = "c"; value = "3333" }
                 }
             }
         }
@@ -172,10 +156,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        queryOrNull { termQuery { field = "a"; value = "" } },
-                        queryOrNull { termQuery { field = "b"; value = null } }
-                    ]
+                    termQuery { field = "a"; value = "" }
+                    termQuery { field = "b"; value = null }
                 }
             }
         }
@@ -189,10 +171,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        query { termQuery { field = "a"; value = "1111" } },
-                        query { termQuery { field = "b"; value = "2222" } }
-                    ]
+                    termQuery { field = "a"; value = "1111" }
+                    termQuery { field = "b"; value = "2222" }
                 }
             }
         }
@@ -208,11 +188,9 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { termQuery { field = "a"; value = null } },
-                        queryOrNull { termQuery { field = "b"; value = "" } },
-                        query { termQuery { field = "c"; value = "3333" } }
-                    ]
+                    termQuery { field = "a"; value = null }
+                    termQuery { field = "b"; value = "" }
+                    termQuery { field = "c"; value = "3333" }
                 }
             }
         }
@@ -229,10 +207,8 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { termQuery { field = "a"; value = "" } },
-                        queryOrNull { termQuery { field = "b"; value = null } }
-                    ]
+                    termQuery { field = "a"; value = "" }
+                    termQuery { field = "b"; value = null }
                 }
             }
         }
@@ -246,7 +222,7 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { termQuery { field = "a"; value = "1111"; boost = 2.0F } }
+                    termQuery { field = "a"; value = "1111"; boost = 2.0F }
                 }
             }
         }
@@ -262,7 +238,7 @@ class TermQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { termQuery { field = "a"; value = "1111"; _name = "named" } }
+                    termQuery { field = "a"; value = "1111"; _name = "named" }
                 }
             }
         }

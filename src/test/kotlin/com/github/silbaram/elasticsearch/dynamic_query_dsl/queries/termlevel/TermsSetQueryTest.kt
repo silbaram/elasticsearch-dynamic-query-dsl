@@ -13,18 +13,16 @@ class TermsSetQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termsSetQuery {
-                            field = "tags"
-                            terms = listOf("tech", "kotlin", "search")
-                            minimumShouldMatchField = "required_matches"
-                            minimumShouldMatchScript = Script.of { script ->
-                                script.inline { inlineScript ->
-                                    inlineScript.source("Math.min(params.num_terms, 2)")
-                                }
+                    termsSetQuery {
+                        field = "tags"
+                        terms = listOf("tech", "kotlin", "search")
+                        minimumShouldMatchField = "required_matches"
+                        minimumShouldMatchScript = Script.of { script ->
+                            script.inline { inlineScript ->
+                                inlineScript.source("Math.min(params.num_terms, 2)")
                             }
-                        } }
-                    ]
+                        }
+                    }
                 }
             }
         }
@@ -45,10 +43,8 @@ class TermsSetQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termsSetQuery { field = null; terms = listOf("a") } },
-                        { termsSetQuery { field = "tags"; terms = emptyList() } }
-                    ]
+                    termsSetQuery { field = null; terms = listOf("a") }
+                    termsSetQuery { field = "tags"; terms = emptyList() }
                 }
             }
         }

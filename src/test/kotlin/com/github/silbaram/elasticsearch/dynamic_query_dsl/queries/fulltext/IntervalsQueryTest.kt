@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class IntervalsQueryTest : FunSpec({
-    
+
     test("기본 intervals match query가 생성되어야 함") {
         val query = query {
             intervals("content") { match("quick brown fox") }
@@ -86,10 +86,8 @@ class IntervalsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { intervals("content") { match("quick brown") } },
-                        { intervals("title") { prefix("fox") } }
-                    ]
+                    intervals("content") { match("quick brown") }
+                    intervals("title") { prefix("fox") }
                 }
             }
         }
@@ -133,12 +131,10 @@ class IntervalsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        query { intervals("title") { anyOf { match("elasticsearch") } } },
-                        query { intervals("content") { anyOf { prefix("search") } } },
-                        query { intervals("tags") { anyOf { wildcard("java*") } } },
-                        query { intervals("description") { anyOf { fuzzy("query", fuzziness = "1") } } }
-                    ]
+                    intervals("title") { anyOf { match("elasticsearch") } }
+                    intervals("content") { anyOf { prefix("search") } }
+                    intervals("tags") { anyOf { wildcard("java*") } }
+                    intervals("description") { anyOf { fuzzy("query", fuzziness = "1") } }
                 }
             }
         }
