@@ -203,7 +203,7 @@ val aggs = aggregations {
 
 ## Elasticsearch 클라이언트 통합
 
-라이브러리에는 Elasticsearch 클러스터에 대해 쿼리를 쉽게 실행할 수 있는 포괄적인 클라이언트 래퍼가 포함되어 있습니다:
+라이브러리에는 Elasticsearch 클러스터에 대해 쿼리를 쉽게 실행할 수 있는 포괄적인 클라이언트 래퍼가 포함되어 있습니다. 이 클라이언트는 공식 `elasticsearch-java` 클라이언트를 Kotlin 친화적인 DSL로 래핑합니다.
 
 ### 클라이언트 빠른 시작
 
@@ -242,8 +242,8 @@ val response = client.search<Product> {
 }
 
 println("${response.totalHits}개 제품을 찾았습니다")
-response.hits.forEach { hit ->
-    println("${hit.source?.name}: $${hit.source?.price}")
+response.sources().forEach { product ->
+    println("${product.name}: $${product.price}")
 }
 
 client.close()
@@ -252,13 +252,284 @@ client.close()
 ### 주요 기능
 
 - **타입 안전한 검색**: 자동 JSON 매핑을 지원하는 제네릭 검색 메소드
-- **비동기 지원**: 코루틴 기반 비동기 작업  
+- **비동기 지원**: `suspend` 함수를 사용한 코루틴 기반 비동기 작업
 - **인덱스 관리**: 인덱스 생성, 삭제, 존재 확인
-- **대량 작업**: 효율적인 배치 인덱싱
-- **응답 헬퍼**: 페이징 정보, 히트 추출, 에러 처리
-- **설정**: 환경 기반 설정, SSL/인증 지원
+- **대량 작업**: 에러 처리를 지원하는 효율적인 배치 인덱싱
+- **응답 헬퍼**: 페이징 정보, 히트 추출, 소스 필터링
+- **설정**: 환경변수 기반 설정, SSL/TLS, 기본 인증 지원
+- **클러스터 헬스**: 클러스터 상태 및 샤드 정보 모니터링
 
-상세한 클라이언트 사용법은 [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md)를 참고하세요.
+### 클라이언트 사용 예제
+
+#### 1. 클라이언트 생성
+
+```kotlin
+// 로컬 개발 환경 (localhost:9200)
+val client = ElasticsearchClientWrapper.create()
+
+// 환경변수에서 설정 로드
+val client = ElasticsearchClientWrapper.createFromEnvironment()
+
+// 커스텀 설정
+val config = ElasticsearchClientConfig(
+    hosts = listOf("es1.example.com:9200", "es2.example.com:9200"),
+    protocol = "https",
+    username = "elastic",
+    password = "your_password",
+    enableSsl = true
+)
+val client = ElasticsearchClientWrapper.create(config)
+```
+
+#### 2. 환경변수 설정
+
+```bash
+export ELASTICSEARCH_HOSTS=es1.example.com:9200,es2.example.com:9200
+export ELASTICSEARCH_PROTOCOL=https
+export ELASTICSEARCH_USERNAME=elastic
+export ELASTICSEARCH_PASSWORD=your_password
+export ELASTICSEARCH_SSL_ENABLED=true
+export ELASTICSEARCH_CONNECT_TIMEOUT=5000
+export ELASTICSEARCH_SOCKET_TIMEOUT=60000
+```
+
+#### 3. 문서 검색
+
+```kotlin
+// 간단한 검색
+val response = client.search<Product> {
+    indices("products")
+    query {
+        matchQuery {
+            field = "name"
+            query = "laptop"
+        }
+    }
+    size(10)
+}
+
+// 결과 추출
+val products = response.sources()
+products.forEach { println(it.name) }
+
+// 첫 번째 결과만
+val firstProduct = response.firstSource()
+
+// 페이징 정보
+val pagingInfo = response.getPagingInfo(currentPage = 1, pageSize = 10)
+println("${pagingInfo.currentPage} 페이지 / 전체 ${pagingInfo.totalPages} 페이지")
+```
+
+#### 4. 비동기 검색 (코루틴)
+
+```kotlin
+import kotlinx.coroutines.*
+
+runBlocking {
+    // 단일 비동기 검색
+    val response = client.searchAsync<Product> {
+        indices("products")
+        query { matchAllQuery() }
+    }
+
+    // 여러 검색을 병렬로 실행
+    val laptops = async {
+        client.searchAsync<Product> {
+            indices("products")
+            query {
+                termQuery {
+                    field = "category"
+                    value = "laptop"
+                }
+            }
+        }
+    }
+
+    val phones = async {
+        client.searchAsync<Product> {
+            indices("products")
+            query {
+                termQuery {
+                    field = "category"
+                    value = "phone"
+                }
+            }
+        }
+    }
+
+    println("노트북: ${laptops.await().totalHits}개")
+    println("휴대폰: ${phones.await().totalHits}개")
+}
+```
+
+#### 5. 문서 인덱싱
+
+```kotlin
+// 단건 인덱싱
+val productId = client.index(
+    index = "products",
+    document = Product("1", "Laptop", "electronics", 1200.0),
+    id = "1" // 옵션, null이면 자동 생성
+)
+
+// 비동기 인덱싱
+val id = client.indexAsync(
+    index = "products",
+    document = product
+)
+
+// 대량 인덱싱
+val products = listOf(
+    Product("1", "Laptop", "electronics", 1200.0),
+    Product("2", "Mouse", "accessories", 25.0),
+    Product("3", "Keyboard", "accessories", 80.0)
+)
+
+val result = client.bulkIndex(
+    index = "products",
+    documents = products,
+    idExtractor = { it.id }
+)
+
+println("${result.successCount}개 문서 인덱싱 완료")
+if (result.hasErrors) {
+    result.failedItems.forEach { item ->
+        println("실패: ${item.id} - ${item.error}")
+    }
+}
+```
+
+#### 6. 인덱스 관리
+
+```kotlin
+// 인덱스 존재 확인
+if (!client.indexExists("products")) {
+    // 매핑과 설정으로 인덱스 생성
+    client.createIndex(
+        index = "products",
+        mappings = mapOf(
+            "name" to mapOf("type" to "text"),
+            "price" to mapOf("type" to "double"),
+            "category" to mapOf("type" to "keyword")
+        ),
+        settings = mapOf(
+            "number_of_shards" to 2,
+            "number_of_replicas" to 1
+        )
+    )
+}
+
+// 인덱스 삭제
+client.deleteIndex("products")
+```
+
+#### 7. 클러스터 헬스 모니터링
+
+```kotlin
+val health = client.health()
+println("클러스터: ${health.clusterName}")
+println("상태: ${health.status}") // green, yellow, red
+println("노드 수: ${health.numberOfNodes}")
+println("활성 샤드: ${health.activeShards}")
+println("정상 여부: ${health.isHealthy}")
+```
+
+#### 8. 고급 검색 옵션
+
+```kotlin
+val response = client.search<Product> {
+    indices("products", "archived_products")
+
+    query {
+        boolQuery {
+            mustQuery {
+                matchQuery {
+                    field = "description"
+                    query = "gaming"
+                }
+            }
+            filterQuery {
+                rangeQuery {
+                    field = "price"
+                    gte = 100.0
+                }
+            }
+        }
+    }
+
+    // 정렬
+    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Asc)
+    sortByScore()
+
+    // 페이징
+    size(20)
+    from(40) // 처음 40개 건너뛰기
+
+    // 소스 필터링
+    includeFields("id", "name", "price")
+    excludeFields("internal_metadata")
+
+    // 타임아웃
+    timeout("5s")
+
+    // 전체 히트 수 추적
+    trackTotalHits(true)
+}
+
+// 샤드 정보
+val shardInfo = response.shardInfo
+println("샤드 - 전체: ${shardInfo.total}, 성공: ${shardInfo.successful}")
+```
+
+#### 9. 리소스 관리
+
+```kotlin
+// use 블록으로 자동 종료
+ElasticsearchClientWrapper.create().use { client ->
+    val response = client.search<Product> {
+        indices("products")
+        query { matchAllQuery() }
+    }
+    println(response.totalHits)
+}
+
+// 수동 종료
+val client = ElasticsearchClientWrapper.create()
+try {
+    // 클라이언트 사용
+} finally {
+    client.close()
+}
+```
+
+### 응답 API
+
+`ElasticsearchSearchResponse<T>`는 편리한 메서드를 제공합니다:
+
+```kotlin
+val response = client.search<Product> { /* ... */ }
+
+// 히트 수
+response.totalHits: Long
+response.totalHitsRelation: String // "eq" 또는 "gte"
+
+// 결과
+response.hits: List<SearchHit<T>>
+response.sources(): List<T>
+response.firstHit(): SearchHit<T>?
+response.firstSource(): T?
+
+// 메타데이터
+response.tookInMillis: Long
+response.timedOut: Boolean
+response.maxScore: Double?
+response.shardInfo: ShardInfo
+
+// 페이징
+response.getPagingInfo(page, pageSize): PagingInfo
+```
+
+상세한 클라이언트 사용법과 고급 기능은 [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md)를 참고하세요.
 
 ## 테스트 & 품질 관리
 - 필요 시 `./gradlew test --tests "패키지.클래스"`로 특정 스펙만 실행하세요.

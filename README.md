@@ -207,14 +207,14 @@ Bucket builders cover adjacency matrix, composite, geo grids, range variants, sa
 
 ## Elasticsearch Client Integration
 
-The library includes a comprehensive client wrapper that makes it easy to execute queries against Elasticsearch clusters:
+The library includes a comprehensive client wrapper that makes it easy to execute queries against Elasticsearch clusters. The client wraps the official `elasticsearch-java` client with a Kotlin-friendly DSL.
 
 ### Quick Start with Client
 
 ```kotlin
 import com.github.silbaram.elasticsearch.dynamic_query_dsl.client.*
 
-// Create client
+// Create client (wraps elasticsearch-java)
 val client = ElasticsearchClientWrapper.create() // Local default
 // or
 val client = ElasticsearchClientWrapper.createFromEnvironment() // From env vars
@@ -246,8 +246,8 @@ val response = client.search<Product> {
 }
 
 println("Found ${response.totalHits} products")
-response.hits.forEach { hit ->
-    println("${hit.source?.name}: $${hit.source?.price}")
+response.sources().forEach { product ->
+    println("${product.name}: $${product.price}")
 }
 
 client.close()
@@ -256,13 +256,284 @@ client.close()
 ### Key Features
 
 - **Type-safe search**: Generic search methods with automatic JSON mapping
-- **Async support**: Coroutine-based async operations  
+- **Async support**: Coroutine-based async operations using `suspend` functions
 - **Index management**: Create, delete, check index existence
-- **Bulk operations**: Efficient batch indexing
-- **Response helpers**: Pagination info, hit extraction, error handling
-- **Configuration**: Environment-based config, SSL/auth support
+- **Bulk operations**: Efficient batch indexing with error handling
+- **Response helpers**: Pagination info, hit extraction, source filtering
+- **Configuration**: Environment-based config, SSL/TLS, basic auth support
+- **Cluster health**: Monitor cluster status and shard information
 
-For detailed client usage, see [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md).
+### Client Usage Examples
+
+#### 1. Creating a Client
+
+```kotlin
+// Local development (localhost:9200)
+val client = ElasticsearchClientWrapper.create()
+
+// From environment variables
+val client = ElasticsearchClientWrapper.createFromEnvironment()
+
+// Custom configuration
+val config = ElasticsearchClientConfig(
+    hosts = listOf("es1.example.com:9200", "es2.example.com:9200"),
+    protocol = "https",
+    username = "elastic",
+    password = "your_password",
+    enableSsl = true
+)
+val client = ElasticsearchClientWrapper.create(config)
+```
+
+#### 2. Environment Variables
+
+```bash
+export ELASTICSEARCH_HOSTS=es1.example.com:9200,es2.example.com:9200
+export ELASTICSEARCH_PROTOCOL=https
+export ELASTICSEARCH_USERNAME=elastic
+export ELASTICSEARCH_PASSWORD=your_password
+export ELASTICSEARCH_SSL_ENABLED=true
+export ELASTICSEARCH_CONNECT_TIMEOUT=5000
+export ELASTICSEARCH_SOCKET_TIMEOUT=60000
+```
+
+#### 3. Searching Documents
+
+```kotlin
+// Simple search
+val response = client.search<Product> {
+    indices("products")
+    query {
+        matchQuery {
+            field = "name"
+            query = "laptop"
+        }
+    }
+    size(10)
+}
+
+// Extract sources
+val products = response.sources()
+products.forEach { println(it.name) }
+
+// Access first result
+val firstProduct = response.firstSource()
+
+// Pagination info
+val pagingInfo = response.getPagingInfo(currentPage = 1, pageSize = 10)
+println("Page ${pagingInfo.currentPage} of ${pagingInfo.totalPages}")
+```
+
+#### 4. Async Search with Coroutines
+
+```kotlin
+import kotlinx.coroutines.*
+
+runBlocking {
+    // Single async search
+    val response = client.searchAsync<Product> {
+        indices("products")
+        query { matchAllQuery() }
+    }
+
+    // Multiple parallel searches
+    val laptops = async {
+        client.searchAsync<Product> {
+            indices("products")
+            query {
+                termQuery {
+                    field = "category"
+                    value = "laptop"
+                }
+            }
+        }
+    }
+
+    val phones = async {
+        client.searchAsync<Product> {
+            indices("products")
+            query {
+                termQuery {
+                    field = "category"
+                    value = "phone"
+                }
+            }
+        }
+    }
+
+    println("Laptops: ${laptops.await().totalHits}")
+    println("Phones: ${phones.await().totalHits}")
+}
+```
+
+#### 5. Indexing Documents
+
+```kotlin
+// Single document
+val productId = client.index(
+    index = "products",
+    document = Product("1", "Laptop", "electronics", 1200.0),
+    id = "1" // Optional, auto-generated if null
+)
+
+// Async indexing
+val id = client.indexAsync(
+    index = "products",
+    document = product
+)
+
+// Bulk indexing
+val products = listOf(
+    Product("1", "Laptop", "electronics", 1200.0),
+    Product("2", "Mouse", "accessories", 25.0),
+    Product("3", "Keyboard", "accessories", 80.0)
+)
+
+val result = client.bulkIndex(
+    index = "products",
+    documents = products,
+    idExtractor = { it.id }
+)
+
+println("Indexed ${result.successCount} documents")
+if (result.hasErrors) {
+    result.failedItems.forEach { item ->
+        println("Failed: ${item.id} - ${item.error}")
+    }
+}
+```
+
+#### 6. Index Management
+
+```kotlin
+// Check if index exists
+if (!client.indexExists("products")) {
+    // Create index with mappings and settings
+    client.createIndex(
+        index = "products",
+        mappings = mapOf(
+            "name" to mapOf("type" to "text"),
+            "price" to mapOf("type" to "double"),
+            "category" to mapOf("type" to "keyword")
+        ),
+        settings = mapOf(
+            "number_of_shards" to 2,
+            "number_of_replicas" to 1
+        )
+    )
+}
+
+// Delete index
+client.deleteIndex("products")
+```
+
+#### 7. Cluster Health Monitoring
+
+```kotlin
+val health = client.health()
+println("Cluster: ${health.clusterName}")
+println("Status: ${health.status}") // green, yellow, red
+println("Nodes: ${health.numberOfNodes}")
+println("Active Shards: ${health.activeShards}")
+println("Is Healthy: ${health.isHealthy}")
+```
+
+#### 8. Advanced Search Options
+
+```kotlin
+val response = client.search<Product> {
+    indices("products", "archived_products")
+
+    query {
+        boolQuery {
+            mustQuery {
+                matchQuery {
+                    field = "description"
+                    query = "gaming"
+                }
+            }
+            filterQuery {
+                rangeQuery {
+                    field = "price"
+                    gte = 100.0
+                }
+            }
+        }
+    }
+
+    // Sorting
+    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Asc)
+    sortByScore()
+
+    // Pagination
+    size(20)
+    from(40) // Skip first 40 results
+
+    // Source filtering
+    includeFields("id", "name", "price")
+    excludeFields("internal_metadata")
+
+    // Timeout
+    timeout("5s")
+
+    // Track total hits
+    trackTotalHits(true)
+}
+
+// Shard information
+val shardInfo = response.shardInfo
+println("Shards - Total: ${shardInfo.total}, Successful: ${shardInfo.successful}")
+```
+
+#### 9. Resource Management
+
+```kotlin
+// Use-block automatically closes client
+ElasticsearchClientWrapper.create().use { client ->
+    val response = client.search<Product> {
+        indices("products")
+        query { matchAllQuery() }
+    }
+    println(response.totalHits)
+}
+
+// Or manual close
+val client = ElasticsearchClientWrapper.create()
+try {
+    // Use client
+} finally {
+    client.close()
+}
+```
+
+### Response API
+
+The `ElasticsearchSearchResponse<T>` provides convenient methods:
+
+```kotlin
+val response = client.search<Product> { /* ... */ }
+
+// Hit counts
+response.totalHits: Long
+response.totalHitsRelation: String // "eq" or "gte"
+
+// Results
+response.hits: List<SearchHit<T>>
+response.sources(): List<T>
+response.firstHit(): SearchHit<T>?
+response.firstSource(): T?
+
+// Metadata
+response.tookInMillis: Long
+response.timedOut: Boolean
+response.maxScore: Double?
+response.shardInfo: ShardInfo
+
+// Pagination
+response.getPagingInfo(page, pageSize): PagingInfo
+```
+
+For detailed client usage and advanced features, see [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md).
 
 ## Testing & Quality
 - Run targeted suites via Gradle’s `--tests` flag when iterating.
