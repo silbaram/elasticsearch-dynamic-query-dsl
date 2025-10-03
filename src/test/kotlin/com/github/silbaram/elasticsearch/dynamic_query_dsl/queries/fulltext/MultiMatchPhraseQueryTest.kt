@@ -32,12 +32,10 @@ class MultiMatchPhraseQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { multiMatchPhrase(query = "kotlin coroutine", fields = listOf("title", "desc")) },
-                        { multiMatchPhrase(query = null, fields = listOf("title")) },
-                        { multiMatchPhrase(query = "", fields = listOf("title")) },
-                        { multiMatchPhrase(query = "text", fields = emptyList()) }
-                    ]
+                    multiMatchPhrase(query = "kotlin coroutine", fields = listOf("title", "desc"))
+                    multiMatchPhrase(query = null, fields = listOf("title"))
+                    multiMatchPhrase(query = "", fields = listOf("title"))
+                    multiMatchPhrase(query = "text", fields = emptyList())
                 }
             }
         }

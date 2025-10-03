@@ -29,12 +29,10 @@ class CombinedFieldsQueryTest : FunSpec({
         val q = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { combinedFields(query = "kotlin coroutine", fields = listOf("title", "desc")) },
-                        { combinedFields(query = null, fields = listOf("title")) },
-                        { combinedFields(query = "", fields = listOf("title")) },
-                        { combinedFields(query = "text", fields = emptyList()) }
-                    ]
+                    combinedFields(query = "kotlin coroutine", fields = listOf("title", "desc"))
+                    combinedFields(query = null, fields = listOf("title"))
+                    combinedFields(query = "", fields = listOf("title"))
+                    combinedFields(query = "text", fields = emptyList())
                 }
             }
         }

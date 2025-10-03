@@ -16,25 +16,23 @@ class HasChildQueryTest : FunSpec({
         val result = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { hasChildQuery {
-                            type = "reply"
-                            minChildren = 1
-                            maxChildren = 5
-                            scoreMode = ChildScoreMode.Sum
-                            ignoreUnmapped = true
-                            query {
-                                matchQuery {
-                                    field = "reply.text"
-                                    query = "ok"
-                                }
+                    hasChildQuery {
+                        type = "reply"
+                        minChildren = 1
+                        maxChildren = 5
+                        scoreMode = ChildScoreMode.Sum
+                        ignoreUnmapped = true
+                        query {
+                            matchQuery {
+                                field = "reply.text"
+                                query = "ok"
                             }
-                            innerHits {
-                                name("replies")
-                                size(3)
-                            }
-                        } }
-                    ]
+                        }
+                        innerHits {
+                            name("replies")
+                            size(3)
+                        }
+                    }
                 }
             }
         }

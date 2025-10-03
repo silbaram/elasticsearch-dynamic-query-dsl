@@ -9,8 +9,7 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Safe omission** – Invalid or empty values get dropped automatically.
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
 - **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
-- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks.
-- **Elasticsearch Client Integration** – Built-in client wrapper with async support, search, indexing, and index management capabilities.
+- **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks. Sub clauses can be added inline, batched with `queries[...]`, or fed prebuilt objects via `+query`.
 - **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
 
 ## Requirements
@@ -18,20 +17,6 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - Gradle Wrapper (provided)
 
 ## Getting Started
-
-### Dependencies
-
-```kotlin
-dependencies {
-    implementation("io.github.silbaram:elasticsearch-dynamic-query-dsl:1.0.0-SNAPSHOT")
-    implementation("co.elastic.clients:elasticsearch-java:8.14.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // For async support
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2") // For JSON processing
-}
-```
-
-### Build & Test
-
 ```bash
 ./gradlew clean build        # compile + full test suite
 ./gradlew test               # iterative feedback with Kotest/JUnit
@@ -50,18 +35,29 @@ val q: Query = query {
     boolQuery {
         mustQuery {
             termQuery { field = "user.id"; value = "silbaram" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "tags"; value = "kotlin" }
+                    termQuery { field = "tags"; value = "dsl" }
+                }
+            }
         }
         filterQuery {
             rangeQuery { field = "age"; gte = 20; lt = 35 }
         }
         shouldQuery {
-            queries[
-                { termQuery { field = "tags"; value = "kotlin" } },
-                { termQuery { field = "tags"; value = "search" } }
-            ]
+            termQuery { field = "tags"; value = "search" }
+            boolQuery {
+                shouldQuery {
+                    termQuery { field = "interests"; value = "es" }
+                    termQuery { field = "interests"; value = "dsl" }
+                }
+            }
         }
     }
 }
+
+// 위 예시는 절 안에서 순차적으로 헬퍼를 호출해 중첩 bool 쿼리를 구성하는 기본 패턴을 보여줍니다.
 ```
 
 ## DSL Overview
@@ -69,6 +65,26 @@ val q: Query = query {
 - Build top-level queries with `query { ... }` or `queryOrNull { ... }` (omits invalid content).
 - Use clause helpers (`mustQuery`, `filterQuery`, `shouldQuery`, `mustNotQuery`) to aggregate sub-queries.
 - `SubQueryBuilders` exposes inline helpers such as `termQuery`, `rangeQuery`, `matchQuery`, `scriptQuery`, `scriptScoreQuery`, `wrapperQuery`, `pinnedQuery`, etc.
+
+#### Collecting Multiple Sub-queries
+- **Sequential builders** – Just call helpers one after another; each valid `Query` is captured automatically.
+- **Bracket batching** – Use `queries[...]` to register several builders or pre-built `Query?` instances in one expression.
+- **Unary plus** – Apply `+queryOrNull { ... }` or `+prebuiltQuery` when you prefer expression-style accumulation.
+
+```kotlin
+mustQuery {
+    termQuery { field = "status"; value = "active" }
+
+    queries[
+        {
+            termQuery { field = "tier"; value = "gold" }
+        },
+        queryOrNull { termQuery { field = "region"; value = regionIfAny } }
+    ]
+
+    +queryOrNull { matchQuery { field = "description"; query = keyword } }
+}
+```
 
 ### Term & Full-text Helpers
 - `termQuery`, `termsQuery`, `rangeQuery`, `existsQuery`, `matchAllDsl`
@@ -198,342 +214,7 @@ val aggs = aggregations {
 }
 ```
 
-Bucket builders cover adjacency matrix, composite, geo grids, range variants, samplers, and more. Metric helpers span the full Elasticsearch surface (`avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg`, etc.) while keeping omission safeguards. 
-
-**Examples and Tests**: See comprehensive examples in:
-- `ElasticsearchClientExamplesTest.kt` - Client usage examples and patterns
-- `ElasticsearchClientTest.kt` - Full integration tests with real Elasticsearch
-- `BucketAggregationsTest.kt` and `MetricsAggregationsTest.kt` - Aggregation examples
-
-## Elasticsearch Client Integration
-
-The library includes a comprehensive client wrapper that makes it easy to execute queries against Elasticsearch clusters. The client wraps the official `elasticsearch-java` client with a Kotlin-friendly DSL.
-
-### Quick Start with Client
-
-```kotlin
-import com.github.silbaram.elasticsearch.dynamic_query_dsl.client.*
-
-// Create client (wraps elasticsearch-java)
-val client = ElasticsearchClientWrapper.create() // Local default
-// or
-val client = ElasticsearchClientWrapper.createFromEnvironment() // From env vars
-
-data class Product(val id: String, val name: String, val category: String, val price: Double)
-
-// Search with DSL
-val response = client.search<Product> {
-    indices("products")
-    query {
-        boolQuery {
-            mustQuery {
-                matchQuery {
-                    field = "name"
-                    query = "laptop"
-                }
-            }
-            mustQuery {
-                rangeQuery {
-                    field = "price"
-                    gte = 100.0
-                    lte = 2000.0
-                }
-            }
-        }
-    }
-    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Desc)
-    size(20)
-}
-
-println("Found ${response.totalHits} products")
-response.sources().forEach { product ->
-    println("${product.name}: $${product.price}")
-}
-
-client.close()
-```
-
-### Key Features
-
-- **Type-safe search**: Generic search methods with automatic JSON mapping
-- **Async support**: Coroutine-based async operations using `suspend` functions
-- **Index management**: Create, delete, check index existence
-- **Bulk operations**: Efficient batch indexing with error handling
-- **Response helpers**: Pagination info, hit extraction, source filtering
-- **Configuration**: Environment-based config, SSL/TLS, basic auth support
-- **Cluster health**: Monitor cluster status and shard information
-
-### Client Usage Examples
-
-#### 1. Creating a Client
-
-```kotlin
-// Local development (localhost:9200)
-val client = ElasticsearchClientWrapper.create()
-
-// From environment variables
-val client = ElasticsearchClientWrapper.createFromEnvironment()
-
-// Custom configuration
-val config = ElasticsearchClientConfig(
-    hosts = listOf("es1.example.com:9200", "es2.example.com:9200"),
-    protocol = "https",
-    username = "elastic",
-    password = "your_password",
-    enableSsl = true
-)
-val client = ElasticsearchClientWrapper.create(config)
-```
-
-#### 2. Environment Variables
-
-```bash
-export ELASTICSEARCH_HOSTS=es1.example.com:9200,es2.example.com:9200
-export ELASTICSEARCH_PROTOCOL=https
-export ELASTICSEARCH_USERNAME=elastic
-export ELASTICSEARCH_PASSWORD=your_password
-export ELASTICSEARCH_SSL_ENABLED=true
-export ELASTICSEARCH_CONNECT_TIMEOUT=5000
-export ELASTICSEARCH_SOCKET_TIMEOUT=60000
-```
-
-#### 3. Searching Documents
-
-```kotlin
-// Simple search
-val response = client.search<Product> {
-    indices("products")
-    query {
-        matchQuery {
-            field = "name"
-            query = "laptop"
-        }
-    }
-    size(10)
-}
-
-// Extract sources
-val products = response.sources()
-products.forEach { println(it.name) }
-
-// Access first result
-val firstProduct = response.firstSource()
-
-// Pagination info
-val pagingInfo = response.getPagingInfo(currentPage = 1, pageSize = 10)
-println("Page ${pagingInfo.currentPage} of ${pagingInfo.totalPages}")
-```
-
-#### 4. Async Search with Coroutines
-
-```kotlin
-import kotlinx.coroutines.*
-
-runBlocking {
-    // Single async search
-    val response = client.searchAsync<Product> {
-        indices("products")
-        query { matchAllQuery() }
-    }
-
-    // Multiple parallel searches
-    val laptops = async {
-        client.searchAsync<Product> {
-            indices("products")
-            query {
-                termQuery {
-                    field = "category"
-                    value = "laptop"
-                }
-            }
-        }
-    }
-
-    val phones = async {
-        client.searchAsync<Product> {
-            indices("products")
-            query {
-                termQuery {
-                    field = "category"
-                    value = "phone"
-                }
-            }
-        }
-    }
-
-    println("Laptops: ${laptops.await().totalHits}")
-    println("Phones: ${phones.await().totalHits}")
-}
-```
-
-#### 5. Indexing Documents
-
-```kotlin
-// Single document
-val productId = client.index(
-    index = "products",
-    document = Product("1", "Laptop", "electronics", 1200.0),
-    id = "1" // Optional, auto-generated if null
-)
-
-// Async indexing
-val id = client.indexAsync(
-    index = "products",
-    document = product
-)
-
-// Bulk indexing
-val products = listOf(
-    Product("1", "Laptop", "electronics", 1200.0),
-    Product("2", "Mouse", "accessories", 25.0),
-    Product("3", "Keyboard", "accessories", 80.0)
-)
-
-val result = client.bulkIndex(
-    index = "products",
-    documents = products,
-    idExtractor = { it.id }
-)
-
-println("Indexed ${result.successCount} documents")
-if (result.hasErrors) {
-    result.failedItems.forEach { item ->
-        println("Failed: ${item.id} - ${item.error}")
-    }
-}
-```
-
-#### 6. Index Management
-
-```kotlin
-// Check if index exists
-if (!client.indexExists("products")) {
-    // Create index with mappings and settings
-    client.createIndex(
-        index = "products",
-        mappings = mapOf(
-            "name" to mapOf("type" to "text"),
-            "price" to mapOf("type" to "double"),
-            "category" to mapOf("type" to "keyword")
-        ),
-        settings = mapOf(
-            "number_of_shards" to 2,
-            "number_of_replicas" to 1
-        )
-    )
-}
-
-// Delete index
-client.deleteIndex("products")
-```
-
-#### 7. Cluster Health Monitoring
-
-```kotlin
-val health = client.health()
-println("Cluster: ${health.clusterName}")
-println("Status: ${health.status}") // green, yellow, red
-println("Nodes: ${health.numberOfNodes}")
-println("Active Shards: ${health.activeShards}")
-println("Is Healthy: ${health.isHealthy}")
-```
-
-#### 8. Advanced Search Options
-
-```kotlin
-val response = client.search<Product> {
-    indices("products", "archived_products")
-
-    query {
-        boolQuery {
-            mustQuery {
-                matchQuery {
-                    field = "description"
-                    query = "gaming"
-                }
-            }
-            filterQuery {
-                rangeQuery {
-                    field = "price"
-                    gte = 100.0
-                }
-            }
-        }
-    }
-
-    // Sorting
-    sortByField("price", co.elastic.clients.elasticsearch._types.SortOrder.Asc)
-    sortByScore()
-
-    // Pagination
-    size(20)
-    from(40) // Skip first 40 results
-
-    // Source filtering
-    includeFields("id", "name", "price")
-    excludeFields("internal_metadata")
-
-    // Timeout
-    timeout("5s")
-
-    // Track total hits
-    trackTotalHits(true)
-}
-
-// Shard information
-val shardInfo = response.shardInfo
-println("Shards - Total: ${shardInfo.total}, Successful: ${shardInfo.successful}")
-```
-
-#### 9. Resource Management
-
-```kotlin
-// Use-block automatically closes client
-ElasticsearchClientWrapper.create().use { client ->
-    val response = client.search<Product> {
-        indices("products")
-        query { matchAllQuery() }
-    }
-    println(response.totalHits)
-}
-
-// Or manual close
-val client = ElasticsearchClientWrapper.create()
-try {
-    // Use client
-} finally {
-    client.close()
-}
-```
-
-### Response API
-
-The `ElasticsearchSearchResponse<T>` provides convenient methods:
-
-```kotlin
-val response = client.search<Product> { /* ... */ }
-
-// Hit counts
-response.totalHits: Long
-response.totalHitsRelation: String // "eq" or "gte"
-
-// Results
-response.hits: List<SearchHit<T>>
-response.sources(): List<T>
-response.firstHit(): SearchHit<T>?
-response.firstSource(): T?
-
-// Metadata
-response.tookInMillis: Long
-response.timedOut: Boolean
-response.maxScore: Double?
-response.shardInfo: ShardInfo
-
-// Pagination
-response.getPagingInfo(page, pageSize): PagingInfo
-```
-
-For detailed client usage and advanced features, see [ELASTICSEARCH_CLIENT_USAGE.md](ELASTICSEARCH_CLIENT_USAGE.md).
+Bucket builders cover adjacency matrix, composite, geo grids, range variants, samplers, and more. Metric helpers span the full Elasticsearch surface (`avg`, `sum`, `min`, `max`, `valueCount`, `boxplot`, `cardinality`, `extendedStats`, `geoBounds`, `geoCentroid`, `geoLine`, `matrixStats`, `medianAbsoluteDeviation`, `percentiles`, `percentileRanks`, `rate`, `scriptedMetric`, `stats`, `stringStats`, `tTest`, `topHits`, `topMetrics`, `weightedAvg`, etc.) while keeping omission safeguards. See `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/BucketAggregationsTest.kt` and `src/test/kotlin/com/github/silbaram/elasticsearch/dynamic_query_dsl/aggregations/MetricsAggregationsTest.kt` for end-to-end samples.
 
 ## Testing & Quality
 - Run targeted suites via Gradle’s `--tests` flag when iterating.

@@ -11,7 +11,7 @@ class ConstantScoreQueryDsl {
     fun filterQuery(fn: SubQueryBuilders.() -> Any?) {
         val subQuery = SubQueryBuilders()
         val result = subQuery.fn()
-        if (result is Query) {
+        if (subQuery.size() == 0 && result is Query) {
             subQuery.addQuery(result)
         }
         filterQueries.addAll(subQuery)

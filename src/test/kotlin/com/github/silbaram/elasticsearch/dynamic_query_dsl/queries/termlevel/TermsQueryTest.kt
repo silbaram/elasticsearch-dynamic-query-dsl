@@ -18,10 +18,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
-                    ]
+                    termsQuery { field = "a"; values = listOf("1111", "2222") }
+                    termsQuery { field = "b"; values = listOf("3333", "4444") }
                 }
             }
         }
@@ -37,12 +35,10 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } },
-                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
+                    termsQuery { field = "c"; values = listOf("1111", "2222") }
+                    termsQuery { field = "d"; values = listOf(null, "3333") }
                 }
             }
         }
@@ -60,10 +56,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
                 }
             }
         }
@@ -77,11 +71,9 @@ class TermsQueryTest : FunSpec({
     test("filter 쿼리에서 terms 쿼리 생성이 되어야함") {
         val query = query {
             boolQuery {
-                filterQuery{
-                    queries[
-                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
-                    ]
+                filterQuery {
+                    termsQuery { field = "a"; values = listOf("1111", "2222") }
+                    termsQuery { field = "b"; values = listOf("3333", "4444") }
                 }
             }
         }
@@ -97,12 +89,10 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } },
-                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
+                    termsQuery { field = "c"; values = listOf("1111", "2222") }
+                    termsQuery { field = "d"; values = listOf(null, "3333") }
                 }
             }
         }
@@ -120,10 +110,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
                 }
             }
         }
@@ -138,10 +126,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "b"; values = listOf("3333", "4444") } }
-                    ]
+                    termsQuery { field = "a"; values = listOf("1111", "2222") }
+                    termsQuery { field = "b"; values = listOf("3333", "4444") }
                 }
             }
         }
@@ -157,12 +143,10 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustNotQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } },
-                        { termsQuery { field = "c"; values = listOf("1111", "2222") } },
-                        { termsQuery { field = "d"; values = listOf(null, "3333") } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
+                    termsQuery { field = "c"; values = listOf("1111", "2222") }
+                    termsQuery { field = "d"; values = listOf(null, "3333") }
                 }
             }
         }
@@ -180,10 +164,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 filterQuery {
-                    queries[
-                        { termsQuery { field = "a"; values = null } },
-                        { termsQuery { field = "b"; values = emptyList() } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
                 }
             }
         }
@@ -197,10 +179,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        query { termsQuery { field = "a"; values = listOf("1111", "2222") } },
-                        query { termsQuery { field = "b"; values = listOf("3333", "4444") } }
-                    ]
+                    termsQuery { field = "a"; values = listOf("1111", "2222") }
+                    termsQuery { field = "b"; values = listOf("3333", "4444") }
                 }
             }
         }
@@ -216,12 +196,10 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { termsQuery { field = "a"; values = null } },
-                        queryOrNull { termsQuery { field = "b"; values = emptyList() } },
-                        query { termsQuery { field = "c"; values = listOf("1111", "2222") } },
-                        query { termsQuery { field = "d"; values = listOf(null, "3333") } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
+                    termsQuery { field = "c"; values = listOf("1111", "2222") }
+                    termsQuery { field = "d"; values = listOf(null, "3333") }
                 }
             }
         }
@@ -239,10 +217,8 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 shouldQuery {
-                    queries[
-                        queryOrNull { termsQuery { field = "a"; values = null } },
-                        queryOrNull { termsQuery { field = "b"; values = emptyList() } }
-                    ]
+                    termsQuery { field = "a"; values = null }
+                    termsQuery { field = "b"; values = emptyList() }
                 }
             }
         }
@@ -256,7 +232,7 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { termsQuery { field = "a"; values = listOf("1111", "2222"); boost = 2.5F } }
+                    termsQuery { field = "a"; values = listOf("1111", "2222"); boost = 2.5F }
                 }
             }
         }
@@ -272,7 +248,7 @@ class TermsQueryTest : FunSpec({
         val query = query {
             boolQuery {
                 mustQuery {
-                    query { termsQuery { field = "a"; values = listOf("1111", "2222"); _name = "named" } }
+                    termsQuery { field = "a"; values = listOf("1111", "2222"); _name = "named" }
                 }
             }
         }
