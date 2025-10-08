@@ -322,4 +322,64 @@ class MatchQueryTest : FunSpec({
         must.fuzzyTranspositions() shouldBe true
         must.fuzzyRewrite() shouldBe "constant_score"
     }
+
+    test("Bool 쿼리 없이 독립 Match 쿼리 생성이 되어야함") {
+        val query = query {
+            matchQuery {
+                field = "title"
+                query = "elasticsearch"
+            }
+        }
+
+        query.isMatch shouldBe true
+        query.match().field() shouldBe "title"
+        query.match().query().stringValue() shouldBe "elasticsearch"
+    }
+
+    test("field가 null이거나 빈 문자열일 때 Match 쿼리가 생성되지 않아야함") {
+        // field가 null인 경우
+        val query1 = queryOrNull {
+            matchQuery {
+                field = null
+                query = "test"
+            }
+        }
+        query1 shouldBe null
+
+        // field가 빈 문자열인 경우
+        val query2 = queryOrNull {
+            matchQuery {
+                field = ""
+                query = "test"
+            }
+        }
+        query2 shouldBe null
+    }
+
+    test("복수 파라미터를 동시에 설정했을 때 모두 적용되어야함") {
+        val query = query {
+            boolQuery {
+                mustQuery {
+                    matchQuery {
+                        field = "content"
+                        query = "elasticsearch search"
+                        operator = Operator.And
+                        fuzziness = "AUTO"
+                        analyzer = "standard"
+                        boost = 1.5F
+                        _name = "complex_match"
+                    }
+                }
+            }
+        }
+
+        val match = query.bool().must().first().match()
+        match.field() shouldBe "content"
+        match.query().stringValue() shouldBe "elasticsearch search"
+        match.operator() shouldBe Operator.And
+        match.fuzziness() shouldBe "AUTO"
+        match.analyzer() shouldBe "standard"
+        match.boost() shouldBe 1.5F
+        match.queryName() shouldBe "complex_match"
+    }
 })
