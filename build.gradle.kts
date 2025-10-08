@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.20"
+    `java-library`
     `maven-publish`
     signing
     id("org.jetbrains.dokka") version "1.9.20"
@@ -18,9 +19,14 @@ repositories {
 val elasticsearchJavaVersion: String by project
 
 dependencies {
-    implementation("co.elastic.clients:elasticsearch-java:$elasticsearchJavaVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    // API dependencies (exposed to consumers)
+    api("co.elastic.clients:elasticsearch-java:$elasticsearchJavaVersion")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+    // Implementation dependencies (internal only)
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+
+    // Test dependencies
     testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
     testImplementation("io.kotest:kotest-assertions-core:5.7.1")
 }

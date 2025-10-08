@@ -8,15 +8,30 @@
 - **코틀린 친화적 API**: JSON 문자열 대신 빌더 패턴으로 쿼리를 작성합니다.
 - **안전한 생략 처리**: 불필요하거나 잘못된 입력을 자동으로 걸러냅니다.
 - **폭넓은 쿼리 지원**: 전문 검색, term-level, span, compound, script, wrapper, pinned, rule, weighted_tokens 등 다양한 Elasticsearch DSL을 커버합니다.
+- **완전한 Match 쿼리 지원**: 13개 파라미터(query, operator, fuzziness, analyzer, minimumShouldMatch 등) 전체를 지원하며 21개 이상의 테스트 케이스로 모든 Elasticsearch Match 쿼리 기능을 검증합니다.
 - **Aggregation DSL**: terms/date histogram/composite/random sampler/time series 등 다양한 버킷 집계와 boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg 등 메트릭 집계를 동일한 생략 규칙으로 구성합니다.
 - **재사용 가능한 헬퍼**: `SubQueryBuilders`로 bool 절 내부에서도 간단히 하위 쿼리를 누적할 수 있습니다. 서브 쿼리는 순차 호출, `queries[...]` 대괄호, `+query` 중 원하는 방식으로 추가할 수 있습니다.
-- **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있어 예제와 검증을 동시에 제공합니다.
+- **테스트 검증**: Kotest + JUnit 5 스펙이 패키지 구조와 동일하게 구성되어 있으며, 핵심 쿼리 빌더는 100% 테스트 커버리지를 달성했습니다.
 
 ## 요구 사항
-- JDK 17
+- JDK 21 (toolchain 설정됨)
 - Gradle Wrapper (저장소에 포함)
+- Kotlin 2.0.20
 
 ## 시작하기
+
+### 설치 방법
+Gradle 프로젝트에 라이브러리를 추가하세요:
+
+```kotlin
+dependencies {
+    implementation("io.github.silbaram:elasticsearch-dynamic-query-dsl:1.0.0")
+    // elasticsearch-java는 전이 의존성으로 자동 포함됩니다
+    // 별도로 추가할 필요가 없습니다!
+}
+```
+
+### 소스에서 빌드
 ```bash
 ./gradlew clean build        # 전체 빌드 및 테스트
 ./gradlew test               # 반복 개발 시 빠른 테스트
@@ -81,10 +96,38 @@ mustQuery {
 
 ### 자주 쓰는 쿼리 빌더
 - **Term/Range**: `termQuery`, `termsQuery`, `rangeQuery`, `existsQuery`, `matchAllDsl`
-- **전문 검색**: `matchQuery`, `matchPhrase`, `matchPhrasePrefix`, `matchBoolPrefix`, `multiMatchQuery`, `combinedFields`, `queryString`, `simpleQueryString`
+- **`matchQuery` – 13개 파라미터 완전 지원**:
+  - 기본: `field`, `query`, `analyzer`, `operator`, `minimumShouldMatch`
+  - 퍼지 매칭: `fuzziness`, `prefixLength`, `maxExpansions`, `fuzzyTranspositions`, `fuzzyRewrite`
+  - 고급: `autoGenerateSynonymsPhraseQuery`, `lenient`, `zeroTermsQuery`
+  - 공통: `boost`, `_name`
+- **전문 검색**: `matchPhrase`, `matchPhrasePrefix`, `matchBoolPrefix`, `multiMatchQuery`, `combinedFields`, `queryString`, `simpleQueryString`
 - **Span/Interval**: `spanTermQuery`, `spanNearQuery`, `spanContainingQuery`, `intervals`
 
-세부 예제는 `src/test/kotlin/.../queries/{termlevel,fulltext,span}` 경로의 Kotest 스펙을 참고하세요.
+```kotlin
+// 여러 파라미터를 조합한 Match 쿼리
+query {
+    matchQuery {
+        field = "content"
+        query = "엘라스틱서치 검색"
+        operator = Operator.And
+        fuzziness = "AUTO"
+        analyzer = "standard"
+        boost = 1.5F
+        _name = "메인_검색"
+    }
+}
+
+// Match 쿼리는 Bool 쿼리 없이도 독립적으로 사용 가능
+query {
+    matchQuery {
+        field = "title"
+        query = "코틀린 DSL"
+    }
+}
+```
+
+세부 예제는 `src/test/kotlin/.../queries/{termlevel,fulltext,span}` 경로의 Kotest 스펙을 참고하세요. `MatchQueryTest`에는 모든 파라미터와 엣지 케이스를 다루는 21개의 포괄적인 테스트가 포함되어 있습니다.
 
 ### 컴파운드/스코어링 빌더
 - `boolQuery` + 절 헬퍼
