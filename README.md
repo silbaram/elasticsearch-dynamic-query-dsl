@@ -8,15 +8,30 @@ Type-safe Kotlin DSL for composing Elasticsearch queries. Builders omit null or 
 - **Fluent Kotlin API** – Prefer Kotlin builders over brittle JSON strings.
 - **Safe omission** – Invalid or empty values get dropped automatically.
 - **Rich coverage** – Full-text, term-level, span, compound, and specialized queries (percolate, KNN, script, script_score, wrapper, pinned, rule, weighted_tokens, rank_feature, distance_feature).
+- **Comprehensive Match Query** – 13 parameters (query, operator, fuzziness, analyzer, minimumShouldMatch, etc.) with 21+ test cases covering all Elasticsearch Match query features.
 - **Aggregation DSL** – Compose bucket and metric aggregations (terms/date histogram/composite plus boxplot, cardinality, extended stats, geo bounds/centroid/line, matrix stats, MAD, percentiles, percentile ranks, rate, scripted metric, stats, string stats, t-test, top hits/metrics, weighted avg, etc.) with the same omission safeguards.
 - **Composable helpers** – `SubQueryBuilders` utilities let you stack clauses without repetitive `query { ... }` blocks. Sub clauses can be added inline, batched with `queries[...]`, or fed prebuilt objects via `+query`.
-- **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout.
+- **Battle-tested** – Kotest + JUnit 5 specs mirror the production package layout with 100% test coverage for core query builders.
 
 ## Requirements
-- JDK 17
+- JDK 21 (toolchain configured)
 - Gradle Wrapper (provided)
+- Kotlin 2.0.20
 
 ## Getting Started
+
+### Installation
+Add the library to your Gradle project:
+
+```kotlin
+dependencies {
+    implementation("io.github.silbaram:elasticsearch-dynamic-query-dsl:1.0.0")
+    // elasticsearch-java is automatically included as a transitive dependency
+    // No need to add it separately!
+}
+```
+
+### Build from Source
 ```bash
 ./gradlew clean build        # compile + full test suite
 ./gradlew test               # iterative feedback with Kotest/JUnit
@@ -88,11 +103,39 @@ mustQuery {
 
 ### Term & Full-text Helpers
 - `termQuery`, `termsQuery`, `rangeQuery`, `existsQuery`, `matchAllDsl`
-- `matchQuery`, `matchPhrase`, `matchPhrasePrefix`, `matchBoolPrefix`
+- `matchQuery` – **Full 13-parameter support** including:
+  - Basic: `field`, `query`, `analyzer`, `operator`, `minimumShouldMatch`
+  - Fuzzy matching: `fuzziness`, `prefixLength`, `maxExpansions`, `fuzzyTranspositions`, `fuzzyRewrite`
+  - Advanced: `autoGenerateSynonymsPhraseQuery`, `lenient`, `zeroTermsQuery`
+  - Common: `boost`, `_name`
+- `matchPhrase`, `matchPhrasePrefix`, `matchBoolPrefix`
 - `multiMatchQuery`, `combinedFields`, `queryString`, `simpleQueryString`
 - `moreLikeThis`, `intervals`, and span DSL (`spanTermQuery`, `spanNearQuery`, ...)
 
-See the test suite under `src/test/kotlin/.../queries/{termlevel,fulltext,span}` for end-to-end samples.
+```kotlin
+// Match query with multiple parameters
+query {
+    matchQuery {
+        field = "content"
+        query = "elasticsearch search"
+        operator = Operator.And
+        fuzziness = "AUTO"
+        analyzer = "standard"
+        boost = 1.5F
+        _name = "main_search"
+    }
+}
+
+// Match query can be used independently (without Bool query)
+query {
+    matchQuery {
+        field = "title"
+        query = "kotlin dsl"
+    }
+}
+```
+
+See the test suite under `src/test/kotlin/.../queries/{termlevel,fulltext,span}` for end-to-end samples. `MatchQueryTest` contains 21 comprehensive test cases covering all parameters and edge cases.
 
 ### Compound Builders
 - `boolQuery` with clause helpers
