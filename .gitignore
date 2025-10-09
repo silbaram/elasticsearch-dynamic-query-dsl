@@ -37,11 +37,15 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### AI Tools ###
 /GEMINI.md
 /AGENTS.md
 /CLAUDE.md
 /AGENTS.ko.md
 .claude/
+.specify/
 
+### Requirements ###
 .requirements/
 .requirements-backup/
