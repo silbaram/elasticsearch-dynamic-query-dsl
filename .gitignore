@@ -42,6 +42,7 @@ bin/
 /CLAUDE.md
 /AGENTS.ko.md
 .claude/
+.specify/
 
 .requirements/
 .requirements-backup/
