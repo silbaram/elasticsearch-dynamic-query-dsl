@@ -119,16 +119,18 @@ signing {
     val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
 
-    if (!isSnapshotVersion) {
-        require(signingKey != null && signingPassword != null) {
-            "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
-        }
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications)
-    } else if (signingKey != null && signingPassword != null) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications)
-    }
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign(publishing.publications)
+//    if (!isSnapshotVersion) {
+//        require(signingKey != null && signingPassword != null) {
+//            "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
+//        }
+//        useInMemoryPgpKeys(signingKey, signingPassword)
+//        sign(publishing.publications)
+//    } else if (signingKey != null && signingPassword != null) {
+//        useInMemoryPgpKeys(signingKey, signingPassword)
+//        sign(publishing.publications)
+//    }
 }
 
 // 편의 태스크
