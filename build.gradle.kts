@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.silbaram"
-version = "1.0.0-SNAPSHOT"
+version = "v1.0.0-es8.14.2-3"
 description = "Kotlin DSL for building Elasticsearch Query DSL mirroring Kibana-style JSON"
 
 val isSnapshotVersion = version.toString().endsWith("SNAPSHOT")
