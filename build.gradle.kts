@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.silbaram"
-version = "v1.0.0-es8.14.2-3"
+version = "1.0.0-SNAPSHOT"
 description = "Kotlin DSL for building Elasticsearch Query DSL mirroring Kibana-style JSON"
 
 val isSnapshotVersion = version.toString().endsWith("SNAPSHOT")
@@ -115,15 +115,11 @@ publishing {
     }
 }
 
-val isCentralPublish = gradle.startParameter.taskNames.any {
-    it == "publishMavenJavaPublicationToCentralPortalRepository"
-}
-
 signing {
     val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
 
-    if (!isSnapshotVersion && isCentralPublish) {
+    if (!isSnapshotVersion) {
         require(signingKey != null && signingPassword != null) {
             "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
         }
@@ -143,5 +139,4 @@ tasks.register("publishToCentral") {
     doFirst { check(!isSnapshotVersion) { "Central Portal은 SNAPSHOT을 받지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
     dependsOn("publishMavenJavaPublicationToCentralPortalRepository")
 }
-
 
