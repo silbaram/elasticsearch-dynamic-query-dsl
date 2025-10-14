@@ -30,6 +30,8 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ secrets.PUBLISH_GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
   publish-central:
     if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.target == 'central')

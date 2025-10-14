@@ -115,23 +115,23 @@ publishing {
     }
 }
 
-signing {
-    val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
-    val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
+// signing {
+//     val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
+//     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
 
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign(publishing.publications)
-//    if (!isSnapshotVersion) {
-//        require(signingKey != null && signingPassword != null) {
-//            "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
-//        }
-//        useInMemoryPgpKeys(signingKey, signingPassword)
-//        sign(publishing.publications)
-//    } else if (signingKey != null && signingPassword != null) {
-//        useInMemoryPgpKeys(signingKey, signingPassword)
-//        sign(publishing.publications)
-//    }
-}
+//     if (!isSnapshotVersion) {
+//         // 릴리스 버전에서는 서명 필수
+//         require(signingKey != null && signingPassword != null) {
+//             "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
+//         }
+//         useInMemoryPgpKeys(signingKey, signingPassword)
+//         sign(publishing.publications)
+//     } else if (signingKey != null && signingPassword != null) {
+//         // 스냅샷에서는 키가 있을 때만 서명
+//         useInMemoryPgpKeys(signingKey, signingPassword)
+//         sign(publishing.publications)
+//     }
+// }
 
 // 편의 태스크
 tasks.register("publishToGitHub") {
@@ -141,4 +141,5 @@ tasks.register("publishToCentral") {
     doFirst { check(!isSnapshotVersion) { "Central Portal은 SNAPSHOT을 받지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
     dependsOn("publishMavenJavaPublicationToCentralPortalRepository")
 }
+
 
