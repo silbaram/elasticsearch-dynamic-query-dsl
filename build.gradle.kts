@@ -123,10 +123,26 @@ signing {
         require(signingKey != null && signingPassword != null) {
             "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
         }
-        useInMemoryPgpKeys(signingKey, signingPassword)
+        
+        // ⭐ base64 디코딩 추가
+        val decodedKey = try {
+            String(java.util.Base64.getDecoder().decode(signingKey))
+        } catch (e: IllegalArgumentException) {
+            // base64가 아니면 그대로 사용 (ASCII-armored)
+            signingKey
+        }
+        
+        useInMemoryPgpKeys(decodedKey, signingPassword)
         sign(publishing.publications)
     } else if (signingKey != null && signingPassword != null) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
+        // ⭐ 여기도 디코딩 추가
+        val decodedKey = try {
+            String(java.util.Base64.getDecoder().decode(signingKey))
+        } catch (e: IllegalArgumentException) {
+            signingKey
+        }
+        
+        useInMemoryPgpKeys(decodedKey, signingPassword)
         sign(publishing.publications)
     }
 }
