@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     kotlin("jvm") version "2.0.20"
     `java-library`
@@ -121,27 +123,24 @@ signing {
 
     if (!isSnapshotVersion) {
         require(signingKey != null && signingPassword != null) {
-            "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
+            "Missing signingKey/signingPassword for release publication."
         }
-        
-        // ⭐ base64 디코딩 추가
+
         val decodedKey = try {
-            String(java.util.Base64.getDecoder().decode(signingKey))
+            String(Base64.getDecoder().decode(signingKey))
         } catch (e: IllegalArgumentException) {
-            // base64가 아니면 그대로 사용 (ASCII-armored)
             signingKey
         }
-        
+
         useInMemoryPgpKeys(decodedKey, signingPassword)
         sign(publishing.publications)
     } else if (signingKey != null && signingPassword != null) {
-        // ⭐ 여기도 디코딩 추가
         val decodedKey = try {
-            String(java.util.Base64.getDecoder().decode(signingKey))
+            String(Base64.getDecoder().decode(signingKey))
         } catch (e: IllegalArgumentException) {
             signingKey
         }
-        
+
         useInMemoryPgpKeys(decodedKey, signingPassword)
         sign(publishing.publications)
     }
