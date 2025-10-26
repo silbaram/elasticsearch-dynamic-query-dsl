@@ -1,16 +1,13 @@
-import java.util.Base64
-
 plugins {
     kotlin("jvm") version "2.0.20"
     `java-library`
     `maven-publish`
     signing
     id("org.jetbrains.dokka") version "1.9.20"
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 group = "io.github.silbaram"
-version = "v1.0.0-es8.14.2-3"
+version = "1.0.0-SNAPSHOT"
 description = "Kotlin DSL for building Elasticsearch Query DSL mirroring Kibana-style JSON"
 
 val isSnapshotVersion = version.toString().endsWith("SNAPSHOT")
@@ -91,18 +88,19 @@ publishing {
         }
     }
     repositories {
-        // OSSRH(S01): 릴리스일 때만 활성화
+        // Central: 릴리스일 때만 활성화
         if (!isSnapshotVersion) {
             maven {
-                name = "SonatypeOSSRH"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                name = "CentralPortal"
+                url = uri("https://central.sonatype.com/api/v1/publisher/upload")
                 credentials {
+                    // ~/.gradle/gradle.properties 또는 환경변수 사용 권장
                     username = findProperty("centralUsername") as String? ?: System.getenv("CENTRAL_USERNAME")
                     password = findProperty("centralPassword") as String? ?: System.getenv("CENTRAL_PASSWORD")
                 }
             }
         } else {
-            logger.lifecycle("OSSRH publishing is disabled for snapshot version '$version'.")
+            logger.lifecycle("Central Portal publishing is disabled for snapshot version '$version'.")
         }
 
         // GitHub Packages: 스냅샷/릴리스 공통
@@ -117,51 +115,19 @@ publishing {
     }
 }
 
-// Nexus Publish 플러그인 설정(스테이징 close/release 자동화)
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            username.set((findProperty("centralUsername") as String?) ?: System.getenv("CENTRAL_USERNAME"))
-            password.set((findProperty("centralPassword") as String?) ?: System.getenv("CENTRAL_PASSWORD"))
-        }
-    }
-}
-
 signing {
-    // 문자열/베이스64만 허용
-    val signingKeyRaw: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
+    val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
 
-    // 필요 시 Base64 디코딩
-    val signingKey: String? = signingKeyRaw?.let { raw ->
-        try { String(Base64.getDecoder().decode(raw)) } catch (_: IllegalArgumentException) { raw }
-    }
-
-    fun isAsciiArmoredPrivateKey(s: String) =
-        s.contains("BEGIN PGP PRIVATE KEY BLOCK") && s.contains("END PGP PRIVATE KEY BLOCK")
-
-    // GitHub Actions에서만 서명 수행
-    val isCi = (System.getenv("CI") == "true") || (System.getenv("GITHUB_ACTIONS") == "true")
-
-    if (isCi) {
-        if (!isSnapshotVersion) {
-            require(signingKey != null && signingPassword != null) {
-                "Missing signingKey/signingPassword for release publication."
-            }
-            require(isAsciiArmoredPrivateKey(signingKey)) {
-                "SIGNING_KEY must be an ASCII-armored PGP private key."
-            }
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign(publishing.publications)
-        } else if (signingKey != null && signingPassword != null) {
-            // 스냅샷은 선택적 서명
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign(publishing.publications)
+    if (!isSnapshotVersion) {
+        require(signingKey != null && signingPassword != null) {
+            "Missing signingKey/signingPassword for release publication. Provide via ~/.gradle/gradle.properties or env vars."
         }
-    } else {
-        logger.lifecycle("Signing is disabled locally. It only runs on CI (GitHub Actions).")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
+    } else if (signingKey != null && signingPassword != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
     }
 }
 
@@ -170,8 +136,6 @@ tasks.register("publishToGitHub") {
     dependsOn("publishMavenJavaPublicationToGitHubPackagesRepository")
 }
 tasks.register("publishToCentral") {
-    doFirst { check(!isSnapshotVersion) { "OSSRH는 SNAPSHOT을 배포하지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
-    // 1) 업로드 → 2) 스테이징 close/release
-    dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository")
+    doFirst { check(!isSnapshotVersion) { "Central Portal은 SNAPSHOT을 받지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
+    dependsOn("publishMavenJavaPublicationToCentralPortalRepository")
 }
-
