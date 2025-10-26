@@ -118,30 +118,36 @@ publishing {
 }
 
 signing {
-    val signingKey: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
+    // 문자열/파일/베이스64 모두 허용
+    val signingKeyProp = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
+    val signingKeyFilePath = (findProperty("signingKeyFile") as String?) ?: System.getenv("SIGNING_KEY_FILE")
     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
+
+    // 파일이 있으면 파일에서 읽기
+    val signingKeyRaw: String? = signingKeyFilePath?.let { path ->
+        val f = file(path)
+        if (f.exists()) f.readText() else null
+    } ?: signingKeyProp
+
+    // 필요 시 Base64 디코딩
+    val signingKey: String? = signingKeyRaw?.let { raw ->
+        try { String(java.util.Base64.getDecoder().decode(raw)) } catch (_: IllegalArgumentException) { raw }
+    }
+
+    fun isAsciiArmoredPrivateKey(s: String) =
+        s.contains("BEGIN PGP PRIVATE KEY BLOCK") && s.contains("END PGP PRIVATE KEY BLOCK")
 
     if (!isSnapshotVersion) {
         require(signingKey != null && signingPassword != null) {
             "Missing signingKey/signingPassword for release publication."
         }
-
-        val decodedKey = try {
-            String(Base64.getDecoder().decode(signingKey))
-        } catch (e: IllegalArgumentException) {
-            signingKey
+        require(isAsciiArmoredPrivateKey(signingKey)) {
+            "SIGNING_KEY must be an ASCII-armored PGP private key."
         }
-
-        useInMemoryPgpKeys(decodedKey, signingPassword)
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications)
     } else if (signingKey != null && signingPassword != null) {
-        val decodedKey = try {
-            String(Base64.getDecoder().decode(signingKey))
-        } catch (e: IllegalArgumentException) {
-            signingKey
-        }
-
-        useInMemoryPgpKeys(decodedKey, signingPassword)
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications)
     }
 }

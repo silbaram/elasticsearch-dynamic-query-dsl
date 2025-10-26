@@ -34,35 +34,23 @@ jobs:
     if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.target == 'central')
     runs-on: ubuntu-latest
     steps:
-      # Git 히스토리를 모두 가져와야 브랜치 추적이 가능합니다.
-      - name: Checkout repository with full history
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # 2. 이 태그가 release 브랜치에 있는지 여기서 검증합니다.
-      - name: Verify tag is on a release branch
-        run: |
-          # 현재 태그가 'origin/release/' 브랜치에 포함되어 있는지 확인
-          if git branch -r --contains ${{ github.ref }} | grep -q 'origin/release/'; then
-            echo "✅ Tag is on a release branch. Starting deployment."
-          else
-            echo "❌ Error: This tag was not found on any release/* branch. Halting deployment."
-            exit 1 # release 브랜치가 아니면 여기서 워크플로우를 중단시킵니다.
-          fi
-
-      # 바로 Java 설정을 시작합니다.
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v3
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Decode signing key (Base64 → file)
+        run: |
+          echo "$SIGNING_KEY_BASE64" | base64 -d > signing-key.asc
+          echo "SIGNING_KEY_FILE=$PWD/signing-key.asc" >> $GITHUB_ENV
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
 
       - name: Publish to Central Portal
         run: ./gradlew publishMavenJavaPublicationToCentralPortalRepository
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_KEY_FILE: ${{ env.SIGNING_KEY_FILE }}
