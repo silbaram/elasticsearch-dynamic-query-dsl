@@ -2,13 +2,14 @@ plugins {
     kotlin("jvm") version "2.0.20"
     `java-library`
 
-    // ✅ Central Publishing Portal 지원 (업로드/퍼블리시/서명 전부 구성)
+    // Central Publishing Portal 전용 플러그인
     id("com.vanniktech.maven.publish") version "0.34.0"
 
     id("org.jetbrains.dokka") version "1.9.20"
 }
 
 group = "io.github.silbaram"
+// Maven 관례상 v 접두사는 제거 권장 (기능엔 영향 없음)
 version = "1.0.0-es8.14.2-3"
 
 description = "Kotlin DSL for building Elasticsearch Query DSL mirroring Kibana-style JSON"
@@ -18,49 +19,34 @@ repositories { mavenCentral() }
 val elasticsearchJavaVersion: String by project
 
 dependencies {
-    // API dependencies (exposed to consumers)
     api("co.elastic.clients:elasticsearch-java:$elasticsearchJavaVersion")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-    // Implementation dependencies (internal only)
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 
-    // Test
     testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
     testImplementation("io.kotest:kotest-assertions-core:5.7.1")
 }
 
 tasks.withType<Test>().configureEach { useJUnitPlatform() }
 kotlin { jvmToolchain(21) }
-
-// 소스/자바독 JAR은 Vanniktech가 자동으로 붙인다.
-// (원하면 다음 한 줄로 소스 Jar 보장)
 java { withSourcesJar() }
 
-// --- 중앙(Maven Central Portal) 퍼블리싱 설정 ---
-// Vanniktech DSL
-import com.vanniktech.maven.publish.SonatypeHost
-
+// ---- Central(신규 포털) 퍼블리싱 설정: Vanniktech ----
 mavenPublishing {
-    // ✅ Central 포털로 업로드 + (원하면 자동 퍼블리시까지)
-    // 자동 퍼블리시 원하면 automaticRelease = true 로
-    publishToMavenCentral(
-        // host = SonatypeHost.CENTRAL_PORTAL, // 기본이 CENTRAL_PORTAL
-        automaticRelease = true
-    )
+    // 업로드 후 자동 Publish까지 하고 싶으면 automaticRelease = true
+    publishToMavenCentral(automaticRelease = true)
 
-    // ✅ 모든 퍼블리케이션 서명 (PGP in-memory)
+    // 모든 publication 서명 (in-memory PGP)
     signAllPublications()
 
-    // ✅ 좌표 명시 (artifactId 고정)
-    // group/version은 상단의 group, version 값을 사용
+    // 좌표 고정 (⚠️ 위치 인자 사용 또는 정확한 이름 groupId)
     coordinates(
-        group = "io.github.silbaram",
-        artifactId = "elasticsearch-dynamic-query-dsl",
-        version = version.toString()
+        "io.github.silbaram",                // groupId
+        "elasticsearch-dynamic-query-dsl",   // artifactId
+        version.toString()                   // version
     )
 
-    // ✅ POM 메타데이터
     pom {
         name = "elasticsearch-dynamic-query-dsl"
         description = "A Kotlin DSL for building Elasticsearch queries dynamically and intuitively."
@@ -88,16 +74,14 @@ mavenPublishing {
     }
 }
 
-// --- GitHub Packages 퍼블리싱 설정 ---
-// Vanniktech는 내부적으로 maven-publish를 사용하므로,
-// repositories 블록만 추가하면 같은 publication이 함께 업로드됨.
+// ---- GitHub Packages 퍼블리싱(기존처럼 유지) ----
+// Vanniktech는 내부적으로 maven-publish를 사용하므로 repositories 만 추가하면 같이 올라감.
 publishing {
     repositories {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/silbaram/elasticsearch-dynamic-query-dsl")
             credentials {
-                // Actions에서 기본 제공되는 GITHUB_ACTOR/GITHUB_TOKEN 사용 또는 Secrets 매핑
                 username = (findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
                 password = (findProperty("gpr.key") as String?) ?: System.getenv("GITHUB_TOKEN")
             }
@@ -105,3 +89,7 @@ publishing {
     }
 }
 
+// (선택) GitHub 전용 편의 태스크
+tasks.register("publishToGitHub") {
+    dependsOn("publishAllPublicationsToGitHubPackagesRepository")
+}
