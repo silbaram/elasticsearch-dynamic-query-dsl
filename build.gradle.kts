@@ -87,21 +87,35 @@ publishing {
             }
         }
     }
+
     repositories {
         // Central: 릴리스일 때만 활성화
-        if (!isSnapshotVersion) {
-            maven {
-                name = "CentralPortal"
-                url = uri("https://central.sonatype.com/api/v1/publisher/upload")
-                credentials {
-                    // ~/.gradle/gradle.properties 또는 환경변수 사용 권장
-                    username = findProperty("centralUsername") as String? ?: System.getenv("CENTRAL_USERNAME")
-                    password = findProperty("centralPassword") as String? ?: System.getenv("CENTRAL_PASSWORD")
-                }
+        maven {
+            name = if (isSnapshotVersion) "OSSRH_SNAPSHOT" else "OSSRH_RELEASE"
+            url = uri(
+                if (isSnapshotVersion)
+                    "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                else
+                    "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            )
+            credentials {
+                username = findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
+                password = findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
             }
-        } else {
-            logger.lifecycle("Central Portal publishing is disabled for snapshot version '$version'.")
         }
+        // if (!isSnapshotVersion) {
+        //     maven {
+        //         name = "CentralPortal"
+        //         url = uri("https://central.sonatype.com/api/v1/publisher/upload")
+        //         credentials {
+        //             // ~/.gradle/gradle.properties 또는 환경변수 사용 권장
+        //             username = findProperty("centralUsername") as String? ?: System.getenv("CENTRAL_USERNAME")
+        //             password = findProperty("centralPassword") as String? ?: System.getenv("CENTRAL_PASSWORD")
+        //         }
+        //     }
+        // } else {
+        //     logger.lifecycle("Central Portal publishing is disabled for snapshot version '$version'.")
+        // }
 
         // GitHub Packages: 스냅샷/릴리스 공통
         maven {
