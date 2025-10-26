@@ -41,7 +41,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
 
       - name: Publish to Sonatype (OSSRH) and Release
-        run: ./gradlew publishMavenJavaPublicationToSonatypeOSSRHRepository closeAndReleaseSonatypeStagingRepository
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}

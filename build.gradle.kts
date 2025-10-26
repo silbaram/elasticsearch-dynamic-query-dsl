@@ -172,6 +172,6 @@ tasks.register("publishToGitHub") {
 tasks.register("publishToCentral") {
     doFirst { check(!isSnapshotVersion) { "OSSRH는 SNAPSHOT을 배포하지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
     // 1) 업로드 → 2) 스테이징 close/release
-    dependsOn("publishMavenJavaPublicationToSonatypeOSSRHRepository", "closeAndReleaseSonatypeStagingRepository")
+    dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository")
 }
 
