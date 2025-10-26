@@ -40,17 +40,10 @@ jobs:
         with: { distribution: temurin, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Decode signing key (Base64 → file)
-        run: |
-          echo "$SIGNING_KEY_BASE64" | base64 -d > signing-key.asc
-          echo "SIGNING_KEY_FILE=$PWD/signing-key.asc" >> $GITHUB_ENV
-        env:
-          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY_BASE64 }}
-
       - name: Publish to Central Portal
         run: ./gradlew publishMavenJavaPublicationToCentralPortalRepository
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          SIGNING_KEY_FILE: ${{ env.SIGNING_KEY_FILE }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}

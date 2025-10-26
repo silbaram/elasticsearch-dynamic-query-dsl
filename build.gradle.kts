@@ -118,37 +118,38 @@ publishing {
 }
 
 signing {
-    // 문자열/파일/베이스64 모두 허용
-    val signingKeyProp = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
-    val signingKeyFilePath = (findProperty("signingKeyFile") as String?) ?: System.getenv("SIGNING_KEY_FILE")
+    // 문자열/베이스64만 허용
+    val signingKeyRaw: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
     val signingPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
-
-    // 파일이 있으면 파일에서 읽기
-    val signingKeyRaw: String? = signingKeyFilePath?.let { path ->
-        val f = file(path)
-        if (f.exists()) f.readText() else null
-    } ?: signingKeyProp
 
     // 필요 시 Base64 디코딩
     val signingKey: String? = signingKeyRaw?.let { raw ->
-        try { String(java.util.Base64.getDecoder().decode(raw)) } catch (_: IllegalArgumentException) { raw }
+        try { String(Base64.getDecoder().decode(raw)) } catch (_: IllegalArgumentException) { raw }
     }
 
     fun isAsciiArmoredPrivateKey(s: String) =
         s.contains("BEGIN PGP PRIVATE KEY BLOCK") && s.contains("END PGP PRIVATE KEY BLOCK")
 
-    if (!isSnapshotVersion) {
-        require(signingKey != null && signingPassword != null) {
-            "Missing signingKey/signingPassword for release publication."
+    // GitHub Actions에서만 서명 수행
+    val isCi = (System.getenv("CI") == "true") || (System.getenv("GITHUB_ACTIONS") == "true")
+
+    if (isCi) {
+        if (!isSnapshotVersion) {
+            require(signingKey != null && signingPassword != null) {
+                "Missing signingKey/signingPassword for release publication."
+            }
+            require(isAsciiArmoredPrivateKey(signingKey)) {
+                "SIGNING_KEY must be an ASCII-armored PGP private key."
+            }
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications)
+        } else if (signingKey != null && signingPassword != null) {
+            // 스냅샷은 선택적 서명
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications)
         }
-        require(isAsciiArmoredPrivateKey(signingKey)) {
-            "SIGNING_KEY must be an ASCII-armored PGP private key."
-        }
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications)
-    } else if (signingKey != null && signingPassword != null) {
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications)
+    } else {
+        logger.lifecycle("Signing is disabled locally. It only runs on CI (GitHub Actions).")
     }
 }
 
