@@ -6,6 +6,7 @@ plugins {
     `maven-publish`
     signing
     id("org.jetbrains.dokka") version "1.9.20"
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 group = "io.github.silbaram"
@@ -90,19 +91,18 @@ publishing {
         }
     }
     repositories {
-        // Central: 릴리스일 때만 활성화
+        // OSSRH(S01): 릴리스일 때만 활성화
         if (!isSnapshotVersion) {
             maven {
-                name = "CentralPortal"
-                url = uri("https://central.sonatype.com/api/v1/publisher/upload")
+                name = "SonatypeOSSRH"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
                 credentials {
-                    // ~/.gradle/gradle.properties 또는 환경변수 사용 권장
                     username = findProperty("centralUsername") as String? ?: System.getenv("CENTRAL_USERNAME")
                     password = findProperty("centralPassword") as String? ?: System.getenv("CENTRAL_PASSWORD")
                 }
             }
         } else {
-            logger.lifecycle("Central Portal publishing is disabled for snapshot version '$version'.")
+            logger.lifecycle("OSSRH publishing is disabled for snapshot version '$version'.")
         }
 
         // GitHub Packages: 스냅샷/릴리스 공통
@@ -113,6 +113,18 @@ publishing {
                 username = (findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
                 password = (findProperty("gpr.key") as String?) ?: System.getenv("GITHUB_TOKEN")
             }
+        }
+    }
+}
+
+// Nexus Publish 플러그인 설정(스테이징 close/release 자동화)
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username.set((findProperty("centralUsername") as String?) ?: System.getenv("CENTRAL_USERNAME"))
+            password.set((findProperty("centralPassword") as String?) ?: System.getenv("CENTRAL_PASSWORD"))
         }
     }
 }
@@ -158,7 +170,8 @@ tasks.register("publishToGitHub") {
     dependsOn("publishMavenJavaPublicationToGitHubPackagesRepository")
 }
 tasks.register("publishToCentral") {
-    doFirst { check(!isSnapshotVersion) { "Central Portal은 SNAPSHOT을 받지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
-    dependsOn("publishMavenJavaPublicationToCentralPortalRepository")
+    doFirst { check(!isSnapshotVersion) { "OSSRH는 SNAPSHOT을 배포하지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
+    // 1) 업로드 → 2) 스테이징 close/release
+    dependsOn("publishMavenJavaPublicationToSonatypeOSSRHRepository", "closeAndReleaseSonatypeStagingRepository")
 }
 

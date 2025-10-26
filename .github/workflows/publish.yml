@@ -40,8 +40,8 @@ jobs:
         with: { distribution: temurin, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Publish to Central Portal
-        run: ./gradlew publishMavenJavaPublicationToCentralPortalRepository
+      - name: Publish to Sonatype (OSSRH) and Release
+        run: ./gradlew publishMavenJavaPublicationToSonatypeOSSRHRepository closeAndReleaseSonatypeStagingRepository
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
