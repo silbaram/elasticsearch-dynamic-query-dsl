@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.SonatypeHost
 import java.util.Base64
+import org.gradle.plugins.signing.Sign
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -57,6 +58,21 @@ val javadocJar by tasks.registering(Jar::class) {
     from(dokkaHtml.flatMap { it.outputDirectory })
 }
 
+// Detect if signing is configured (either via -P or ENV) and skip Sign tasks otherwise
+val signingSecretRaw: String? =
+    (findProperty("signing.secretKey") as String?)
+        ?: (findProperty("signingKey") as String?)
+        ?: System.getenv("SIGNING_KEY")
+val signingPasswordRaw: String? =
+    (findProperty("signing.password") as String?)
+        ?: (findProperty("signingPassword") as String?)
+        ?: System.getenv("SIGNING_PASSWORD")
+val isSigningConfiguredFlag = !signingSecretRaw.isNullOrBlank() && !signingPasswordRaw.isNullOrBlank()
+
+tasks.withType<Sign>().configureEach {
+    onlyIf { isSigningConfiguredFlag }
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
@@ -111,23 +127,27 @@ mavenPublishing {
 
 // 서명: -Psigning.secretKey / -Psigning.password 우선 사용, 없으면 기존 ENV 사용
 signing {
-    val propSecret: String? = findProperty("signing.secretKey") as String?
-    val propPassword: String? = findProperty("signing.password") as String?
-    val envSecret: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
-    val envPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
+    fun valueOrNull(s: String?): String? = s?.trim()?.takeIf { it.isNotEmpty() }
+    val propSecret: String? = valueOrNull(findProperty("signing.secretKey") as String?)
+    val propPassword: String? = valueOrNull(findProperty("signing.password") as String?)
+    val envSecret: String? = valueOrNull((findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY"))
+    val envPassword: String? = valueOrNull((findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD"))
 
-    fun normalize(raw: String): String {
+    fun normalizeOrNull(raw: String): String? {
         val s0 = raw.trim().removeSurrounding("\"").removeSurrounding("'")
         if (s0.contains("BEGIN PGP PRIVATE KEY BLOCK")) return s0
-        return runCatching { String(Base64.getDecoder().decode(s0.replace("\\n", "\n"))) }.getOrElse { s0 }
+        val decoded = runCatching { String(Base64.getDecoder().decode(s0.replace("\\n", "\n"))) }.getOrElse { null }
+        val result = (decoded ?: s0).trim()
+        return result.takeIf { it.isNotEmpty() }
     }
-    val key = (propSecret ?: envSecret)?.let(::normalize)
-    val pwd = propPassword ?: envPassword
+    val key = (propSecret ?: envSecret)?.let(::normalizeOrNull)
+    val pwd = valueOrNull(propPassword ?: envPassword)
+
     if (key != null && pwd != null) {
         useInMemoryPgpKeys(key, pwd)
         sign(publishing.publications)
     } else {
-        logger.lifecycle("PGP signing is not configured; skipping signing.")
+        logger.lifecycle("PGP signing is not configured; skipping signing (secretPresent=${!((propSecret ?: envSecret).isNullOrBlank())}, passwordPresent=${!((propPassword ?: envPassword).isNullOrBlank())}).")
     }
 }
 
