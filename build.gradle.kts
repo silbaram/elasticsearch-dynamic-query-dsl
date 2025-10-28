@@ -74,38 +74,6 @@ tasks.withType<Sign>().configureEach {
 }
 
 publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(tasks["javadocJar"])
-            artifactId = "elasticsearch-dynamic-query-dsl"
-            pom {
-                name.set("elasticsearch-dynamic-query-dsl")
-                description.set("A Kotlin DSL for building Elasticsearch queries dynamically and intuitively.")
-                url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        // http -> https
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("silbaram")
-                        name.set("sang jin park")
-                        email.set("silbaram79@gmail.com")
-                    }
-                }
-                scm {
-                    // https/ssh 표준화
-                    connection.set("scm:git:https://github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
-                    url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
-                }
-            }
-        }
-    }
     repositories {
         // GitHub Packages (only if credentials are present)
         val ghUser = (findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
@@ -128,7 +96,35 @@ publishing {
 // vanniktech: 중앙 포털 사용
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-    signAllPublications()
+    // 좌표와 POM 메타데이터를 이 블록에서 정의하여 단일 'maven' 퍼블리케이션만 사용
+    coordinates(
+        group as String,
+        "elasticsearch-dynamic-query-dsl",
+        version as String,
+    )
+    pom {
+        name.set("elasticsearch-dynamic-query-dsl")
+        description.set("A Kotlin DSL for building Elasticsearch queries dynamically and intuitively.")
+        url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("silbaram")
+                name.set("sang jin park")
+                email.set("silbaram79@gmail.com")
+            }
+        }
+        scm {
+            connection.set("scm:git:https://github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
+            developerConnection.set("scm:git:ssh://git@github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
+            url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
+        }
+    }
 }
 
 // 서명: -Psigning.secretKey / -Psigning.password 우선 사용, 없으면 기존 ENV 사용
