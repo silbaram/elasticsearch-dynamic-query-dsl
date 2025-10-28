@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.SonatypeHost
+import java.util.Base64
+
 plugins {
     kotlin("jvm") version "2.0.20"
     `java-library`
@@ -53,9 +56,6 @@ val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
     from(dokkaHtml.flatMap { it.outputDirectory })
 }
-
-import com.vanniktech.maven.publish.SonatypeHost
-import java.util.Base64
 
 publishing {
     publications {
