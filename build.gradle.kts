@@ -107,14 +107,20 @@ publishing {
         }
     }
     repositories {
-        // GitHub Packages
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/silbaram/elasticsearch-dynamic-query-dsl")
-            credentials {
-                username = (findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
-                password = (findProperty("gpr.key") as String?) ?: System.getenv("GITHUB_TOKEN")
+        // GitHub Packages (only if credentials are present)
+        val ghUser = (findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
+        val ghToken = (findProperty("gpr.key") as String?) ?: System.getenv("GITHUB_TOKEN")
+        if (!ghUser.isNullOrBlank() && !ghToken.isNullOrBlank()) {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/silbaram/elasticsearch-dynamic-query-dsl")
+                credentials {
+                    username = ghUser
+                    password = ghToken
+                }
             }
+        } else {
+            logger.lifecycle("GitHub Packages repository is disabled (missing GITHUB credentials).")
         }
     }
 }
