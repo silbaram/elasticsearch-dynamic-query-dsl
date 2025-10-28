@@ -1,83 +1,97 @@
 plugins {
     kotlin("jvm") version "2.0.20"
     `java-library`
-
-    // Central Publishing Portal 전용 플러그인
-    id("com.vanniktech.maven.publish") version "0.34.0"
-
+    `maven-publish`
+    signing
     id("org.jetbrains.dokka") version "1.9.20"
+    id("com.vanniktech.maven.publish") version "0.29.0"
 }
 
 group = "io.github.silbaram"
-// Maven 관례상 v 접두사는 제거 권장 (기능엔 영향 없음)
 version = "1.0.0-es8.14.2-3"
 
 description = "Kotlin DSL for building Elasticsearch Query DSL mirroring Kibana-style JSON"
 
-repositories { mavenCentral() }
+val isSnapshotVersion = version.toString().endsWith("SNAPSHOT")
+
+repositories {
+    mavenCentral()
+}
 
 val elasticsearchJavaVersion: String by project
 
 dependencies {
+    // API dependencies (exposed to consumers)
     api("co.elastic.clients:elasticsearch-java:$elasticsearchJavaVersion")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
+    // Implementation dependencies (internal only)
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 
+    // Test dependencies
     testImplementation("io.kotest:kotest-runner-junit5:5.7.1")
     testImplementation("io.kotest:kotest-assertions-core:5.7.1")
 }
 
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
-kotlin { jvmToolchain(21) }
-java { withSourcesJar() }
-
-// ---- Central(신규 포털) 퍼블리싱 설정: Vanniktech ----
-mavenPublishing {
-    // 업로드 후 자동 Publish까지 하고 싶으면 automaticRelease = true
-    publishToMavenCentral(automaticRelease = true)
-
-    // 모든 publication 서명 (in-memory PGP)
-    signAllPublications()
-
-    // 좌표 고정 (⚠️ 위치 인자 사용 또는 정확한 이름 groupId)
-    coordinates(
-        "io.github.silbaram",                // groupId
-        "elasticsearch-dynamic-query-dsl",   // artifactId
-        version.toString()                   // version
-    )
-
-    pom {
-        name = "elasticsearch-dynamic-query-dsl"
-        description = "A Kotlin DSL for building Elasticsearch queries dynamically and intuitively."
-        url = "https://github.com/silbaram/elasticsearch-dynamic-query-dsl"
-
-        licenses {
-            license {
-                name = "The Apache License, Version 2.0"
-                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                distribution = "repo"
-            }
-        }
-        developers {
-            developer {
-                id = "silbaram"
-                name = "sang jin park"
-                email = "silbaram79@gmail.com"
-            }
-        }
-        scm {
-            url = "https://github.com/silbaram/elasticsearch-dynamic-query-dsl"
-            connection = "scm:git:https://github.com/silbaram/elasticsearch-dynamic-query-dsl.git"
-            developerConnection = "scm:git:ssh://git@github.com/silbaram/elasticsearch-dynamic-query-dsl.git"
-        }
-    }
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
-// ---- GitHub Packages 퍼블리싱(기존처럼 유지) ----
-// Vanniktech는 내부적으로 maven-publish를 사용하므로 repositories 만 추가하면 같이 올라감.
+kotlin {
+    jvmToolchain(21)
+}
+
+// Attach sources and Dokka-based javadoc artifacts for Maven Central
+java {
+    withSourcesJar()
+}
+
+// Create a javadocJar from Dokka HTML output (accepted by Maven Central)
+val dokkaHtml by tasks.existing(org.jetbrains.dokka.gradle.DokkaTask::class)
+val javadocJar by tasks.registering(Jar::class) {
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.flatMap { it.outputDirectory })
+}
+
+import com.vanniktech.maven.publish.SonatypeHost
+import java.util.Base64
+
 publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(tasks["javadocJar"])
+            artifactId = "elasticsearch-dynamic-query-dsl"
+            pom {
+                name.set("elasticsearch-dynamic-query-dsl")
+                description.set("A Kotlin DSL for building Elasticsearch queries dynamically and intuitively.")
+                url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        // http -> https
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("silbaram")
+                        name.set("sang jin park")
+                        email.set("silbaram79@gmail.com")
+                    }
+                }
+                scm {
+                    // https/ssh 표준화
+                    connection.set("scm:git:https://github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/silbaram/elasticsearch-dynamic-query-dsl.git")
+                    url.set("https://github.com/silbaram/elasticsearch-dynamic-query-dsl")
+                }
+            }
+        }
+    }
     repositories {
+        // GitHub Packages
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/silbaram/elasticsearch-dynamic-query-dsl")
@@ -89,7 +103,40 @@ publishing {
     }
 }
 
-// (선택) GitHub 전용 편의 태스크
-tasks.register("publishToGitHub") {
-    dependsOn("publishAllPublicationsToGitHubPackagesRepository")
+// vanniktech: 중앙 포털 사용
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
 }
+
+// 서명: -Psigning.secretKey / -Psigning.password 우선 사용, 없으면 기존 ENV 사용
+signing {
+    val propSecret: String? = findProperty("signing.secretKey") as String?
+    val propPassword: String? = findProperty("signing.password") as String?
+    val envSecret: String? = (findProperty("signingKey") as String?) ?: System.getenv("SIGNING_KEY")
+    val envPassword: String? = (findProperty("signingPassword") as String?) ?: System.getenv("SIGNING_PASSWORD")
+
+    fun normalize(raw: String): String {
+        val s0 = raw.trim().removeSurrounding("\"").removeSurrounding("'")
+        if (s0.contains("BEGIN PGP PRIVATE KEY BLOCK")) return s0
+        return runCatching { String(Base64.getDecoder().decode(s0.replace("\\n", "\n"))) }.getOrElse { s0 }
+    }
+    val key = (propSecret ?: envSecret)?.let(::normalize)
+    val pwd = propPassword ?: envPassword
+    if (key != null && pwd != null) {
+        useInMemoryPgpKeys(key, pwd)
+        sign(publishing.publications)
+    } else {
+        logger.lifecycle("PGP signing is not configured; skipping signing.")
+    }
+}
+
+// 편의 태스크
+tasks.register("publishToGitHub") {
+    dependsOn("publishMavenJavaPublicationToGitHubPackagesRepository")
+}
+tasks.register("publishToCentral") {
+    doFirst { check(!isSnapshotVersion) { "Central Portal은 SNAPSHOT을 받지 않습니다. -SNAPSHOT 제거 후 재시도하세요." } }
+    dependsOn("publish") // vanniktech가 중앙 포털 업로드를 처리
+}
+
