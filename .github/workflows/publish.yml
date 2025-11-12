@@ -60,9 +60,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Publish to Central Portal
-        run: ./gradlew publishMavenJavaPublicationToCentralPortalRepository
+        run: ./gradlew publish
         env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          # Maven Central 자격증명
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          # PGP 서명 설정 (환경 변수로 전달)
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
