@@ -25,8 +25,8 @@ class SpanMultiQueryTest : FunSpec({
         sm.boost() shouldBe 1.1f
         sm.queryName() shouldBe "range-as-span"
         sm.match().isRange shouldBe true
-        sm.match().range().field() shouldBe "publish_date"
-        sm.match().range().gte()?.to(String::class.java) shouldBe "2023-01-01"
+        sm.match().range().untyped().field() shouldBe "publish_date"
+        sm.match().range().untyped().gte()?.to(String::class.java) shouldBe "2023-01-01"
     }
 
     test("span_multi: span_near 내부 clause로 사용") {

@@ -88,15 +88,18 @@ fun Query.Builder.rangeQuery(fn: RangeQueryDsl.() -> Unit): ObjectBuilder<Query>
     val hasBounds = !(dsl.from.isNullOrEmpty() && dsl.to.isNullOrEmpty() && dsl.gt == null && dsl.lt == null && dsl.gte == null && dsl.lte == null)
     if (!hasBounds) return this
     return this.range { r ->
-        r.field(f)
-        dsl.from?.let { r.from(it) }
-        dsl.to?.let { r.to(it) }
-        dsl.gt?.let { r.gt(jsonDataConvert(it)) }
-        dsl.lt?.let { r.lt(jsonDataConvert(it)) }
-        dsl.gte?.let { r.gte(jsonDataConvert(it)) }
-        dsl.lte?.let { r.lte(jsonDataConvert(it)) }
-        dsl.boost?.let { r.boost(it) }
-        dsl._name?.let { r.queryName(it) }
+        r.untyped { range ->
+            range.field(f)
+            dsl.from?.let { range.from(JsonData.of(it)) }
+            dsl.to?.let { range.to(JsonData.of(it)) }
+            dsl.gt?.let { range.gt(jsonDataConvert(it)) }
+            dsl.lt?.let { range.lt(jsonDataConvert(it)) }
+            dsl.gte?.let { range.gte(jsonDataConvert(it)) }
+            dsl.lte?.let { range.lte(jsonDataConvert(it)) }
+            dsl.boost?.let { range.boost(it) }
+            dsl._name?.let { range.queryName(it) }
+            range
+        }
         r
     }
 }

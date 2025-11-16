@@ -31,7 +31,7 @@ class ScriptQueryTest : FunSpec({
         val scriptQuery = q.script()
         scriptQuery.boost() shouldBe 1.5f
         scriptQuery.queryName() shouldBe "inline-script"
-        val inline = scriptQuery.script().inline()
+        val inline = scriptQuery.script()
         inline.source() shouldBe "doc['score'].value > params.threshold"
         inline.lang() shouldBe "painless"
         inline.params()?.size shouldBe 2
@@ -51,7 +51,7 @@ class ScriptQueryTest : FunSpec({
         q.isScript shouldBe true
         val scriptQuery = q.script()
         scriptQuery.boost() shouldBe 0.7f
-        val stored = scriptQuery.script().stored()
+        val stored = scriptQuery.script()
         stored.id() shouldBe "stored-script-1"
         stored.params()?.containsKey("userId") shouldBe true
     }
@@ -75,7 +75,7 @@ class ScriptQueryTest : FunSpec({
         must.size shouldBe 1
         val nested = must.first()
         nested.isScript shouldBe true
-        nested.script().script().inline().source() shouldBe "doc['votes'].value >= params.min"
+        nested.script().script().source() shouldBe "doc['votes'].value >= params.min"
     }
 
     test("script query - invalid definitions are ignored") {

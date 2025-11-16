@@ -11,20 +11,29 @@ class RuleQueryDsl {
     var _name: String? = null
     var organic: Query? = null
 
-    private var rulesetId: String? = null
+    private var rulesetIds: List<String> = emptyList()
     private var matchCriteria: JsonData? = null
 
     fun rulesetId(id: String?) {
-        val trimmed = id?.trim()
-        rulesetId = trimmed?.takeIf { it.isNotEmpty() }
+        rulesetIds = sanitizeRulesetIds(listOf(id))
     }
 
     fun rulesetIds(vararg ids: String?) {
-        rulesetId(ids.firstOrNull { !it.isNullOrBlank() })
+        rulesetIds = sanitizeRulesetIds(ids.asList())
     }
 
     fun rulesetIds(ids: Iterable<String?>) {
-        rulesetId(ids.firstOrNull { !it.isNullOrBlank() })
+        rulesetIds = sanitizeRulesetIds(ids.asIterable())
+    }
+
+    fun clearRulesetIds() {
+        rulesetIds = emptyList()
+    }
+
+    private fun sanitizeRulesetIds(candidates: Iterable<String?>): List<String> {
+        return candidates
+            .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
+            .distinct()
     }
 
     fun organic(fn: Query.Builder.() -> Unit) {
@@ -56,20 +65,21 @@ class RuleQueryDsl {
         matchCriteria = null
     }
 
-    internal fun resolvedRulesetId(): String? = rulesetId
+    internal fun resolvedRulesetIds(): List<String> = rulesetIds
 
     internal fun resolvedMatchCriteria(): JsonData? = matchCriteria
 }
 
 fun Query.Builder.ruleQueryDsl(fn: RuleQueryDsl.() -> Unit): ObjectBuilder<Query> {
     val dsl = RuleQueryDsl().apply(fn)
-    val rulesetId = dsl.resolvedRulesetId() ?: return this
+    val rulesetIds = dsl.resolvedRulesetIds()
+    if (rulesetIds.isEmpty()) return this
     val organic = dsl.organic ?: return this
     val matchCriteria = dsl.resolvedMatchCriteria() ?: return this
 
-    return this.ruleQuery { builder: RuleQuery.Builder ->
+    return this.rule { builder: RuleQuery.Builder ->
         builder.organic(organic)
-        builder.rulesetId(rulesetId)
+        builder.rulesetIds(rulesetIds)
         builder.matchCriteria(matchCriteria)
         dsl.boost?.let { builder.boost(it) }
         dsl._name?.let { builder.queryName(it) }

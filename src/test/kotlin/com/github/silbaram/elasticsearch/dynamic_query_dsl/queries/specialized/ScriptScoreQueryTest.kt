@@ -32,7 +32,7 @@ class ScriptScoreQueryTest : FunSpec({
         scriptScore.queryName() shouldBe "rating-score"
         scriptScore.minScore() shouldBe 0.5f
         scriptScore.query().isMatchAll shouldBe true
-        val inline = scriptScore.script().inline()
+        val inline = scriptScore.script()
         inline.source() shouldBe "Math.log(2 + doc['rating'].value) * params.factor"
         inline.params()?.get("factor")?.toString() shouldBe "5"
     }
@@ -54,7 +54,7 @@ class ScriptScoreQueryTest : FunSpec({
         q.isScriptScore shouldBe true
         val scriptScore = q.scriptScore()
         scriptScore.boost() shouldBe 1.1f
-        val stored = scriptScore.script().stored()
+        val stored = scriptScore.script()
         stored.id() shouldBe "score-by-status"
         stored.params()?.get("weight")?.toString() shouldBe "3"
         val inner = scriptScore.query()
@@ -81,7 +81,7 @@ class ScriptScoreQueryTest : FunSpec({
         mustQueries.size shouldBe 1
         val nested = mustQueries.first()
         nested.isScriptScore shouldBe true
-        nested.scriptScore().script().inline().source() shouldBe "params.boost"
+        nested.scriptScore().script().source() shouldBe "params.boost"
     }
 
     test("script_score query - invalid definitions are skipped") {

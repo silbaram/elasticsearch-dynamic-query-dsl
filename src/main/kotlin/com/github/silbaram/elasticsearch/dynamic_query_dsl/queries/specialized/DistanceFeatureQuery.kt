@@ -1,8 +1,8 @@
 package com.github.silbaram.elasticsearch.dynamic_query_dsl.queries.specialized
 import co.elastic.clients.elasticsearch._types.query_dsl.DistanceFeatureQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.util.ObjectBuilder
 import co.elastic.clients.json.JsonData
+import co.elastic.clients.util.ObjectBuilder
 
 /** DSL helper for Query.Builder usage */
 class DistanceFeatureQueryDsl {
@@ -36,11 +36,14 @@ fun Query.Builder.distanceFeatureQuery(fn: DistanceFeatureQueryDsl.() -> Unit): 
     }
 
     return this.distanceFeature { df ->
-        df.field(f)
-        df.pivot(JsonData.of(p))
-        df.origin(originJson)
-        dsl.boost?.let { df.boost(it) }
-        dsl._name?.let { df.queryName(it) }
+        df.untyped { untyped ->
+            untyped.field(f)
+            untyped.pivot(JsonData.of(p))
+            untyped.origin(originJson)
+            dsl.boost?.let { untyped.boost(it) }
+            dsl._name?.let { untyped.queryName(it) }
+            untyped
+        }
         df
     }
 }

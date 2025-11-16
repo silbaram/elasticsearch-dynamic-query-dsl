@@ -72,17 +72,13 @@ open class ScriptOptionsDsl {
 
         return when {
             storedId != null -> Script.of { script ->
-                script.stored { stored ->
-                    stored.id(storedId)
-                    params?.let { stored.params(it) }
-                }
+                script.id(storedId)
+                params?.let { script.params(it) }
             }
             inlineSource != null -> Script.of { script ->
-                script.inline { inline ->
-                    inline.source(inlineSource)
-                    lang?.takeIf { it.isNotBlank() }?.let { inline.lang(it) }
-                    params?.let { inline.params(it) }
-                }
+                script.source(inlineSource)
+                lang?.takeIf { it.isNotBlank() }?.let { script.lang(it) }
+                params?.let { script.params(it) }
             }
             else -> null
         }

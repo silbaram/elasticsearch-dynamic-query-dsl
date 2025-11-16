@@ -21,9 +21,10 @@ class DistanceFeatureQueryTest : FunSpec({
         q.shouldNotBeNull()
         q.isDistanceFeature shouldBe true
         val df = q.distanceFeature()
-        df.field() shouldBe "production_date"
-        df.boost() shouldBe 1.2f
-        df.queryName() shouldBe "date-recency-boost"
+        df.isUntyped shouldBe true
+        df.untyped().field() shouldBe "production_date"
+        df.untyped().boost() shouldBe 1.2f
+        df.untyped().queryName() shouldBe "date-recency-boost"
         q.toString().contains("\"pivot\":\"7d\"") shouldBe true
         q.toString().contains("\"origin\":\"now\"") shouldBe true
     }
@@ -40,8 +41,9 @@ class DistanceFeatureQueryTest : FunSpec({
 
         q.isDistanceFeature shouldBe true
         val df = q.distanceFeature()
-        df.field() shouldBe "location"
-        df.queryName() shouldBe "geo-proximity"
+        df.isUntyped shouldBe true
+        df.untyped().field() shouldBe "location"
+        df.untyped().queryName() shouldBe "geo-proximity"
         q.toString().contains("\"pivot\":\"2km\"") shouldBe true
     }
 

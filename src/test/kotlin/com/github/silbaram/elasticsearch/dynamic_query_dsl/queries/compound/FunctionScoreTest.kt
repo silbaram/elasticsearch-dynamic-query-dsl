@@ -68,7 +68,7 @@ class FunctionScoreTest : FunSpec({
         fsq.functions().size shouldBe 1
         val scriptScore = fsq.functions()[0].scriptScore()
         scriptScore shouldNotBe null
-        scriptScore.script().inline().source() shouldBe "Math.log(2 + doc['rating'].value) * params.factor"
+        scriptScore.script().source() shouldBe "Math.log(2 + doc['rating'].value) * params.factor"
         fsq.boostMode() shouldBe FunctionBoostMode.Replace
     }
 
@@ -196,6 +196,6 @@ class FunctionScoreTest : FunSpec({
         query.isFunctionScore shouldBe true
         val fs = query.functionScore()
         fs.functions().size shouldBe 1
-        fs.functions().first().scriptScore().script().inline().source() shouldBe "doc['price'].value * params.factor"
+        fs.functions().first().scriptScore().script().source() shouldBe "doc['price'].value * params.factor"
     }
 })

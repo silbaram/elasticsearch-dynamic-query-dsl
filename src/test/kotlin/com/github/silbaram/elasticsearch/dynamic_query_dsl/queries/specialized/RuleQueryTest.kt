@@ -35,11 +35,11 @@ class RuleQueryTest : FunSpec({
         }
 
         q.shouldNotBeNull()
-        q.isRuleQuery shouldBe true
-        val rule = q.ruleQuery()
+        q.isRule shouldBe true
+        val rule = q.rule()
         rule.boost() shouldBe 1.4f
         rule.queryName() shouldBe "rule-sample"
-        rule.rulesetId() shouldBe "rule-1"
+        rule.rulesetIds() shouldBe listOf("rule-1", "rule-2")
         rule.organic().isMatch shouldBe true
         rule.matchCriteria().toString().contains("field_categories") shouldBe true
     }
@@ -66,8 +66,8 @@ class RuleQueryTest : FunSpec({
         val mustQueries = q.bool().must()
         mustQueries.size shouldBe 1
         val nested = mustQueries.first()
-        nested.isRuleQuery shouldBe true
-        nested.ruleQuery().rulesetId() shouldBe "featured"
+        nested.isRule shouldBe true
+        nested.rule().rulesetIds() shouldBe listOf("featured")
     }
 
     test("rule query - invalid definitions are skipped") {

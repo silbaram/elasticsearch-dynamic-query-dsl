@@ -18,9 +18,7 @@ class TermsSetQueryTest : FunSpec({
                         terms = listOf("tech", "kotlin", "search")
                         minimumShouldMatchField = "required_matches"
                         minimumShouldMatchScript = Script.of { script ->
-                            script.inline { inlineScript ->
-                                inlineScript.source("Math.min(params.num_terms, 2)")
-                            }
+                            script.source("Math.min(params.num_terms, 2)")
                         }
                     }
                 }
@@ -35,8 +33,9 @@ class TermsSetQueryTest : FunSpec({
         termsSet.termsSet().field() shouldBe "tags"
         termsSet.termsSet().terms() shouldBe listOf("tech", "kotlin", "search")
         termsSet.termsSet().minimumShouldMatchField() shouldBe "required_matches"
-        termsSet.termsSet().minimumShouldMatchScript()?.isInline shouldBe true
-        termsSet.termsSet().minimumShouldMatchScript()?.inline()?.source() shouldBe "Math.min(params.num_terms, 2)"
+        val script = termsSet.termsSet().minimumShouldMatchScript()
+        script?.source() shouldBe "Math.min(params.num_terms, 2)"
+        script?.id() shouldBe null
     }
 
     test("필드가 없거나 terms가 비면 terms_set 쿼리를 생성하지 않아야 함") {

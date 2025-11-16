@@ -18,7 +18,7 @@ import com.github.silbaram.elasticsearch.dynamic_query_dsl.core.query
 
 class MetricsAggregationsTest : FunSpec({
     fun inlineScript(source: String): Script = Script.of { script ->
-        script.inline { inline -> inline.source(source) }
+        script.source(source)
     }
 
     test("builds metric aggregation variants with builder DSL") {

@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldNotBe
 
 class PipelineAggregationsTest : FunSpec({
     fun inlineScript(source: String): Script = Script.of { script ->
-        script.inline { inline -> inline.source(source) }
+        script.source(source)
     }
 
     fun singlePath(path: String): BucketsPath = BucketsPath.of { builder ->

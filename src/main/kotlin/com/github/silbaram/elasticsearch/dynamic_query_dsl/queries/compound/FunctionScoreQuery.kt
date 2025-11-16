@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorScoreFu
 import co.elastic.clients.elasticsearch._types.query_dsl.ScriptScoreFunction
 import co.elastic.clients.elasticsearch._types.query_dsl.RandomScoreFunction
 import co.elastic.clients.elasticsearch._types.query_dsl.DecayFunction
+import co.elastic.clients.elasticsearch._types.query_dsl.DecayFunctionBuilders
 import co.elastic.clients.elasticsearch._types.query_dsl.DecayPlacement
  
 import co.elastic.clients.elasticsearch._types.Script
@@ -190,7 +191,7 @@ class FunctionScoreBuilder {
         offset: String?,
         decay: Double?
     ): DecayFunction {
-        return DecayFunction.of { d ->
+        return DecayFunctionBuilders.untyped { d ->
             d.field(field)
                 .placement(
                     DecayPlacement.of { p ->
@@ -324,10 +325,8 @@ fun FunctionScoreBuilder.scriptScoreQuery(
     this.scriptScore {
         script(
             co.elastic.clients.elasticsearch._types.Script.of { script ->
-                script.inline { inline ->
-                    inline.source(source)
-                    params?.let { inline.params(it) }
-                }
+                script.source(source)
+                params?.let { script.params(it) }
             }
         )
     }
@@ -349,10 +348,8 @@ fun FunctionScoreBuilder.scriptScoreStoredQuery(
     this.scriptScore {
         script(
             co.elastic.clients.elasticsearch._types.Script.of { script ->
-                script.stored { stored ->
-                    stored.id(id)
-                    params?.let { stored.params(it) }
-                }
+                script.id(id)
+                params?.let { script.params(it) }
             }
         )
     }
